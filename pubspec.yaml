@@ -1,0 +1,60 @@
+name: avatracker_mobile
+description: "AvaTracker Mobile — учет рабочего времени сотрудников: QR-отметки, FaceID-проверка, контроль геолокации."
+publish_to: 'none'
+version: 0.2.0+2
+
+environment:
+  sdk: ^3.5.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # Состояние
+  flutter_riverpod: ^2.6.1
+
+  # Навигация
+  go_router: ^14.6.2
+
+  # Сеть
+  dio: ^5.7.0
+
+  # Хранение токенов и данных сессии (Keychain / Keystore)
+  flutter_secure_storage: ^9.2.2
+
+  # QR-сканер (ML Kit / AVFoundation)
+  mobile_scanner: ^6.0.2
+
+  # Геолокация: координаты, точность, mock-детекция
+  geolocator: ^13.0.2
+
+  # Камера для FaceID-снимка
+  camera: ^0.11.0+2
+
+  # Форматирование дат (версию пинит flutter_localizations)
+  intl: any
+
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.3
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/logo/
+    - assets/icon/
+
+# Иконка приложения из актуального брендбука AvaTracker (logo/New).
+flutter_launcher_icons:
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  image_path: "assets/icon/app_icon.png"
+  adaptive_icon_background: "#121926"
+  adaptive_icon_foreground: "assets/logo/mark_on_dark.png"
