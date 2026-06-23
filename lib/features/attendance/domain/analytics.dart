@@ -1,5 +1,3 @@
-import 'timesheet.dart';
-
 enum AnalyticsPeriod { week, month }
 
 class AnalyticsRange {
@@ -25,23 +23,8 @@ class AnalyticsRange {
   final DateTime start;
   final DateTime end;
 
-  bool contains(DateTime date) {
-    final day = DateTime(date.year, date.month, date.day);
-    return !day.isBefore(start) && !day.isAfter(end);
-  }
-
-  List<String> get monthKeys {
-    final keys = <String>[];
-    var cursor = DateTime(start.year, start.month);
-    final last = DateTime(end.year, end.month);
-    while (!cursor.isAfter(last)) {
-      keys.add(
-        '${cursor.year}-${cursor.month.toString().padLeft(2, '0')}',
-      );
-      cursor = DateTime(cursor.year, cursor.month + 1);
-    }
-    return keys;
-  }
+  String get startParam => _dateParam(start);
+  String get endParam => _dateParam(end);
 
   @override
   bool operator ==(Object other) =>
@@ -51,78 +34,106 @@ class AnalyticsRange {
   int get hashCode => Object.hash(start, end);
 }
 
-class LateArrival {
-  const LateArrival({
+class TardinessEntry {
+  const TardinessEntry({
     required this.date,
+    required this.authTime,
     required this.scheduledMinutes,
-    required this.actualMinutes,
+    required this.tardinessMinutes,
   });
 
   final DateTime date;
+  final String authTime;
   final int scheduledMinutes;
-  final int actualMinutes;
+  final int tardinessMinutes;
 
-  int get lateMinutes => actualMinutes - scheduledMinutes;
   String get scheduledLabel => _clockLabel(scheduledMinutes);
-  String get actualLabel => _clockLabel(actualMinutes);
+  String get actualLabel {
+    final match = RegExp(r'T(\d{2}):(\d{2})').firstMatch(authTime);
+    if (match != null) return '${match.group(1)}:${match.group(2)}';
+    return _clockLabel(scheduledMinutes + tardinessMinutes);
+  }
+
+  factory TardinessEntry.fromJson(Map<String, dynamic> json) {
+    return TardinessEntry(
+      date: DateTime.tryParse('${json['date']}') ?? DateTime(1970),
+      authTime: '${json['auth_time'] ?? ''}',
+      scheduledMinutes:
+          _parseClock('${json['schedule_start_time'] ?? ''}') ?? 0,
+      tardinessMinutes: _toInt(json['tardiness_minutes']),
+    );
+  }
 }
 
-class AttendanceAnalytics {
-  const AttendanceAnalytics({
+class TardinessAnalytics {
+  const TardinessAnalytics({
     required this.range,
-    required this.workedMinutes,
-    required this.workedDays,
-    required this.lateArrivals,
+    required this.iin,
+    required this.employeeName,
+    required this.scheduleName,
+    required this.scheduleStartTime,
+    required this.count,
+    required this.maxTardiness,
+    required this.avgTardiness,
+    required this.results,
   });
 
   final AnalyticsRange range;
-  final int workedMinutes;
-  final int workedDays;
-  final List<LateArrival> lateArrivals;
+  final String iin;
+  final String employeeName;
+  final String scheduleName;
+  final String scheduleStartTime;
+  final int count;
+  final int maxTardiness;
+  final int avgTardiness;
+  final List<TardinessEntry> results;
 
-  int get lateDays => lateArrivals.length;
-  int get totalLateMinutes => lateArrivals.fold(
+  int get totalTardinessMinutes => results.fold(
         0,
-        (total, arrival) => total + arrival.lateMinutes,
-      );
-  int get averageLateMinutes =>
-      lateDays == 0 ? 0 : (totalLateMinutes / lateDays).round();
-  int get maxLateMinutes => lateArrivals.fold(
-        0,
-        (maximum, arrival) =>
-            arrival.lateMinutes > maximum ? arrival.lateMinutes : maximum,
+        (total, entry) => total + entry.tardinessMinutes,
       );
 
-  factory AttendanceAnalytics.fromDays(
+  String get scheduleStartLabel {
+    final minutes = _parseClock(scheduleStartTime);
+    return minutes == null ? '' : _clockLabel(minutes);
+  }
+
+  factory TardinessAnalytics.fromJson(
     AnalyticsRange range,
-    Iterable<TimesheetDay> source,
+    Map<String, dynamic> json,
   ) {
-    final days = source.where((day) => range.contains(day.date)).toList()
-      ..sort((a, b) => a.date.compareTo(b.date));
-    final lateArrivals = <LateArrival>[];
+    final rawResults = json['results'];
+    final entries = rawResults is List
+        ? rawResults
+            .whereType<Map<String, dynamic>>()
+            .map(TardinessEntry.fromJson)
+            .toList()
+        : <TardinessEntry>[];
+    entries.sort((a, b) => b.date.compareTo(a.date));
+    final computedMax = entries.fold(
+      0,
+      (maximum, entry) =>
+          entry.tardinessMinutes > maximum ? entry.tardinessMinutes : maximum,
+    );
+    final computedTotal = entries.fold(
+      0,
+      (total, entry) => total + entry.tardinessMinutes,
+    );
+    final count = _toInt(json['count'], fallback: entries.length);
 
-    for (final day in days) {
-      final scheduled = _parseClock(day.workStart);
-      final actual = _firstCheckIn(day.scans);
-      if (scheduled != null && actual != null && actual > scheduled) {
-        lateArrivals.add(
-          LateArrival(
-            date: day.date,
-            scheduledMinutes: scheduled,
-            actualMinutes: actual,
-          ),
-        );
-      }
-    }
-
-    return AttendanceAnalytics(
+    return TardinessAnalytics(
       range: range,
-      workedMinutes: days.fold(
-        0,
-        (total, day) => total + day.workedMinutes,
+      iin: '${json['iin'] ?? ''}',
+      employeeName: '${json['employee_name'] ?? ''}',
+      scheduleName: '${json['schedule_name'] ?? ''}',
+      scheduleStartTime: '${json['schedule_start_time'] ?? ''}',
+      count: count,
+      maxTardiness: _toInt(json['max_tardiness'], fallback: computedMax),
+      avgTardiness: _toInt(
+        json['avg_tardiness'],
+        fallback: count == 0 ? 0 : (computedTotal / count).round(),
       ),
-      workedDays: days.where((day) => day.workedMinutes > 0).length,
-      lateArrivals: lateArrivals.reversed.toList(growable: false),
+      results: entries,
     );
   }
 }
@@ -137,18 +148,21 @@ int? _parseClock(String? value) {
   return hour * 60 + minute;
 }
 
-int? _firstCheckIn(List<ScanEntry> scans) {
-  int? earliest;
-  for (final scan in scans) {
-    if (scan.type != 'check_in' || scan.wallClockMinutes == null) continue;
-    final value = scan.wallClockMinutes!;
-    if (earliest == null || value < earliest) earliest = value;
-  }
-  return earliest;
+String _clockLabel(int minutes) {
+  final normalized = minutes % (24 * 60);
+  final hour = (normalized ~/ 60).toString().padLeft(2, '0');
+  final minute = (normalized % 60).toString().padLeft(2, '0');
+  return '$hour:$minute';
 }
 
-String _clockLabel(int minutes) {
-  final hour = (minutes ~/ 60).toString().padLeft(2, '0');
-  final minute = (minutes % 60).toString().padLeft(2, '0');
-  return '$hour:$minute';
+int _toInt(Object? value, {int fallback = 0}) {
+  if (value is int) return value;
+  if (value is num) return value.round();
+  return int.tryParse('$value') ?? fallback;
+}
+
+String _dateParam(DateTime date) {
+  final month = date.month.toString().padLeft(2, '0');
+  final day = date.day.toString().padLeft(2, '0');
+  return '${date.year}-$month-$day';
 }

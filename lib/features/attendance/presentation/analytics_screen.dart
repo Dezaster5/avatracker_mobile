@@ -8,7 +8,7 @@ import '../../../core/widgets/app_error_view.dart';
 import '../domain/analytics.dart';
 import '../providers.dart';
 
-/// Клиентская аналитика по табелю: отработанное время и опоздания.
+/// Аналитика опозданий по данным backend.
 class AnalyticsScreen extends ConsumerStatefulWidget {
   const AnalyticsScreen({super.key});
 
@@ -44,17 +44,14 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
   }
 
   Future<void> _refresh(AnalyticsRange range) async {
-    for (final month in range.monthKeys) {
-      ref.invalidate(timesheetProvider(month));
-    }
-    ref.invalidate(attendanceAnalyticsProvider(range));
-    await ref.read(attendanceAnalyticsProvider(range).future);
+    ref.invalidate(tardinessAnalyticsProvider(range));
+    await ref.read(tardinessAnalyticsProvider(range).future);
   }
 
   @override
   Widget build(BuildContext context) {
     final range = _range;
-    final analytics = ref.watch(attendanceAnalyticsProvider(range));
+    final analytics = ref.watch(tardinessAnalyticsProvider(range));
 
     return Scaffold(
       appBar: AppBar(title: const Text('Аналитика')),
@@ -103,7 +100,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
               error: (error, _) => AppErrorView(
                 message: error.toString(),
                 onRetry: () => ref.invalidate(
-                  attendanceAnalyticsProvider(range),
+                  tardinessAnalyticsProvider(range),
                 ),
               ),
               data: (data) => _AnalyticsContent(
@@ -165,15 +162,17 @@ class _AnalyticsContent extends StatelessWidget {
     required this.period,
   });
 
-  final AttendanceAnalytics analytics;
+  final TardinessAnalytics analytics;
   final AnalyticsPeriod period;
 
   @override
   Widget build(BuildContext context) {
     final periodLabel = period == AnalyticsPeriod.week ? 'неделю' : 'месяц';
-    final averageWorked = analytics.workedDays == 0
-        ? 0
-        : (analytics.workedMinutes / analytics.workedDays).round();
+    final scheduleParts = [
+      if (analytics.scheduleName.isNotEmpty) 'график ${analytics.scheduleName}',
+      if (analytics.scheduleStartLabel.isNotEmpty)
+        'начало ${analytics.scheduleStartLabel}',
+    ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -197,7 +196,7 @@ class _AnalyticsContent extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Отработано за $periodLabel',
+                    'Опоздания за $periodLabel',
                     style: const TextStyle(
                       color: Colors.white70,
                       fontSize: 14,
@@ -207,7 +206,7 @@ class _AnalyticsContent extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                formatMinutes(analytics.workedMinutes),
+                '${analytics.count} ${_caseLabel(analytics.count)}',
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 32,
@@ -216,16 +215,27 @@ class _AnalyticsContent extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               Text(
-                analytics.workedDays == 0
-                    ? 'За выбранный период отработанных смен нет'
-                    : '${analytics.workedDays} ${_shiftLabel(analytics.workedDays)} · '
-                        'в среднем ${formatMinutes(averageWorked)} за смену',
+                analytics.count == 0
+                    ? 'За выбранный период опозданий нет'
+                    : 'Суммарно ${formatMinutes(analytics.totalTardinessMinutes)} · '
+                        'в среднем ${formatMinutes(analytics.avgTardiness)}',
                 style: const TextStyle(
                   color: Colors.white60,
                   fontSize: 13,
                   height: 1.4,
                 ),
               ),
+              if (scheduleParts.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Text(
+                  scheduleParts.join(' · '),
+                  style: const TextStyle(
+                    color: Colors.white60,
+                    fontSize: 13,
+                    height: 1.4,
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -240,7 +250,7 @@ class _AnalyticsContent extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         const Text(
-          'Расчет по индивидуальному времени начала смены и первой отметке прихода',
+          'Данные берутся из первой авторизации сотрудника относительно начала смены',
           style: TextStyle(
             color: AppColors.textSecondary,
             fontSize: 12.5,
@@ -248,14 +258,14 @@ class _AnalyticsContent extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 14),
-        if (analytics.lateDays == 0)
+        if (analytics.count == 0)
           const _NoLateArrivals()
         else ...[
           Row(
             children: [
               Expanded(
                 child: _LateMetric(
-                  value: '${analytics.lateDays}',
+                  value: '${analytics.count}',
                   label: 'случаев',
                   icon: Icons.event_busy_rounded,
                 ),
@@ -263,7 +273,7 @@ class _AnalyticsContent extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: _LateMetric(
-                  value: formatMinutes(analytics.totalLateMinutes),
+                  value: formatMinutes(analytics.totalTardinessMinutes),
                   label: 'суммарно',
                   icon: Icons.timer_outlined,
                 ),
@@ -271,7 +281,7 @@ class _AnalyticsContent extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: _LateMetric(
-                  value: formatMinutes(analytics.averageLateMinutes),
+                  value: formatMinutes(analytics.avgTardiness),
                   label: 'в среднем',
                   icon: Icons.functions_rounded,
                 ),
@@ -300,7 +310,7 @@ class _AnalyticsContent extends StatelessWidget {
                 Expanded(
                   child: Text(
                     'Максимальное опоздание: '
-                    '${formatMinutes(analytics.maxLateMinutes)}',
+                    '${formatMinutes(analytics.maxTardiness)}',
                     style: const TextStyle(
                       color: AppColors.navy,
                       fontWeight: FontWeight.w700,
@@ -321,8 +331,8 @@ class _AnalyticsContent extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          for (final arrival in analytics.lateArrivals) ...[
-            _LateArrivalRow(arrival: arrival),
+          for (final entry in analytics.results) ...[
+            _LateArrivalRow(entry: entry),
             const SizedBox(height: 8),
           ],
         ],
@@ -383,9 +393,9 @@ class _LateMetric extends StatelessWidget {
 }
 
 class _LateArrivalRow extends StatelessWidget {
-  const _LateArrivalRow({required this.arrival});
+  const _LateArrivalRow({required this.entry});
 
-  final LateArrival arrival;
+  final TardinessEntry entry;
 
   @override
   Widget build(BuildContext context) {
@@ -417,7 +427,7 @@ class _LateArrivalRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  DateFormat('d MMMM, EEEE', 'ru').format(arrival.date),
+                  DateFormat('d MMMM, EEEE', 'ru').format(entry.date),
                   style: const TextStyle(
                     color: AppColors.navy,
                     fontWeight: FontWeight.w700,
@@ -426,8 +436,8 @@ class _LateArrivalRow extends StatelessWidget {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  'План ${arrival.scheduledLabel} · '
-                  'приход ${arrival.actualLabel}',
+                  'План ${entry.scheduledLabel} · '
+                  'приход ${entry.actualLabel}',
                   style: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 12.5,
@@ -438,7 +448,7 @@ class _LateArrivalRow extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Text(
-            '+${arrival.lateMinutes} мин',
+            '+${formatMinutes(entry.tardinessMinutes)}',
             style: const TextStyle(
               color: AppColors.warning,
               fontWeight: FontWeight.w800,
@@ -493,12 +503,12 @@ String _rangeTitle(AnalyticsRange range, AnalyticsPeriod period) {
   return '$start – $end';
 }
 
-String _shiftLabel(int count) {
+String _caseLabel(int count) {
   final mod10 = count % 10;
   final mod100 = count % 100;
-  if (mod10 == 1 && mod100 != 11) return 'смена';
+  if (mod10 == 1 && mod100 != 11) return 'случай';
   if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) {
-    return 'смены';
+    return 'случая';
   }
-  return 'смен';
+  return 'случаев';
 }

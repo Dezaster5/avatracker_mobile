@@ -156,6 +156,17 @@ class MockInterceptor extends Interceptor {
         final month =
             options.queryParameters['month']?.toString() ?? _currentMonth();
         return _ok(handler, options, _timesheet(month));
+
+      case '/tardiness/':
+        final iin =
+            options.queryParameters['iin']?.toString() ?? '990101300123';
+        final periodFrom = _parseDate(
+          options.queryParameters['period_from']?.toString(),
+        );
+        final periodTo = _parseDate(
+          options.queryParameters['period_to']?.toString(),
+        );
+        return _ok(handler, options, _tardiness(iin, periodFrom, periodTo));
     }
 
     if (path.startsWith('/employees/')) {
@@ -361,6 +372,59 @@ class MockInterceptor extends Interceptor {
     return {'month': month, 'days': days};
   }
 
+  Map<String, dynamic> _tardiness(
+    String iin,
+    DateTime periodFrom,
+    DateTime periodTo,
+  ) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final end = periodTo.isAfter(today) ? today : periodTo;
+    final results = <Map<String, dynamic>>[];
+
+    for (var date = periodFrom;
+        !date.isAfter(end);
+        date = date.add(const Duration(days: 1))) {
+      if (date.weekday >= DateTime.saturday) continue;
+      final day = date.day;
+      if (day % 4 != 0) continue;
+      const lateMinutes = 34;
+      results.add({
+        'date': _dateParam(date),
+        'auth_time': isoWithOffset(
+          DateTime(date.year, date.month, date.day, 8, lateMinutes),
+        ),
+        'schedule_start_time': '$_workStart:00',
+        'tardiness_minutes': lateMinutes,
+      });
+    }
+
+    final total = results.fold(
+      0,
+      (sum, item) => sum + (item['tardiness_minutes'] as int),
+    );
+    final max = results.fold(
+      0,
+      (maximum, item) {
+        final value = item['tardiness_minutes'] as int;
+        return value > maximum ? value : maximum;
+      },
+    );
+
+    return {
+      'iin': iin,
+      'employee_name': 'Сериков Айдос Бекжанович',
+      'schedule_name': '5/2',
+      'schedule_start_time': '$_workStart:00',
+      'period_from': _dateParam(periodFrom),
+      'period_to': _dateParam(periodTo),
+      'count': results.length,
+      'max_tardiness': max,
+      'avg_tardiness': results.isEmpty ? 0 : (total / results.length).round(),
+      'results': results,
+    };
+  }
+
   List<Map<String, dynamic>> _dayScans(
     int year,
     int month,
@@ -382,6 +446,16 @@ class MockInterceptor extends Interceptor {
         'park': _park,
       },
     ];
+  }
+
+  static DateTime _parseDate(String? value) {
+    return DateTime.tryParse(value ?? '') ?? DateTime.now();
+  }
+
+  static String _dateParam(DateTime date) {
+    final month = date.month.toString().padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
+    return '${date.year}-$month-$day';
   }
 
   void _ok(

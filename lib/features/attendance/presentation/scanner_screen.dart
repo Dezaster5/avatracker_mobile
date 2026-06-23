@@ -129,8 +129,8 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
 
     if (!mounted) return;
     if (success) {
-      // Аналитика зависит от табеля и обновится вместе с ним.
       ref.invalidate(timesheetProvider);
+      ref.invalidate(tardinessAnalyticsProvider);
     }
     await showScanResultSheet(
       context,

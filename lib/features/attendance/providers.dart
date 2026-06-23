@@ -27,18 +27,12 @@ final timesheetProvider =
       .timesheet(iin: iin, month: month);
 });
 
-/// Аналитика за неделю/месяц. Отдельный API не используется: агрегаты
-/// рассчитываются из одного или двух уже кэшируемых месячных табелей.
-final attendanceAnalyticsProvider =
-    FutureProvider.family<AttendanceAnalytics, AnalyticsRange>(
-        (ref, range) async {
-  final futures = [
-    for (final month in range.monthKeys)
-      ref.watch(timesheetProvider(month).future),
-  ];
-  final sheets = await Future.wait(futures);
-  return AttendanceAnalytics.fromDays(
-    range,
-    sheets.expand((sheet) => sheet.days),
-  );
+/// Аналитика опозданий за неделю/месяц.
+final tardinessAnalyticsProvider =
+    FutureProvider.family<TardinessAnalytics, AnalyticsRange>((ref, range) {
+  final iin = _requireIin(ref);
+  return ref.watch(attendanceRepositoryProvider).tardiness(
+        iin: iin,
+        range: range,
+      );
 });

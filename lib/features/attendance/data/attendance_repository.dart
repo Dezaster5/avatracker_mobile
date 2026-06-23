@@ -4,10 +4,11 @@ import 'package:geolocator/geolocator.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/utils/formatters.dart';
+import '../domain/analytics.dart';
 import '../domain/scan_result.dart';
 import '../domain/timesheet.dart';
 
-/// Отметки и табель. Аналитика рассчитывается на клиенте из табеля.
+/// Отметки, табель и аналитика посещаемости.
 class AttendanceRepository {
   AttendanceRepository({required ApiClient api}) : _dio = api.dio;
 
@@ -67,6 +68,30 @@ class AttendanceRepository {
         throw const ApiException(message: 'Неверный формат ответа сервера');
       }
       return TimesheetMonth.fromJson(data);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// `GET /tardiness/?iin={iin}&period_from={yyyy-MM-dd}&period_to={yyyy-MM-dd}`.
+  Future<TardinessAnalytics> tardiness({
+    required String iin,
+    required AnalyticsRange range,
+  }) async {
+    try {
+      final res = await _dio.get<dynamic>(
+        '/tardiness/',
+        queryParameters: {
+          'iin': iin,
+          'period_from': range.startParam,
+          'period_to': range.endParam,
+        },
+      );
+      final data = res.data;
+      if (data is! Map<String, dynamic>) {
+        throw const ApiException(message: 'Неверный формат ответа сервера');
+      }
+      return TardinessAnalytics.fromJson(range, data);
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }

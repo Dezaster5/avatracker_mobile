@@ -137,7 +137,7 @@ class _SmsCodeScreenState extends ConsumerState<SmsCodeScreen> {
                   size: 40,
                   color: AppColors.primary,
                 ),
-              ),
+              ),  
             ),
             const SizedBox(height: 20),
             const Center(

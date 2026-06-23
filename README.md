@@ -95,7 +95,7 @@ lib/
   features/
     auth/                  # login/register/password, face-verify, employee
       presentation/        # Splash, Login, SmsCode, FaceId перед QR
-    attendance/            # scan, timesheet, клиентская analytics
+    attendance/            # scan, timesheet, analytics
       presentation/        # Scanner, Timesheet, Analytics + result sheet
     profile/               # Мои данные
     shell/                 # Нижняя навигация (4 вкладки, ТЗ §6)
@@ -130,14 +130,15 @@ QR найден → FaceID для этого QR → GPS → POST attendance/scan
 | GET | `/api/v1/mobile/qr-points/{qr_id}` | ТЗ 13.5 |
 | POST | `/api/v1/mobile/attendance/scan` | QR + GPS + `face_verification_token` |
 | GET | `/api/v1/mobile/attendance/timesheet` | ТЗ 13.7 |
+| GET | `/api/v1/tardiness/` | аналитика опозданий за период |
 
 В запрос отметки приложение дополнительно передает `accuracy_meters` и
 `is_mock_location` и одноразовый FaceID-токен — для серверного антифрода.
 Решение о зачете отметки (FaceID, радиус, повторы, активность) принимает сервер.
 
-Экран «Аналитика» отдельный API не вызывает: отработанное время и опоздания за
-неделю/месяц рассчитываются из месячного табеля по индивидуальному
-`work_start` и первой отметке `check_in`.
+Экран «Аналитика» запрашивает `/tardiness/` с параметрами `iin`,
+`period_from`, `period_to` и показывает количество, суммарные, средние,
+максимальные минуты опоздания и историю по дням.
 
 ### Настройка SMSC.kz
 

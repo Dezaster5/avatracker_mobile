@@ -149,70 +149,59 @@ void main() {
     });
   });
 
-  group('AttendanceAnalytics', () {
-    test('считает отработанное время и детали опозданий из табеля', () {
-      final month = TimesheetMonth.fromJson({
-        'month': '2026-06',
-        'days': [
-          {
-            'date': '2026-06-04',
-            'work_start': '08:00',
-            'worked_minutes': 446,
-            'scans': [
-              {
-                'scanned_at': '2026-06-04T08:34:00+05:00',
-                'mark_type': 'check_in',
-              },
-            ],
-          },
-          {
-            'date': '2026-06-05',
-            'work_start': '10:00',
-            'worked_minutes': 420,
-            'scans': [
-              {
-                'scanned_at': '2026-06-05T09:58:00+05:00',
-                'mark_type': 'check_in',
-              },
-            ],
-          },
-          {
-            'date': '2026-06-06',
-            'work_start': '10:00',
-            'worked_minutes': 400,
-            'scans': [
-              {
-                'scanned_at': '2026-06-06T10:20:00+05:00',
-                'mark_type': 'check_in',
-              },
-            ],
-          },
-        ],
-      });
+  group('TardinessAnalytics', () {
+    test('парсит ответ /tardiness и считает сумму минут', () {
       final range = AnalyticsRange.forPeriod(
         AnalyticsPeriod.month,
         DateTime(2026, 6, 10),
       );
-      final analytics = AttendanceAnalytics.fromDays(range, month.days);
+      final analytics = TardinessAnalytics.fromJson(range, {
+        'iin': '050402501662',
+        'employee_name': 'Қуатұлы Әбуханифа',
+        'schedule_name': '2/2',
+        'schedule_start_time': '09:00:00',
+        'period_from': '2026-06-01',
+        'period_to': '2026-06-23',
+        'count': 2,
+        'max_tardiness': 178,
+        'avg_tardiness': 92,
+        'results': [
+          {
+            'date': '2026-06-22',
+            'auth_time': '2026-06-22T11:58:42+05:00',
+            'schedule_start_time': '09:00:00',
+            'tardiness_minutes': 178,
+          },
+          {
+            'date': '2026-06-23',
+            'auth_time': '2026-06-23T09:07:50+05:00',
+            'schedule_start_time': '09:00:00',
+            'tardiness_minutes': 7,
+          },
+        ],
+      });
 
-      expect(analytics.workedMinutes, 1266);
-      expect(analytics.workedDays, 3);
-      expect(analytics.lateDays, 2);
-      expect(analytics.totalLateMinutes, 54);
-      expect(analytics.averageLateMinutes, 27);
-      expect(analytics.maxLateMinutes, 34);
-      expect(analytics.lateArrivals.first.actualLabel, '10:20');
-      expect(analytics.lateArrivals.last.scheduledLabel, '08:00');
+      expect(analytics.iin, '050402501662');
+      expect(analytics.employeeName, 'Қуатұлы Әбуханифа');
+      expect(analytics.scheduleName, '2/2');
+      expect(analytics.scheduleStartLabel, '09:00');
+      expect(analytics.count, 2);
+      expect(analytics.totalTardinessMinutes, 185);
+      expect(analytics.avgTardiness, 92);
+      expect(analytics.maxTardiness, 178);
+      expect(analytics.results.first.actualLabel, '09:07');
+      expect(analytics.results.last.scheduledLabel, '09:00');
     });
 
-    test('неделя корректно запрашивает два месяца на границе', () {
+    test('неделя корректно формирует period_from и period_to', () {
       final range = AnalyticsRange.forPeriod(
         AnalyticsPeriod.week,
         DateTime(2026, 7, 1),
       );
       expect(range.start, DateTime(2026, 6, 29));
       expect(range.end, DateTime(2026, 7, 5));
-      expect(range.monthKeys, ['2026-06', '2026-07']);
+      expect(range.startParam, '2026-06-29');
+      expect(range.endParam, '2026-07-05');
     });
   });
 }
