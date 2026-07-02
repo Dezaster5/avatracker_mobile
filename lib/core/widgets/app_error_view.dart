@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/l10n_ext.dart';
 import '../theme/app_theme.dart';
 
 class AppErrorView extends StatelessWidget {
@@ -25,7 +26,7 @@ class AppErrorView extends StatelessWidget {
             Icon(icon, size: 48, color: AppColors.textSecondary),
             const SizedBox(height: 12),
             Text(
-              message,
+              context.localizedMessage(message),
               textAlign: TextAlign.center,
               style:
                   const TextStyle(color: AppColors.textSecondary, fontSize: 15),
@@ -33,7 +34,9 @@ class AppErrorView extends StatelessWidget {
             if (onRetry != null) ...[
               const SizedBox(height: 16),
               OutlinedButton(
-                  onPressed: onRetry, child: const Text('Повторить')),
+                onPressed: onRetry,
+                child: Text(context.l10n.actionRetry),
+              ),
             ],
           ],
         ),

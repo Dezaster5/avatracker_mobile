@@ -20,8 +20,11 @@ class ApiException implements Exception {
     final response = e.response;
     final data = response?.data;
     if (data is Map<String, dynamic>) {
+      // DRF: общий текст в message/error/detail, либо ошибки по полям
+      // вида {"phone": ["Обязательное поле."]} — берём первое сообщение.
       final message =
-          (data['message'] ?? data['error'] ?? data['detail'])?.toString();
+          (data['message'] ?? data['error'] ?? data['detail'])?.toString() ??
+              _firstFieldError(data);
       if (message != null && message.isNotEmpty) {
         return ApiException(
           message: message,
@@ -52,6 +55,19 @@ class ApiException implements Exception {
           statusCode: response?.statusCode,
         );
     }
+  }
+
+  /// Первое сообщение из ошибок по полям DRF (`{field: [msg, ...]}`).
+  static String? _firstFieldError(Map<String, dynamic> data) {
+    for (final value in data.values) {
+      if (value is List && value.isNotEmpty) {
+        final first = value.first?.toString();
+        if (first != null && first.isNotEmpty) return first;
+      } else if (value is String && value.isNotEmpty) {
+        return value;
+      }
+    }
+    return null;
   }
 
   @override

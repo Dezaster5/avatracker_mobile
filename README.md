@@ -1,199 +1,225 @@
 # AvaTracker Mobile
 
-Мобильное приложение учета рабочего времени сотрудников (Flutter):
-QR-отметки с контролем геолокации (≤ 50 м), FaceID-сверка с фото из базы,
-SMS-авторизация по номеру телефона и ИИН. Реализовано по `AvaTracker_TZ.md`.
+Корпоративное Flutter-приложение для учёта рабочего времени сотрудников
+AvaTracker. Текущая версия: `1.0.0+8`.
+
+## Возможности
+
+- регистрация и вход по номеру телефона;
+- подтверждение регистрации и сброса пароля по SMS;
+- QR-отметка с проверкой геолокации;
+- фото-верификация сотрудника непосредственно перед QR-отметкой;
+- табель и аналитика опозданий;
+- профиль сотрудника и смена пароля;
+- локализация на казахский, русский и узбекский;
+- телефонные номера Казахстана (`+7`) и Узбекистана (`+998`);
+- локальный mock-режим для разработки без backend.
+
+Face verification при обычном входе не выполняется. После чтения QR приложение
+делает снимок фронтальной камерой, получает геолокацию и отправляет данные
+серверу одним запросом отметки.
 
 ## Стек
 
-- Flutter 3.44 / Dart 3
-- **flutter_riverpod** — состояние
-- **go_router** — навигация c guard'ами по статусу сессии
-- **dio** — HTTP + JWT-interceptor с автоматическим refresh
-- **mobile_scanner** — QR (ML Kit / AVFoundation)
-- **geolocator** — координаты, точность GPS, детекция mock-локации
-- **camera** — live-снимок для FaceID
-- **flutter_secure_storage** — токены/ИИН (Keychain / Keystore)
+- Flutter 3.44 / Dart 3;
+- Riverpod для состояния;
+- GoRouter для навигации;
+- Dio для HTTP и обновления JWT;
+- Flutter Secure Storage для токенов и данных сессии;
+- Mobile Scanner для QR;
+- Camera для снимка лица;
+- Geolocator для координат и проверки mock-location;
+- `gen-l10n` и Intl для локализации.
 
-## Запуск
+## Требования
 
-```bash
+- Flutter stable с Dart `>=3.5.0`;
+- Android Studio с Android SDK;
+- JDK 17;
+- Android API 24 или новее;
+- Xcode и CocoaPods для iOS-сборки.
+
+На Windows используйте путь без кириллицы и желательно без пробелов, например
+`C:\dev\avatracker_mobile`. Android build-tools могут завершаться с
+`Illegal byte sequence`, если проект находится в каталоге вида
+`C:\Users\...\Программирование\...`.
+
+## Быстрый запуск
+
+```powershell
 flutter pub get
+flutter gen-l10n
+flutter devices
+```
 
-# Демо без бэкенда (mock-режим, SMS-код: 1234)
+Демо без backend:
+
+```powershell
 flutter run --dart-define=MOCK_API=true
-
-# Боевой API
-flutter run --dart-define=API_BASE_URL=https://avatracker.online/api/v1
 ```
 
-Тесты и анализ:
+Демо-аккаунт:
 
-```bash
-flutter test
-flutter analyze
+- телефон: `+7 700 123 45 67`;
+- пароль: `123456`;
+- SMS-код: `1234`.
+
+Для QR можно использовать любую непустую строку. Значение с `far` имитирует
+выход за разрешённый радиус, с `inactive` — отключённую точку.
+
+Запуск с production API:
+
+```powershell
+flutter run `
+  --dart-define=MOCK_API=false `
+  --dart-define=API_BASE_URL=https://avatracker.online/api/v1
 ```
 
-### Запуск в Android Studio
+`API_BASE_URL` по умолчанию уже указывает на production. Явное значение в
+команде делает режим запуска очевидным.
 
-> На Windows открывайте проект из пути без кириллицы и пробелов, например
-> `C:\dev\avatracker_mobile_ascii`. Android build-tools могут падать на путях
-> вида `C:\Users\Мирас\Desktop\Программирование\...` с ошибкой
-> `Illegal byte sequence` при чтении APK.
+## Android Studio
 
-1. Откройте Android Studio и выберите **Open**.
-2. Укажите корневую папку проекта `avatracker_mobile`, не папку `android`.
-3. Если Android Studio попросит Flutter SDK, укажите путь `C:\dev\flutter`.
-   Настройка также доступна через **Settings → Languages & Frameworks → Flutter**.
-4. Дождитесь индексации проекта и нажмите **Pub get** в верхней панели или в
-   файле `pubspec.yaml`.
-5. Выберите устройство в верхней панели:
-   - Android Emulator через **Device Manager**;
-   - физический Android-телефон с включенной USB-отладкой.
-6. Для demo-запуска откройте **Run → Edit Configurations...**, выберите Flutter
-   configuration для `lib/main.dart` и добавьте в **Additional run args**:
+1. Откройте корневую папку проекта, не каталог `android`.
+2. Укажите Flutter SDK в
+   **Settings > Languages & Frameworks > Flutter**.
+3. Выполните **Pub get**.
+4. Запустите Android Emulator или подключите физический телефон с USB debugging.
+5. В **Run > Edit Configurations > Additional run args** добавьте:
 
 ```text
 --dart-define=MOCK_API=true
 ```
 
-7. Нажмите **Run** или **Debug**.
-
-Для запуска с реальным API вместо mock-аргумента укажите:
+Для production API замените аргумент на:
 
 ```text
---dart-define=API_BASE_URL=https://avatracker.online/api/v1
+--dart-define=MOCK_API=false --dart-define=API_BASE_URL=https://avatracker.online/api/v1
 ```
 
-После установки на устройство разрешите приложению доступ к камере и
-геолокации. Для проверки QR/FaceID лучше использовать физический телефон:
-на эмуляторе камера и геолокация могут работать ограниченно.
+Камеру, Face verification и геолокацию корректнее проверять на физическом
+устройстве.
 
-### Mock-режим
+## Тест с временным Bearer-токеном
 
-`--dart-define=MOCK_API=true` — все эндпоинты обслуживаются локально
-([mock_interceptor.dart](lib/core/network/mock_interceptor.dart)):
+Режим предназначен только для локальной отладки, когда auth API недоступен, но
+есть тестовый ИИН и Bearer-токен.
 
-| Что | Поведение |
-|---|---|
-| SMS-код | всегда `1234` |
-| FaceID | всегда успех (94.5%) |
-| QR с текстом `far` | отказ «Вы находитесь далеко от точки отметки» |
-| QR с текстом `inactive` | отказ «Эта точка отметки отключена» |
-| Любой другой QR | приход → уход → проверка присутствия |
-
-## Структура
-
-```
-lib/
-  app.dart                 # MaterialApp.router, тема, локализация (ru)
-  core/
-    config/app_config.dart # BASE_URL, лимиты ТЗ (радиус, попытки, таймауты)
-    network/               # ApiClient (JWT+refresh), ApiException, mock
-    services/              # LocationService (проверки GPS и mock-location)
-    storage/               # TokenStorage (secure storage, ТЗ §18.2)
-  features/
-    auth/                  # login/register/password, face-verify, employee
-      presentation/        # Splash, Login, SmsCode, FaceId перед QR
-    attendance/            # scan, timesheet, analytics
-      presentation/        # Scanner, Timesheet, Analytics + result sheet
-    profile/               # Мои данные
-    shell/                 # Нижняя навигация (4 вкладки, ТЗ §6)
-  router/app_router.dart   # Редиректы: unknown→splash, no-token→login,
-                           # authenticated→scanner
+```powershell
+Copy-Item .env.example .env.local
+notepad .env.local
+powershell -ExecutionPolicy Bypass `
+  -File tools\run_real_person_test.ps1 `
+  -DeviceId emulator-5554
 ```
 
-## Флоу сессии (ТЗ §5, §19.1)
+Заполните в `.env.local` значения `TEST_IIN`, `TEST_BEARER_TOKEN` и при
+необходимости `TEST_REFRESH_TOKEN`. Файл игнорируется Git.
 
-```
-Splash → токен есть? → GET /employees/{iin} → активен? → Главный экран
-            └ нет → Login / Регистрация → Главный экран
+Не используйте `TEST_BEARER_TOKEN` при release-сборке: значения
+`--dart-define` компилируются в приложение. Тестовый токен предназначен только
+для локального debug-запуска.
 
-QR найден → FaceID для этого QR → GPS → POST attendance/scan → результат
-```
+## Локализация
 
-Активность сотрудника перепроверяется при каждом входе; неактивный
-сотрудник разлогинивается с сообщением «Доступ запрещен. Сотрудник неактивен».
+Исходные строки находятся в:
 
-## Контракт API (бэкенд — следующий этап)
+- `lib/l10n/app_kk.arb`;
+- `lib/l10n/app_ru.arb`;
+- `lib/l10n/app_uz.arb`.
 
-Используются эндпоинты из ТЗ §13 + один дополнительный:
+После изменения ARB-файлов выполните:
 
-| Метод | Путь | Примечание |
-|---|---|---|
-| GET | `/api/v1/employees/{iin}/` | уже есть в avatracker-back |
-| POST | `/api/v1/mobile/auth/register/send-code` | SMSC.kz, код регистрации |
-| POST | `/api/v1/mobile/auth/register/verify` | подтверждение кода, выдает JWT |
-| POST | `/api/v1/mobile/auth/login` | вход по телефону и паролю |
-| POST | `/api/v1/mobile/auth/refresh` | **доп. к ТЗ**: обновление access-токена |
-| POST | `/api/v1/mobile/auth/face-verify` | FaceID конкретного QR, возвращает одноразовый токен |
-| GET | `/api/v1/mobile/qr-points/{qr_id}` | ТЗ 13.5 |
-| POST | `/api/v1/mobile/attendance/scan` | QR + GPS + `face_verification_token` |
-| GET | `/api/v1/mobile/attendance/timesheet` | ТЗ 13.7 |
-| GET | `/api/v1/tardiness/` | аналитика опозданий за период |
-
-В запрос отметки приложение дополнительно передает `accuracy_meters` и
-`is_mock_location` и одноразовый FaceID-токен — для серверного антифрода.
-Решение о зачете отметки (FaceID, радиус, повторы, активность) принимает сервер.
-
-Экран «Аналитика» запрашивает `/tardiness/` с параметрами `iin`,
-`period_from`, `period_to` и показывает количество, суммарные, средние,
-максимальные минуты опоздания и историю по дням.
-
-### Настройка SMSC.kz
-
-Логин и пароль SMSC.kz указываются **только в `.env` backend-проекта
-`avatracker-back`**, не в Flutter и не через `--dart-define`:
-
-```dotenv
-SMSC_LOGIN=
-SMSC_PASSWORD=
-SMSC_SENDER=
-SMSC_API_URL=https://smsc.kz/rest/send/
+```powershell
+flutter gen-l10n
 ```
 
-Подробный запрос и требования описаны в `API_CONTRACT.md`. Официальная
-документация: https://smsc.kz/api/http/send/
+Сгенерированные `app_localizations*.dart` входят в репозиторий, чтобы сборка
+была воспроизводимой.
 
-## Итоговая сводка и инструкция запуска
+## Проверки
 
-MVP мобильного приложения реализован по `AvaTracker_TZ.md`: вход по телефону и
-ИИН, подтверждение SMS-кодом, проверка активности сотрудника при старте,
-FaceID перед каждой QR-отметкой, геолокация, табель, аналитика опозданий,
-профиль и нижняя навигация на 4 вкладки.
+Перед commit:
 
-Для демонстрации без бэкенда используйте mock-режим:
-
-```bash
-flutter pub get
-flutter run --dart-define=MOCK_API=true
-```
-
-В mock-режиме SMS-код всегда `1234`, FaceID выдает одноразовый токен, обычный
-QR засчитывает отметку, QR с текстом `far` имитирует выход за радиус, QR с
-текстом `inactive` имитирует отключенную точку.
-
-Для запуска с реальным API:
-
-```bash
-flutter pub get
-flutter run --dart-define=API_BASE_URL=https://avatracker.online/api/v1
-```
-
-Перед передачей сборки проверьте проект:
-
-```bash
+```powershell
+flutter gen-l10n
+dart format --output=none --set-exit-if-changed lib test
 flutter analyze
 flutter test
 ```
 
-На физическом устройстве нужно выдать приложению доступ к камере и геолокации.
-Android и iOS permissions уже прописаны в проекте.
+Текущий набор содержит unit-, localization- и widget-тесты.
 
-## Что дальше (вне MVP мобилки)
+## Release
 
-- [ ] Бэкенд: Django-приложение `mobile` в avatracker-back
-      (JWT simplejwt, SMSc.kz, InsightFace, QR-точки, отметки)
-- [ ] Push-уведомления (FCM) — ТЗ §12
-- [ ] Liveness-проверка на устройстве (ML Kit face detection) — ТЗ §5.3
-- [ ] Вкладка «AvaTracker Mobile» в веб-админке — ТЗ §14, §21
+Production Android-сборка:
+
+```powershell
+flutter build apk --release `
+  --dart-define=MOCK_API=false `
+  --dart-define=API_BASE_URL=https://avatracker.online/api/v1
+```
+
+APK создаётся в `build\app\outputs\flutter-apk`. APK/AAB и ключи подписи не
+должны попадать в Git; распространяйте их через GitHub Releases, Google Play
+или защищённое корпоративное хранилище.
+
+Сейчас проект может собирать release APK с debug-подписью для внутреннего
+тестирования. Перед публикацией требуется постоянный production keystore.
+Полный чек-лист находится в [RELEASE.md](RELEASE.md).
+
+## API
+
+Приложение использует три API-базы на `avatracker.online`:
+
+| Назначение | База |
+|---|---|
+| Авторизация и профиль | `/api/mobile` |
+| QR-точки и отметка | `/api/qr` |
+| Сотрудники и аналитика | `/api/v1` |
+
+Основной flow отметки:
+
+```text
+QR -> проверка точки -> снимок лица -> GPS -> POST /api/qr/scan/ -> результат
+```
+
+Табель и аналитика текущей версии строятся по данным `/api/v1/tardiness/`.
+Подробные payload и различия между фактическим и изначально предложенным API
+описаны в [API_CONTRACT.md](API_CONTRACT.md).
+
+## Безопасность и хранение
+
+Пароли, SMS-коды и снимки лица приложение локально не сохраняет. Access token,
+refresh token, ИИН, телефон и кеш профиля хранятся через
+`flutter_secure_storage` в Android Keystore или iOS Keychain.
+
+Не коммитьте `.env.local`, Bearer-токены, keystore, `key.properties`, APK/AAB
+и provisioning profiles. Дополнительные правила описаны в
+[SECURITY.md](SECURITY.md).
+
+## Структура
+
+```text
+lib/
+  core/                 конфигурация, сеть, storage, тема, локализация
+  features/
+    auth/               регистрация, вход, SMS, пароли, фото-верификация
+    attendance/         QR, геолокация, табель, аналитика
+    legal/              intro, политика, согласие, удаление аккаунта
+    profile/            профиль сотрудника
+    shell/              нижняя навигация
+  l10n/                 ARB и сгенерированные локализации
+  router/               маршруты и session guards
+test/                   unit, localization и widget tests
+tools/                  локальные PowerShell-сценарии
+```
+
+## Документы
+
+- [API_CONTRACT.md](API_CONTRACT.md) — фактический API и legacy-контракт;
+- [AvaTracker_TZ.md](AvaTracker_TZ.md) — исходное техническое задание;
+- [APP_STORE_REVIEW.md](APP_STORE_REVIEW.md) — материалы для App Store;
+- [RELEASE.md](RELEASE.md) — сборка и подпись релиза;
+- [SECURITY.md](SECURITY.md) — правила обращения с секретами;
+- [CHANGELOG.md](CHANGELOG.md) — изменения по версиям.

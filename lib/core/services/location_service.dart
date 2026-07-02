@@ -4,16 +4,28 @@ import '../config/app_config.dart';
 
 enum LocationSettingsAction { none, appSettings, locationSettings }
 
-/// Ошибка получения/валидации геолокации с текстом по ТЗ (7.4, 17).
-class LocationFailure implements Exception {
-  const LocationFailure(this.message,
-      {this.settings = LocationSettingsAction.none});
+enum LocationFailureCode {
+  serviceDisabled,
+  permissionDenied,
+  unavailable,
+  mocked,
+  lowAccuracy,
+}
 
-  final String message;
+/// Ошибка получения/валидации геолокации с машинным кодом для локализации UI.
+class LocationFailure implements Exception {
+  const LocationFailure(
+    this.code, {
+    this.settings = LocationSettingsAction.none,
+    this.accuracyMeters,
+  });
+
+  final LocationFailureCode code;
   final LocationSettingsAction settings;
+  final int? accuracyMeters;
 
   @override
-  String toString() => message;
+  String toString() => code.name;
 }
 
 /// Получение координат с обязательными проверками из ТЗ, раздел 17:
@@ -24,7 +36,7 @@ class LocationService {
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       throw const LocationFailure(
-        'Включите геолокацию (GPS) на устройстве',
+        LocationFailureCode.serviceDisabled,
         settings: LocationSettingsAction.locationSettings,
       );
     }
@@ -34,11 +46,11 @@ class LocationService {
       permission = await Geolocator.requestPermission();
     }
     if (permission == LocationPermission.denied) {
-      throw const LocationFailure('Разрешите доступ к геолокации для отметки');
+      throw const LocationFailure(LocationFailureCode.permissionDenied);
     }
     if (permission == LocationPermission.deniedForever) {
       throw const LocationFailure(
-        'Разрешите доступ к геолокации для отметки',
+        LocationFailureCode.permissionDenied,
         settings: LocationSettingsAction.appSettings,
       );
     }
@@ -53,19 +65,19 @@ class LocationService {
       );
     } on Exception {
       throw const LocationFailure(
-        'Не удалось определить геолокацию. Попробуйте еще раз',
+        LocationFailureCode.unavailable,
       );
     }
 
     if (position.isMocked) {
       throw const LocationFailure(
-        'Обнаружена поддельная геолокация. Отметка запрещена',
+        LocationFailureCode.mocked,
       );
     }
     if (position.accuracy > AppConfig.maxGpsAccuracyMeters) {
       throw LocationFailure(
-        'Низкая точность GPS (±${position.accuracy.round()} м). '
-        'Выйдите на открытое место и попробуйте снова',
+        LocationFailureCode.lowAccuracy,
+        accuracyMeters: position.accuracy.round(),
       );
     }
     return position;

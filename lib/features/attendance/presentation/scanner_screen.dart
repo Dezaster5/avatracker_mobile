@@ -7,6 +7,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/services/location_service.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../l10n/l10n_ext.dart';
 import '../../auth/presentation/face_id_screen.dart';
 import '../../auth/providers.dart';
 import '../domain/scan_result.dart';
@@ -22,11 +23,20 @@ class ScannerScreen extends ConsumerStatefulWidget {
 }
 
 class _ScannerScreenState extends ConsumerState<ScannerScreen>
-    with SingleTickerProviderStateMixin {
-  late final MobileScannerController _controller = MobileScannerController(
-    detectionSpeed: DetectionSpeed.noDuplicates,
-    formats: const [BarcodeFormat.qrCode],
-  );
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
+  static MobileScannerController _newController() => MobileScannerController(
+        detectionSpeed: DetectionSpeed.noDuplicates,
+        formats: const [BarcodeFormat.qrCode],
+      );
+
+  MobileScannerController _controller = _newController();
+
+  /// Эпоха камеры: смена ключа полностью пересоздаёт превью при перезапуске.
+  int _cameraEpoch = 0;
+
+  /// Было ли приложение свёрнуто — чтобы пересоздавать камеру только после
+  /// реального возврата из фона (например, из настроек с выдачей разрешения).
+  bool _wasPaused = false;
 
   /// Бегущая линия сканирования внутри рамки.
   late final AnimationController _scanLine = AnimationController(
@@ -38,7 +48,40 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
   String _stage = '';
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (_busy) return; // во время FaceID/обработки камеру не трогаем
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
+      _wasPaused = true;
+    } else if (state == AppLifecycleState.resumed && _wasPaused) {
+      // Встроенный авто-ретрай mobile_scanner перезапускает камеру только
+      // если разрешения ещё нет; после выдачи в настройках контроллер
+      // остаётся в ошибке — пересоздаём его сами.
+      _wasPaused = false;
+      _restartCamera();
+    }
+  }
+
+  /// Полный перезапуск камеры — самый надёжный способ выйти из ошибки старта.
+  void _restartCamera() {
+    if (!mounted) return;
+    final old = _controller;
+    setState(() {
+      _controller = _newController();
+      _cameraEpoch++;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => old.dispose());
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _scanLine.dispose();
     _controller.dispose();
     super.dispose();
@@ -68,28 +111,73 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
     _processScan(_parseQrId(raw));
   }
 
+  /// Показывает результат отметки и возвращает сканер в рабочее состояние.
+  Future<void> _showResultAndResume(
+    ScanResult result, {
+    String? settingsLabel,
+    VoidCallback? onSettings,
+  }) async {
+    if (!mounted) return;
+    await showScanResultSheet(
+      context,
+      result,
+      settingsLabel: settingsLabel,
+      onSettings: onSettings,
+    );
+    if (!mounted) return;
+    setState(() => _busy = false);
+    await _controller.start();
+  }
+
   Future<void> _processScan(String qrId) async {
+    final l10n = context.l10n;
     setState(() {
       _busy = true;
-      _stage = 'Подготовка FaceID…';
+      _stage = l10n.stageCheckingPoint;
     });
     await _controller.stop();
     if (!mounted) return;
 
-    final faceToken = await Navigator.of(context).push<String>(
+    // Пред-проверка QR: незарегистрированную/отключённую точку отсекаем до
+    // FaceID, чтобы не гонять сотрудника делать селфи зря.
+    try {
+      final point = await ref.read(attendanceRepositoryProvider).qrPoint(qrId);
+      if (!point.isActive) {
+        await _showResultAndResume(ScanResult.failure(l10n.pointDisabled));
+        return;
+      }
+    } on ApiException catch (e) {
+      if (e.statusCode == 404) {
+        // Показываем сам код из QR — видно расхождение (дефис/подчёркивание).
+        await _showResultAndResume(
+          ScanResult.failure(
+            '${l10n.qrNotRegistered}\n${l10n.qrCodeValue(qrId)}',
+            errorCode: 'QR_NOT_FOUND',
+          ),
+        );
+        return;
+      }
+      // Иная ошибка пред-проверки — не блокируем, решение примет сам scan.
+    } catch (_) {/* сеть/формат — пусть решит scan */}
+
+    if (!mounted) return;
+    setState(() => _stage = l10n.stageCheckingFace);
+
+    // Экран FaceID возвращает base64-снимок лица; сверку делает сервер при скане.
+    final photo = await Navigator.of(context).push<String>(
       MaterialPageRoute(
         fullscreenDialog: true,
-        builder: (_) => FaceIdScreen(qrId: qrId),
+        builder: (_) => const FaceIdScreen(),
       ),
     );
     if (!mounted) return;
-    if (faceToken == null || faceToken.isEmpty) {
+    if (photo == null || photo.isEmpty) {
       setState(() => _busy = false);
       await _controller.start();
       return;
     }
 
-    setState(() => _stage = 'Проверка геолокации…');
+    setState(() => _stage = l10n.stageCheckingLocation);
 
     String? settingsLabel;
     VoidCallback? onSettings;
@@ -101,7 +189,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
           await ref.read(locationServiceProvider).getValidatedPosition();
 
       if (!mounted) return;
-      setState(() => _stage = 'Отправка отметки…');
+      setState(() => _stage = l10n.stageSendingMark);
 
       final auth = ref.read(authControllerProvider);
       final iin = auth.employee?.iin ?? '';
@@ -109,39 +197,42 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
             iin: iin,
             qrId: qrId,
             position: position,
-            faceVerificationToken: faceToken,
+            photo: photo,
           );
       success = result.success;
     } on LocationFailure catch (e) {
-      result = ScanResult.failure(e.message);
+      final message = switch (e.code) {
+        LocationFailureCode.serviceDisabled => l10n.locationEnableGps,
+        LocationFailureCode.permissionDenied => l10n.locationPermissionRequired,
+        LocationFailureCode.unavailable => l10n.locationUnavailable,
+        LocationFailureCode.mocked => l10n.locationMocked,
+        LocationFailureCode.lowAccuracy =>
+          l10n.locationLowAccuracy(e.accuracyMeters ?? 0),
+      };
+      result = ScanResult.failure(message);
       if (e.settings != LocationSettingsAction.none) {
         settingsLabel = e.settings == LocationSettingsAction.appSettings
-            ? 'Открыть настройки'
-            : 'Включить геолокацию';
+            ? l10n.actionOpenSettings
+            : l10n.actionEnableLocation;
         onSettings =
             () => ref.read(locationServiceProvider).openSettings(e.settings);
       }
     } on ApiException catch (e) {
       result = ScanResult.failure(e.message, errorCode: e.code);
     } catch (_) {
-      result = ScanResult.failure('Нет соединения с сервером');
+      result = ScanResult.failure(l10n.noServerConnection);
     }
 
     if (!mounted) return;
     if (success) {
-      ref.invalidate(timesheetProvider);
+      // Табель и аналитика строятся из /tardiness/ — обновляем его.
       ref.invalidate(tardinessAnalyticsProvider);
     }
-    await showScanResultSheet(
-      context,
+    await _showResultAndResume(
       result,
       settingsLabel: settingsLabel,
       onSettings: onSettings,
     );
-
-    if (!mounted) return;
-    setState(() => _busy = false);
-    await _controller.start();
   }
 
   @override
@@ -152,9 +243,16 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
         fit: StackFit.expand,
         children: [
           MobileScanner(
+            key: ValueKey(_cameraEpoch),
             controller: _controller,
             onDetect: _onDetect,
-            errorBuilder: (context, error, child) => _CameraError(error: error),
+            errorBuilder: (context, error, child) => _CameraError(
+              error: error,
+              onRetry: _restartCamera,
+              onOpenSettings: () => ref
+                  .read(locationServiceProvider)
+                  .openSettings(LocationSettingsAction.appSettings),
+            ),
           ),
           // Затемнение с вырезом, уголки рамки и бегущая линия.
           AnimatedBuilder(
@@ -172,9 +270,9 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
                 const SizedBox(height: 14),
                 const BrandLogo(onDark: true, height: 24),
                 const SizedBox(height: 10),
-                const Text(
-                  'Отметка по QR-коду',
-                  style: TextStyle(
+                Text(
+                  context.l10n.scanQrTitle,
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
@@ -188,20 +286,22 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
                     color: Colors.black.withValues(alpha: 0.45),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: const Column(
+                  child: Column(
                     children: [
                       Text(
-                        'Наведите камеру на QR-код',
-                        style: TextStyle(
+                        context.l10n.pointCameraAtQr,
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      SizedBox(height: 4),
+                      const SizedBox(height: 4),
                       Text(
-                        'Вы должны находиться не далее 50 м от точки отметки',
-                        style: TextStyle(color: Colors.white70, fontSize: 12.5),
+                        context.l10n.within50m,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                            color: Colors.white70, fontSize: 12.5),
                       ),
                     ],
                   ),
@@ -343,13 +443,21 @@ class _ScannerOverlayPainter extends CustomPainter {
 }
 
 class _CameraError extends StatelessWidget {
-  const _CameraError({required this.error});
+  const _CameraError({
+    required this.error,
+    this.onRetry,
+    this.onOpenSettings,
+  });
 
   final MobileScannerException error;
+  final VoidCallback? onRetry;
+  final VoidCallback? onOpenSettings;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final denied = error.errorCode == MobileScannerErrorCode.permissionDenied;
+    final details = error.errorDetails?.message;
     return ColoredBox(
       color: Colors.black,
       child: Center(
@@ -362,17 +470,41 @@ class _CameraError extends StatelessWidget {
                   color: Colors.white38, size: 56),
               const SizedBox(height: 16),
               Text(
-                denied ? 'Нет доступа к камере' : 'Не удалось запустить камеру',
+                denied ? l10n.cameraNoAccess : l10n.cameraStartFailed,
                 textAlign: TextAlign.center,
                 style: const TextStyle(color: Colors.white, fontSize: 16),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Разрешите доступ к камере в настройках приложения, '
-                'чтобы сканировать QR-коды',
+              Text(
+                denied ? l10n.cameraGrantAccess : l10n.cameraCloseOthers,
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.white54, fontSize: 13),
+                style: const TextStyle(color: Colors.white54, fontSize: 13),
               ),
+              if (details != null && details.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  '${error.errorCode.name}: $details',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white30, fontSize: 11),
+                ),
+              ],
+              const SizedBox(height: 24),
+              if (onRetry != null)
+                FilledButton.icon(
+                  onPressed: onRetry,
+                  icon: const Icon(Icons.refresh_rounded, size: 20),
+                  label: Text(l10n.actionRetry),
+                ),
+              if (onOpenSettings != null) ...[
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: onOpenSettings,
+                  child: Text(
+                    l10n.actionOpenSettings,
+                    style: const TextStyle(color: Colors.white70),
+                  ),
+                ),
+              ],
             ],
           ),
         ),

@@ -24,18 +24,25 @@ class MockInterceptor extends Interceptor {
   static const _lunchEnd = '14:00';
   static const _workDayMinutes = 480;
 
-  /// Зарегистрированные аккаунты: телефон -> {iin, password}.
+  /// Зарегистрированные аккаунты: национальный номер -> {iin, password}.
   static final Map<String, Map<String, String>> _accounts = {
-    '+77001234567': {'iin': '990101300123', 'password': '123456'},
+    '7001234567': {'iin': '990101300123', 'password': '123456'},
   };
 
-  /// Телефон текущей сессии (для смены пароля).
+  /// Национальный номер и ИИН текущей сессии.
   static String? _sessionPhone;
+  static String? _sessionIin;
+
+  /// Выданные токены сброса пароля: reset_token -> национальный номер.
+  static final Map<String, String> _resetTokens = {};
 
   static final List<Map<String, dynamic>> _todayMarks = [];
 
-  /// Одноразовые FaceID-токены: token -> QR ID.
-  static final Map<String, String> _faceTokens = {};
+  /// Последние 10 цифр номера (национальная часть, как шлёт клиент).
+  static String _nat(Object? phone) {
+    final digits = '$phone'.replaceAll(RegExp(r'\D'), '');
+    return digits.length > 10 ? digits.substring(digits.length - 10) : digits;
+  }
 
   @override
   Future<void> onRequest(
@@ -43,115 +50,142 @@ class MockInterceptor extends Interceptor {
     RequestInterceptorHandler handler,
   ) async {
     await Future<void>.delayed(const Duration(milliseconds: 400));
-    final path = options.path;
+    // Auth-вызовы идут на абсолютные URL `…/api/mobile/…` — сопоставляем
+    // по суффиксу пути; data-эндпоинты остаются относительными.
+    final p = Uri.parse(options.path).path;
     final body = options.data is Map ? (options.data as Map) : const {};
 
-    switch (path) {
-      case '/mobile/auth/register/send-code':
-        return _ok(
-            handler, options, {'success': true, 'message': 'SMS code sent'});
+    // ─── Мобильный auth-API (/api/mobile) ───
+    // Порядок важен: verify/resend проверяем до общего register/.
+    if (p.endsWith('/auth/register/verify/')) {
+      final phone = _nat(body['phone']);
+      if ('${body['code']}' != _code) {
+        return _fail(handler, options, 400, {'detail': 'Неверный SMS-код'});
+      }
+      final account = _accounts[phone];
+      if (account == null) {
+        return _fail(
+            handler, options, 400, {'detail': 'Сначала зарегистрируйтесь'});
+      }
+      _sessionPhone = phone;
+      _sessionIin = account['iin'];
+      return _ok(handler, options, _session());
+    }
 
-      case '/mobile/auth/register/verify':
-        final phone = '${body['phone']}';
-        if ('${body['code']}' != _code) {
-          return _fail(handler, options, 400,
-              {'success': false, 'message': 'Неверный SMS-код'});
-        }
-        _accounts[phone] = {
-          'iin': '${body['iin']}',
-          'password': '${body['password']}',
-        };
-        _sessionPhone = phone;
-        return _ok(handler, options, _session(phone));
+    if (p.endsWith('/auth/register/resend/')) {
+      return _ok(handler, options, {'detail': 'SMS code sent'});
+    }
 
-      case '/mobile/auth/login':
-        final phone = '${body['phone']}';
-        final account = _accounts[phone];
-        if (account == null) {
-          return _fail(handler, options, 404, {
-            'success': false,
-            'message': 'Аккаунт не найден. Зарегистрируйтесь',
-          });
-        }
-        if (account['password'] != '${body['password']}') {
-          return _fail(handler, options, 400, {
-            'success': false,
-            'message': 'Неверный номер телефона или пароль',
-          });
-        }
-        _sessionPhone = phone;
-        return _ok(handler, options, _session(phone));
+    if (p.endsWith('/auth/register/')) {
+      final phone = _nat(body['phone']);
+      _accounts[phone] = {
+        'iin': '${body['iin']}',
+        'password': '${body['password']}',
+      };
+      return _ok(handler, options, {'detail': 'SMS code sent'});
+    }
 
-      case '/mobile/auth/password/forgot':
-        if (!_accounts.containsKey('${body['phone']}')) {
-          return _fail(handler, options, 404, {
-            'success': false,
-            'message': 'Аккаунт с этим номером не найден',
-          });
-        }
-        return _ok(
-            handler, options, {'success': true, 'message': 'SMS code sent'});
+    if (p.endsWith('/auth/login/')) {
+      final phone = _nat(body['phone']);
+      final account = _accounts[phone];
+      if (account == null) {
+        return _fail(handler, options, 404,
+            {'detail': 'Аккаунт не найден. Зарегистрируйтесь'});
+      }
+      if (account['password'] != '${body['password']}') {
+        return _fail(handler, options, 401,
+            {'detail': 'Неверный номер телефона или пароль'});
+      }
+      _sessionPhone = phone;
+      _sessionIin = account['iin'];
+      return _ok(handler, options, _session());
+    }
 
-      case '/mobile/auth/password/verify-code':
-        if ('${body['code']}' != _code) {
-          return _fail(handler, options, 400,
-              {'success': false, 'message': 'Неверный SMS-код'});
-        }
-        return _ok(handler, options, {'success': true});
+    if (p.endsWith('/auth/token/refresh/')) {
+      return _ok(handler, options, {
+        'access': 'mock_access_${DateTime.now().millisecondsSinceEpoch}',
+        'refresh': 'mock_refresh',
+      });
+    }
 
-      case '/mobile/auth/password/reset':
-        final phone = '${body['phone']}';
-        final account = _accounts[phone];
-        if ('${body['code']}' != _code) {
-          return _fail(handler, options, 400,
-              {'success': false, 'message': 'Неверный SMS-код'});
-        }
-        if (account == null) {
-          return _fail(handler, options, 404, {
-            'success': false,
-            'message': 'Аккаунт с этим номером не найден',
-          });
-        }
-        account['password'] = '${body['new_password']}';
-        return _ok(
-            handler, options, {'success': true, 'message': 'Пароль изменен'});
+    if (p.endsWith('/password-reset/request/')) {
+      if (!_accounts.containsKey(_nat(body['phone']))) {
+        return _fail(handler, options, 404,
+            {'detail': 'Аккаунт с этим номером не найден'});
+      }
+      return _ok(handler, options, {'detail': 'SMS code sent'});
+    }
 
-      case '/mobile/auth/password/change':
-        final account = _sessionPhone == null ? null : _accounts[_sessionPhone];
-        if (account == null) {
-          return _fail(handler, options, 401,
-              {'success': false, 'message': 'Сессия истекла. Войдите заново'});
-        }
-        if (account['password'] != '${body['current_password']}') {
-          return _fail(handler, options, 400,
-              {'success': false, 'message': 'Текущий пароль неверен'});
-        }
-        account['password'] = '${body['new_password']}';
-        return _ok(
-            handler, options, {'success': true, 'message': 'Пароль изменен'});
+    if (p.endsWith('/password-reset/verify/')) {
+      if ('${body['code']}' != _code) {
+        return _fail(handler, options, 400, {'detail': 'Неверный SMS-код'});
+      }
+      final token = 'mock_reset_${DateTime.now().microsecondsSinceEpoch}';
+      _resetTokens[token] = _nat(body['phone']);
+      return _ok(handler, options, {'reset_token': token});
+    }
 
-      case '/mobile/auth/refresh':
-        return _ok(handler, options, {
-          'success': true,
-          'access_token':
-              'mock_access_${DateTime.now().millisecondsSinceEpoch}',
-          'refresh_token': 'mock_refresh',
-        });
+    if (p.endsWith('/password-reset/confirm/')) {
+      final phone = _resetTokens.remove('${body['reset_token']}');
+      final account = phone == null ? null : _accounts[phone];
+      if (account == null) {
+        return _fail(
+            handler, options, 400, {'detail': 'Токен сброса недействителен'});
+      }
+      account['password'] = '${body['password']}';
+      return _ok(handler, options, {'detail': 'Пароль изменен'});
+    }
 
-      case '/mobile/auth/face-verify':
-        final qrId = '${body['qr_id'] ?? ''}';
-        final token = 'mock_face_${DateTime.now().microsecondsSinceEpoch}';
-        _faceTokens[token] = qrId;
-        return _ok(handler, options, {
-          'success': true,
-          'match_percent': 94.5,
-          'access_granted': true,
-          'verification_token': token,
-        });
+    if (p.endsWith('/auth/change-password/')) {
+      final account = _sessionPhone == null ? null : _accounts[_sessionPhone];
+      if (account == null) {
+        return _fail(handler, options, 401,
+            {'detail': 'Сессия истекла. Войдите заново'});
+      }
+      if (account['password'] != '${body['current_password']}') {
+        return _fail(
+            handler, options, 400, {'detail': 'Текущий пароль неверен'});
+      }
+      account['password'] = '${body['new_password']}';
+      return _ok(handler, options, {'detail': 'Пароль изменен'});
+    }
 
-      case '/mobile/attendance/scan':
-        return _scan(handler, options);
+    if (p.endsWith('/profile/me/')) {
+      final iin = _sessionIin ?? '990101300123';
+      final phone = _sessionPhone == null ? null : '+7$_sessionPhone';
+      return _ok(handler, options, _employee(iin, phone: phone));
+    }
 
+    if (p.endsWith('/account/delete-request')) {
+      return _ok(handler, options, {
+        'success': true,
+        'message': 'Запрос на удаление аккаунта отправлен',
+      });
+    }
+
+    // QR-скан с фото лица: сервер сверяет лицо с базой при отметке.
+    if (p.endsWith('/qr/scan/')) {
+      return _scan(handler, options);
+    }
+
+    // Данные точки `GET /api/qr/{qr_id}/` (id со строкой `inactive` — отключена).
+    final qrMatch = RegExp(r'/qr/([^/]+)/?$').firstMatch(p);
+    if (qrMatch != null && qrMatch.group(1) != 'scan') {
+      final qrId = qrMatch.group(1)!;
+      return _ok(handler, options, {
+        'id': 1,
+        'qr_id': qrId,
+        'park_id': 5000011,
+        'park_name': _park,
+        'latitude': 49.8047,
+        'longitude': 73.1094,
+        'radius_meters': 50,
+        'is_active': !qrId.contains('inactive'),
+      });
+    }
+
+    // ─── data-API (/api/v1) ───
+    switch (p) {
       case '/mobile/attendance/timesheet':
         final month =
             options.queryParameters['month']?.toString() ?? _currentMonth();
@@ -169,13 +203,13 @@ class MockInterceptor extends Interceptor {
         return _ok(handler, options, _tardiness(iin, periodFrom, periodTo));
     }
 
-    if (path.startsWith('/employees/')) {
-      final iin = path.split('/').where((s) => s.isNotEmpty).last;
+    if (p.startsWith('/employees/')) {
+      final iin = p.split('/').where((s) => s.isNotEmpty).last;
       return _ok(handler, options, _employee(iin));
     }
 
-    if (path.startsWith('/mobile/qr-points/')) {
-      final qrId = path.split('/').where((s) => s.isNotEmpty).last;
+    if (p.startsWith('/mobile/qr-points/')) {
+      final qrId = p.split('/').where((s) => s.isNotEmpty).last;
       return _ok(handler, options, {
         'id': qrId,
         'name': 'Главный вход',
@@ -190,32 +224,29 @@ class MockInterceptor extends Interceptor {
     }
 
     // Незамоканный путь — отдаем 404, чтобы это было заметно при разработке.
-    return _fail(handler, options, 404,
-        {'message': 'Mock: эндпоинт $path не реализован'});
+    return _fail(
+        handler, options, 404, {'message': 'Mock: эндпоинт $p не реализован'});
   }
 
-  /// Ответ авторизации: токены + сотрудник.
-  Map<String, dynamic> _session(String phone) {
-    final iin = _accounts[phone]?['iin'] ?? '990101300123';
+  /// Ответ авторизации в стиле SimpleJWT: только токены
+  /// (профиль клиент берёт следом из `/profile/me/`).
+  Map<String, dynamic> _session() {
     return {
-      'success': true,
-      'access_token': 'mock_access_${DateTime.now().millisecondsSinceEpoch}',
-      'refresh_token': 'mock_refresh',
-      'employee': _employee(iin, phone: phone),
+      'access': 'mock_access_${DateTime.now().millisecondsSinceEpoch}',
+      'refresh': 'mock_refresh',
     };
   }
 
   void _scan(RequestInterceptorHandler handler, RequestOptions options) {
     final data = options.data;
     final qrId = data is Map ? '${data['qr_id'] ?? ''}' : '';
-    final faceToken =
-        data is Map ? '${data['face_verification_token'] ?? ''}' : '';
+    final photo = data is Map ? '${data['photo'] ?? ''}' : '';
 
-    if (_faceTokens.remove(faceToken) != qrId) {
+    if (photo.isEmpty) {
       return _fail(handler, options, 400, {
         'success': false,
         'error_code': 'FACE_REQUIRED',
-        'message': 'Подтвердите личность перед отметкой',
+        'message': 'Не приложено фото для сверки лица',
       });
     }
 

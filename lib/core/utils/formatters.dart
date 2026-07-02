@@ -1,6 +1,8 @@
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
+import '../country/country.dart';
+
 String _group(String s, int start, int end) {
   if (s.length <= start) return '';
   final e = s.length < end ? s.length : end;
@@ -63,6 +65,15 @@ class PhoneInputFormatter extends TextInputFormatter {
 /// `+7 700 123 45 67` / `8 700...` / `700...` -> `+77001234567`.
 String normalizePhone(String input) => '+7${_subscriberDigits(input)}';
 
+/// Разбивает номер на `dial_code` + национальный номер для мобильного API,
+/// которое хранит код страны отдельным полем.
+///
+/// Пока Казахстан: `dial_code = '+7'`, `phone = 10 цифр` (`7001234567`).
+/// Когда добавим Узбекистан, выбор кода будет по введённому номеру.
+({String dialCode, String number}) splitPhone(String input) {
+  return (dialCode: '+7', number: _subscriberDigits(input));
+}
+
 /// `+77001234567` -> `+7 700 123 45 67`.
 String formatPhone(String normalized) {
   final subscriber = _subscriberDigits(normalized);
@@ -71,6 +82,100 @@ String formatPhone(String normalized) {
 }
 
 bool isValidKzPhone(String input) => _subscriberDigits(input).length == 10;
+
+// ─── Телефон с учётом выбранной страны (KZ 10 цифр / UZ 9 цифр) ─────────────
+
+/// Национальные цифры номера для страны (без кода страны).
+String phoneNational(String input, Country country) {
+  var digits = input.replaceAll(RegExp(r'\D'), '');
+  final code = country.dialCode.replaceAll(RegExp(r'\D'), '');
+  final n = country.nationalLength;
+  // Ввод с кодом страны или межгородской «8» — убираем префикс.
+  if (digits.length > n && digits.startsWith(code)) {
+    digits = digits.substring(code.length);
+  } else if (country.isoCode == 'KZ' &&
+      digits.length > n &&
+      digits.startsWith('8')) {
+    digits = digits.substring(1);
+  }
+  if (digits.length > n) digits = digits.substring(digits.length - n);
+  return digits;
+}
+
+/// Форматирует национальные цифры группами: KZ «700 123 45 67», UZ «90 123 45 67».
+String formatNational(String national, Country country) {
+  final parts = <String>[];
+  var i = 0;
+  for (final g in country.groups) {
+    if (i >= national.length) break;
+    final end = (i + g) > national.length ? national.length : i + g;
+    parts.add(national.substring(i, end));
+    i = end;
+  }
+  if (i < national.length) parts.add(national.substring(i));
+  return parts.join(' ');
+}
+
+bool isValidPhoneFor(String input, Country country) =>
+    phoneNational(input, country).length == country.nationalLength;
+
+/// `dial_code` + национальный номер для login/register.
+({String dialCode, String number}) splitPhoneFor(
+        String input, Country country) =>
+    (dialCode: country.dialCode, number: phoneNational(input, country));
+
+/// Полный номер с кодом страны без «+»: KZ «77001234567», UZ «998901234567».
+String fullPhoneFor(String input, Country country) {
+  final code = country.dialCode.replaceAll(RegExp(r'\D'), '');
+  return '$code${phoneNational(input, country)}';
+}
+
+/// `+77001234567` / `+998901234567` — для отображения (хранения телефона сессии).
+String e164For(String input, Country country) =>
+    '${country.dialCode}${phoneNational(input, country)}';
+
+/// Красивое отображение E.164-номера с учётом страны:
+/// `+7 700 123 45 67` / `+998 90 123 45 67`.
+String prettyE164(String e164) {
+  final c = countryOfE164(e164);
+  final national = phoneNational(e164, c);
+  if (national.isEmpty) return e164;
+  return '${c.dialCode} ${formatNational(national, c)}';
+}
+
+/// Определяет страну по E.164-номеру (`+7…` → KZ, `+998…` → UZ).
+/// Длинные коды проверяем первыми, чтобы `+998` не спутать с `+7`.
+Country countryOfE164(String e164) {
+  final digits = e164.replaceAll(RegExp(r'\D'), '');
+  final byCode = [...Country.fallback]..sort(
+      (a, b) => b.dialCode.length.compareTo(a.dialCode.length),
+    );
+  for (final c in byCode) {
+    final code = c.dialCode.replaceAll(RegExp(r'\D'), '');
+    if (digits.startsWith(code)) return c;
+  }
+  return Country.fallback.first;
+}
+
+/// Форматтер поля телефона с учётом страны (группировка без кода страны).
+class CountryPhoneInputFormatter extends TextInputFormatter {
+  CountryPhoneInputFormatter(this.country);
+
+  final Country country;
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final national = phoneNational(newValue.text, country);
+    final text = national.isEmpty ? '' : formatNational(national, country);
+    return TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
+    );
+  }
+}
 
 bool isValidIin(String iin) => RegExp(r'^\d{12}$').hasMatch(iin);
 
@@ -89,8 +194,8 @@ String formatMinutes(int minutes) {
 }
 
 /// `Июнь 2026`.
-String formatMonthTitle(DateTime month) {
-  final raw = DateFormat('LLLL yyyy', 'ru').format(month);
+String formatMonthTitle(DateTime month, {String locale = 'ru'}) {
+  final raw = DateFormat('LLLL yyyy', locale).format(month);
   return raw[0].toUpperCase() + raw.substring(1);
 }
 

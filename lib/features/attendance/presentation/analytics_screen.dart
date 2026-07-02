@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/config/app_config.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/app_error_view.dart';
+import '../../../l10n/l10n_ext.dart';
 import '../domain/analytics.dart';
 import '../providers.dart';
 
@@ -23,11 +25,12 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
   @override
   void initState() {
     super.initState();
-    final now = DateTime.now();
+    final now = AppConfig.today;
     _anchor = DateTime(now.year, now.month, now.day);
   }
 
-  AnalyticsRange get _range => AnalyticsRange.forPeriod(_period, _anchor);
+  AnalyticsRange get _range =>
+      AnalyticsRange.forPeriod(_period, _anchor).clampEnd(AppConfig.today);
 
   DateTime _shiftedAnchor(int direction) {
     if (_period == AnalyticsPeriod.week) {
@@ -38,8 +41,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
 
   bool get _canGoNext {
     final next = AnalyticsRange.forPeriod(_period, _shiftedAnchor(1));
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
+    final today = AppConfig.today;
     return !next.start.isAfter(today);
   }
 
@@ -50,11 +52,12 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final range = _range;
     final analytics = ref.watch(tardinessAnalyticsProvider(range));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Аналитика')),
+      appBar: AppBar(title: Text(l10n.tabAnalytics)),
       body: RefreshIndicator(
         onRefresh: () => _refresh(range),
         child: ListView(
@@ -65,16 +68,16 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
               width: double.infinity,
               child: SegmentedButton<AnalyticsPeriod>(
                 showSelectedIcon: false,
-                segments: const [
+                segments: [
                   ButtonSegment(
                     value: AnalyticsPeriod.week,
-                    label: Text('Неделя'),
-                    icon: Icon(Icons.date_range_rounded),
+                    label: Text(l10n.analyticsWeek),
+                    icon: const Icon(Icons.date_range_rounded),
                   ),
                   ButtonSegment(
                     value: AnalyticsPeriod.month,
-                    label: Text('Месяц'),
-                    icon: Icon(Icons.calendar_month_rounded),
+                    label: Text(l10n.analyticsMonth),
+                    icon: const Icon(Icons.calendar_month_rounded),
                   ),
                 ],
                 selected: {_period},
@@ -85,7 +88,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
             ),
             const SizedBox(height: 14),
             _RangeSwitcher(
-              title: _rangeTitle(range, _period),
+              title: _rangeTitle(range, _period, l10n.localeName),
               onPrevious: () => setState(() => _anchor = _shiftedAnchor(-1)),
               onNext: _canGoNext
                   ? () => setState(() => _anchor = _shiftedAnchor(1))
@@ -131,7 +134,7 @@ class _RangeSwitcher extends StatelessWidget {
     return Row(
       children: [
         IconButton(
-          tooltip: 'Предыдущий период',
+          tooltip: context.l10n.previousPeriod,
           onPressed: onPrevious,
           icon: const Icon(Icons.chevron_left_rounded, size: 28),
         ),
@@ -147,7 +150,7 @@ class _RangeSwitcher extends StatelessWidget {
           ),
         ),
         IconButton(
-          tooltip: 'Следующий период',
+          tooltip: context.l10n.nextPeriod,
           onPressed: onNext,
           icon: const Icon(Icons.chevron_right_rounded, size: 28),
         ),
@@ -167,11 +170,12 @@ class _AnalyticsContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final periodLabel = period == AnalyticsPeriod.week ? 'неделю' : 'месяц';
+    final l10n = context.l10n;
     final scheduleParts = [
-      if (analytics.scheduleName.isNotEmpty) 'график ${analytics.scheduleName}',
+      if (analytics.scheduleName.isNotEmpty)
+        l10n.scheduleName(analytics.scheduleName),
       if (analytics.scheduleStartLabel.isNotEmpty)
-        'начало ${analytics.scheduleStartLabel}',
+        l10n.scheduleStart(analytics.scheduleStartLabel),
     ];
 
     return Column(
@@ -196,7 +200,9 @@ class _AnalyticsContent extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Опоздания за $periodLabel',
+                    period == AnalyticsPeriod.week
+                        ? l10n.analyticsLatenessForWeek
+                        : l10n.analyticsLatenessForMonth,
                     style: const TextStyle(
                       color: Colors.white70,
                       fontSize: 14,
@@ -206,7 +212,7 @@ class _AnalyticsContent extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                '${analytics.count} ${_caseLabel(analytics.count)}',
+                l10n.latenessCases(analytics.count),
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 32,
@@ -216,9 +222,13 @@ class _AnalyticsContent extends StatelessWidget {
               const SizedBox(height: 10),
               Text(
                 analytics.count == 0
-                    ? 'За выбранный период опозданий нет'
-                    : 'Суммарно ${formatMinutes(analytics.totalTardinessMinutes)} · '
-                        'в среднем ${formatMinutes(analytics.avgTardiness)}',
+                    ? l10n.analyticsNoLateness
+                    : l10n.analyticsSummary(
+                        l10n.formatDuration(
+                          analytics.totalTardinessMinutes,
+                        ),
+                        l10n.formatDuration(analytics.avgTardiness),
+                      ),
                 style: const TextStyle(
                   color: Colors.white60,
                   fontSize: 13,
@@ -240,18 +250,18 @@ class _AnalyticsContent extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 22),
-        const Text(
-          'Опоздания',
-          style: TextStyle(
+        Text(
+          l10n.latenessLabel,
+          style: const TextStyle(
             color: AppColors.navy,
             fontSize: 19,
             fontWeight: FontWeight.w800,
           ),
         ),
         const SizedBox(height: 4),
-        const Text(
-          'Данные берутся из первой авторизации сотрудника относительно начала смены',
-          style: TextStyle(
+        Text(
+          l10n.analyticsSourceNote,
+          style: const TextStyle(
             color: AppColors.textSecondary,
             fontSize: 12.5,
             height: 1.4,
@@ -266,23 +276,23 @@ class _AnalyticsContent extends StatelessWidget {
               Expanded(
                 child: _LateMetric(
                   value: '${analytics.count}',
-                  label: 'случаев',
+                  label: l10n.metricCases,
                   icon: Icons.event_busy_rounded,
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: _LateMetric(
-                  value: formatMinutes(analytics.totalTardinessMinutes),
-                  label: 'суммарно',
+                  value: l10n.formatDuration(analytics.totalTardinessMinutes),
+                  label: l10n.metricTotal,
                   icon: Icons.timer_outlined,
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: _LateMetric(
-                  value: formatMinutes(analytics.avgTardiness),
-                  label: 'в среднем',
+                  value: l10n.formatDuration(analytics.avgTardiness),
+                  label: l10n.metricAverage,
                   icon: Icons.functions_rounded,
                 ),
               ),
@@ -309,8 +319,9 @@ class _AnalyticsContent extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Максимальное опоздание: '
-                    '${formatMinutes(analytics.maxTardiness)}',
+                    l10n.maxLateness(
+                      l10n.formatDuration(analytics.maxTardiness),
+                    ),
                     style: const TextStyle(
                       color: AppColors.navy,
                       fontWeight: FontWeight.w700,
@@ -322,9 +333,9 @@ class _AnalyticsContent extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
-          const Text(
-            'История опозданий',
-            style: TextStyle(
+          Text(
+            l10n.latenessHistory,
+            style: const TextStyle(
               color: AppColors.navy,
               fontSize: 16,
               fontWeight: FontWeight.w700,
@@ -399,6 +410,7 @@ class _LateArrivalRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -427,7 +439,10 @@ class _LateArrivalRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  DateFormat('d MMMM, EEEE', 'ru').format(entry.date),
+                  DateFormat(
+                    'd MMMM, EEEE',
+                    l10n.localeName,
+                  ).format(entry.date),
                   style: const TextStyle(
                     color: AppColors.navy,
                     fontWeight: FontWeight.w700,
@@ -436,8 +451,10 @@ class _LateArrivalRow extends StatelessWidget {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  'План ${entry.scheduledLabel} · '
-                  'приход ${entry.actualLabel}',
+                  l10n.plannedArrival(
+                    entry.scheduledLabel,
+                    entry.actualLabel,
+                  ),
                   style: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 12.5,
@@ -448,7 +465,7 @@ class _LateArrivalRow extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Text(
-            '+${formatMinutes(entry.tardinessMinutes)}',
+            '+${l10n.formatDuration(entry.tardinessMinutes)}',
             style: const TextStyle(
               color: AppColors.warning,
               fontWeight: FontWeight.w800,
@@ -474,14 +491,18 @@ class _NoLateArrivals extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: AppColors.outline),
       ),
-      child: const Row(
+      child: Row(
         children: [
-          Icon(Icons.check_circle_rounded, color: AppColors.success, size: 28),
-          SizedBox(width: 12),
+          const Icon(
+            Icons.check_circle_rounded,
+            color: AppColors.success,
+            size: 28,
+          ),
+          const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'За выбранный период опозданий нет',
-              style: TextStyle(
+              context.l10n.analyticsNoLateness,
+              style: const TextStyle(
                 color: AppColors.navy,
                 fontWeight: FontWeight.w700,
                 fontSize: 14,
@@ -494,21 +515,15 @@ class _NoLateArrivals extends StatelessWidget {
   }
 }
 
-String _rangeTitle(AnalyticsRange range, AnalyticsPeriod period) {
+String _rangeTitle(
+  AnalyticsRange range,
+  AnalyticsPeriod period,
+  String locale,
+) {
   if (period == AnalyticsPeriod.month) {
-    return formatMonthTitle(range.start);
+    return formatMonthTitle(range.start, locale: locale);
   }
-  final start = DateFormat('d MMM', 'ru').format(range.start);
-  final end = DateFormat('d MMM yyyy', 'ru').format(range.end);
+  final start = DateFormat('d MMM', locale).format(range.start);
+  final end = DateFormat('d MMM yyyy', locale).format(range.end);
   return '$start – $end';
-}
-
-String _caseLabel(int count) {
-  final mod10 = count % 10;
-  final mod100 = count % 100;
-  if (mod10 == 1 && mod100 != 11) return 'случай';
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) {
-    return 'случая';
-  }
-  return 'случаев';
 }

@@ -6,17 +6,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../../../core/config/app_config.dart';
-import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/primary_button.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../../l10n/l10n_ext.dart';
 import '../providers.dart';
 
-/// FaceID-сверка перед QR-отметкой: live-снимок отправляется на сервер вместе
-/// с QR ID. При успехе экран возвращает одноразовый verification token.
-class FaceIdScreen extends ConsumerStatefulWidget {
-  const FaceIdScreen({super.key, required this.qrId});
+enum _CameraFailure { denied, start }
 
-  final String qrId;
+/// FaceID перед QR-отметкой: live-снимок фронтальной камеры. Экран возвращает
+/// base64-фото лица; сверку с базовым фото сотрудника сервер делает при скане
+/// (`POST /api/qr/scan/`), отдельного запроса сверки нет.
+class FaceIdScreen extends ConsumerStatefulWidget {
+  const FaceIdScreen({super.key});
 
   @override
   ConsumerState<FaceIdScreen> createState() => _FaceIdScreenState();
@@ -26,7 +28,7 @@ class _FaceIdScreenState extends ConsumerState<FaceIdScreen>
     with WidgetsBindingObserver, SingleTickerProviderStateMixin {
   CameraController? _camera;
   bool _initializing = true;
-  String? _cameraError;
+  _CameraFailure? _cameraError;
   bool _checking = false;
   String? _error;
   int _attemptsLeft = AppConfig.faceIdMaxAttempts;
@@ -75,7 +77,7 @@ class _FaceIdScreenState extends ConsumerState<FaceIdScreen>
       if (cameras.isEmpty) {
         setState(() {
           _initializing = false;
-          _cameraError = 'Нет доступа к камере';
+          _cameraError = _CameraFailure.denied;
         });
         return;
       }
@@ -99,14 +101,14 @@ class _FaceIdScreenState extends ConsumerState<FaceIdScreen>
       setState(() {
         _initializing = false;
         _cameraError = e.code == 'CameraAccessDenied'
-            ? 'Нет доступа к камере'
-            : 'Не удалось запустить камеру';
+            ? _CameraFailure.denied
+            : _CameraFailure.start;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _initializing = false;
-        _cameraError = 'Не удалось запустить камеру';
+        _cameraError = _CameraFailure.start;
       });
     }
   }
@@ -122,30 +124,13 @@ class _FaceIdScreenState extends ConsumerState<FaceIdScreen>
       final shot = await camera.takePicture();
       final bytes = await shot.readAsBytes();
       final imageBase64 = base64Encode(bytes);
-
-      final iin = ref.read(authControllerProvider).employee?.iin ?? '';
-      final result = await ref.read(authRepositoryProvider).faceVerify(
-            iin: iin,
-            imageBase64: imageBase64,
-            qrId: widget.qrId,
-          );
       if (!mounted) return;
-      if (result.accessGranted) {
-        final token = result.verificationToken;
-        if (token == null || token.isEmpty) {
-          _fail('Сервер не вернул подтверждение FaceID');
-          return;
-        }
-        Navigator.of(context).pop(token);
-        return;
-      }
-      _fail(result.message ?? 'Лицо не совпадает с профилем сотрудника');
-    } on ApiException catch (e) {
-      _fail(e.message);
+      // Снимок отправится в /api/qr/scan/ — сервер сверит лицо при отметке.
+      Navigator.of(context).pop(imageBase64);
     } on CameraException {
-      _fail('Не удалось распознать лицо. Попробуйте еще раз');
+      _fail(context.l10n.photoCaptureFailed);
     } catch (_) {
-      _fail('Не удалось распознать лицо. Попробуйте еще раз');
+      _fail(context.l10n.photoCaptureFailed);
     } finally {
       if (mounted) setState(() => _checking = false);
     }
@@ -163,6 +148,7 @@ class _FaceIdScreenState extends ConsumerState<FaceIdScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final employee = ref.watch(authControllerProvider).employee;
 
     return Scaffold(
@@ -172,8 +158,8 @@ class _FaceIdScreenState extends ConsumerState<FaceIdScreen>
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             child: SizedBox.expand(
-              child:
-                  _buildBody(employee?.hasPhoto ?? false, employee?.firstName),
+              child: _buildBody(
+                  l10n, employee?.hasPhoto ?? false, employee?.firstName),
             ),
           ),
         ),
@@ -181,15 +167,14 @@ class _FaceIdScreenState extends ConsumerState<FaceIdScreen>
     );
   }
 
-  Widget _buildBody(bool hasPhoto, String? firstName) {
+  Widget _buildBody(AppLocalizations l10n, bool hasPhoto, String? firstName) {
     // Без фото в базе подтвердить личность перед отметкой нельзя.
     if (!hasPhoto) {
       return _MessageView(
         icon: Icons.no_photography_outlined,
-        title: 'В системе отсутствует фото сотрудника',
-        subtitle:
-            'Отметка невозможна. Обратитесь к администратору, чтобы добавить фото в AvaTracker.',
-        actionLabel: 'Вернуться к сканеру',
+        title: l10n.noEmployeePhoto,
+        subtitle: l10n.noEmployeePhotoNote,
+        actionLabel: l10n.backToScanner,
         onAction: _cancel,
       );
     }
@@ -197,9 +182,9 @@ class _FaceIdScreenState extends ConsumerState<FaceIdScreen>
     if (_attemptsLeft <= 0) {
       return _MessageView(
         icon: Icons.lock_outline,
-        title: 'Превышено количество попыток FaceID',
-        subtitle: _error ?? 'Отсканируйте QR-код и попробуйте снова',
-        actionLabel: 'Вернуться к сканеру',
+        title: l10n.faceAttemptsExceeded,
+        subtitle: _error ?? l10n.scanQrTryAgain,
+        actionLabel: l10n.backToScanner,
         onAction: _cancel,
       );
     }
@@ -207,13 +192,15 @@ class _FaceIdScreenState extends ConsumerState<FaceIdScreen>
     if (_cameraError != null) {
       return _MessageView(
         icon: Icons.videocam_off_outlined,
-        title: _cameraError!,
-        subtitle: 'Разрешите доступ к камере в настройках приложения',
-        actionLabel: 'Открыть настройки',
+        title: _cameraError == _CameraFailure.denied
+            ? l10n.cameraNoAccess
+            : l10n.cameraStartFailed,
+        subtitle: l10n.cameraGrantAccess,
+        actionLabel: l10n.actionOpenSettings,
         onAction: () => Geolocator.openAppSettings(),
-        secondaryLabel: 'Повторить',
+        secondaryLabel: l10n.actionRetry,
         onSecondary: _initCamera,
-        tertiaryLabel: 'Отмена',
+        tertiaryLabel: l10n.actionCancel,
         onTertiary: _cancel,
       );
     }
@@ -226,8 +213,8 @@ class _FaceIdScreenState extends ConsumerState<FaceIdScreen>
         const SizedBox(height: 22),
         Text(
           firstName == null || firstName.isEmpty
-              ? 'Подтверждение личности'
-              : '$firstName, подтвердите личность',
+              ? l10n.identityCheck
+              : l10n.identityCheckName(firstName),
           style: const TextStyle(
             color: Colors.white,
             fontSize: 22,
@@ -236,9 +223,9 @@ class _FaceIdScreenState extends ConsumerState<FaceIdScreen>
           ),
         ),
         const SizedBox(height: 8),
-        const Text(
-          'Проверка обязательна перед каждой QR-отметкой',
-          style: TextStyle(color: Colors.white60),
+        Text(
+          l10n.photoVerifyBeforeScan,
+          style: const TextStyle(color: Colors.white60),
         ),
         const Spacer(),
         AnimatedBuilder(
@@ -287,19 +274,19 @@ class _FaceIdScreenState extends ConsumerState<FaceIdScreen>
           ),
         ),
         const SizedBox(height: 24),
-        const Text(
-          'Посмотрите в камеру',
-          style: TextStyle(
+        Text(
+          l10n.lookAtCamera,
+          style: const TextStyle(
             color: Colors.white,
             fontSize: 17,
             fontWeight: FontWeight.w600,
           ),
         ),
         const SizedBox(height: 6),
-        const Text(
-          'Лицо будет сверено с вашей фотографией в системе AvaTracker',
+        Text(
+          l10n.photoComparedNote,
           textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.white54, fontSize: 13),
+          style: const TextStyle(color: Colors.white54, fontSize: 13),
         ),
         if (_error != null) ...[
           const SizedBox(height: 12),
@@ -312,20 +299,23 @@ class _FaceIdScreenState extends ConsumerState<FaceIdScreen>
         if (_attemptsLeft < AppConfig.faceIdMaxAttempts) ...[
           const SizedBox(height: 6),
           Text(
-            'Осталось попыток: $_attemptsLeft',
+            l10n.attemptsLeft(_attemptsLeft),
             style: const TextStyle(color: Colors.white54, fontSize: 13),
           ),
         ],
         const Spacer(),
         PrimaryButton(
-          label: 'Подтвердить и продолжить',
+          label: l10n.confirmAndContinue,
           icon: Icons.face_retouching_natural,
           loading: _checking,
           onPressed: camera == null ? null : _verify,
         ),
         TextButton(
           onPressed: _checking ? null : _cancel,
-          child: const Text('Отмена', style: TextStyle(color: Colors.white54)),
+          child: Text(
+            l10n.actionCancel,
+            style: const TextStyle(color: Colors.white54),
+          ),
         ),
       ],
     );

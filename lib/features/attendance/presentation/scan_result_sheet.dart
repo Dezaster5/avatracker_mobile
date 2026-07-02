@@ -4,6 +4,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/primary_button.dart';
 import '../../../core/widgets/status_chip.dart';
+import '../../../l10n/l10n_ext.dart';
 import '../domain/scan_result.dart';
 
 /// Результат отметки (ТЗ 19.4): успех — тип отметки, парк, расстояние;
@@ -22,6 +23,13 @@ Future<void> showScanResultSheet(
       borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
     ),
     builder: (sheetContext) {
+      final l10n = sheetContext.l10n;
+      final markLabel = switch (result.markType) {
+        'check_in' => l10n.markCheckIn,
+        'check_out' => l10n.markCheckOut,
+        'presence' => l10n.markPresence,
+        _ => '',
+      };
       return SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
@@ -55,32 +63,36 @@ Future<void> showScanResultSheet(
               ),
               const SizedBox(height: 16),
               Text(
-                result.success ? 'Отметка засчитана' : 'Отметка не засчитана',
+                result.success ? l10n.markAccepted : l10n.markNotAccepted,
                 style:
                     const TextStyle(fontSize: 19, fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 10),
               if (result.success && result.markType != null) ...[
-                StatusChip(label: result.markTypeLabelRu, color: color),
+                StatusChip(label: markLabel, color: color),
                 const SizedBox(height: 10),
               ],
               Text(
-                result.message,
+                l10n.localizeKnownMessage(result.message),
                 textAlign: TextAlign.center,
                 style: const TextStyle(color: AppColors.textSecondary),
               ),
               const SizedBox(height: 12),
               if (result.park != null)
-                _DetailRow(label: 'Локация', value: result.park!),
+                _DetailRow(label: l10n.resultLocation, value: result.park!),
               if (result.distanceMeters != null)
                 _DetailRow(
-                  label: 'Расстояние до точки',
-                  value: '${result.distanceMeters} м'
-                      '${result.allowedRadius != null ? ' (допустимо ${result.allowedRadius} м)' : ''}',
+                  label: l10n.resultDistance,
+                  value: result.allowedRadius == null
+                      ? l10n.distanceMeters(result.distanceMeters!)
+                      : l10n.distanceWithLimit(
+                          result.distanceMeters!,
+                          result.allowedRadius!,
+                        ),
                 ),
               if (result.scannedAt != null)
                 _DetailRow(
-                  label: 'Время',
+                  label: l10n.resultTime,
                   value: formatTime(result.scannedAt!.toLocal()),
                 ),
               const SizedBox(height: 20),
@@ -95,7 +107,7 @@ Future<void> showScanResultSheet(
                 const SizedBox(height: 10),
               ],
               PrimaryButton(
-                label: result.success ? 'Готово' : 'Понятно',
+                label: result.success ? l10n.actionDone : l10n.actionUnderstood,
                 onPressed: () => Navigator.of(sheetContext).pop(),
               ),
             ],

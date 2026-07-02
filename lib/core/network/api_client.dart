@@ -41,22 +41,21 @@ class ApiClient {
 
   Dio get dio => _dio;
 
-  /// Эндпоинты, не требующие токена.
-  static const _publicPaths = {
-    '/mobile/auth/register/send-code',
-    '/mobile/auth/register/verify',
-    '/mobile/auth/login',
-    '/mobile/auth/password/forgot',
-    '/mobile/auth/password/verify-code',
-    '/mobile/auth/password/reset',
-    '/mobile/auth/refresh',
-  };
+  /// Публичные (без токена) эндпоинты мобильного auth-API. Сопоставляем по
+  /// суффиксу пути, т.к. auth-вызовы идут на абсолютные URL `…/api/mobile/…`.
+  static bool _isPublicAuth(String path) {
+    final p = Uri.parse(path).path;
+    return p.contains('/auth/login') ||
+        p.contains('/auth/register') ||
+        p.contains('/auth/token/refresh') ||
+        p.contains('/password-reset/');
+  }
 
   Future<void> _onRequest(
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
-    if (!_publicPaths.contains(options.path)) {
+    if (!_isPublicAuth(options.path)) {
       final token = await _storage.accessToken;
       if (token != null && token.isNotEmpty) {
         options.headers['Authorization'] = 'Bearer $token';
@@ -70,7 +69,7 @@ class ApiClient {
     ErrorInterceptorHandler handler,
   ) async {
     final is401 = err.response?.statusCode == 401;
-    final isPublic = _publicPaths.contains(err.requestOptions.path);
+    final isPublic = _isPublicAuth(err.requestOptions.path);
     final alreadyRetried = err.requestOptions.extra['retried'] == true;
     if (!is401 || isPublic || alreadyRetried) {
       return handler.next(err);
@@ -93,21 +92,26 @@ class ApiClient {
     }
   }
 
+  /// Обновление JWT через `POST …/api/mobile/auth/token/refresh/`
+  /// (SimpleJWT: запрос `{refresh}`, ответ `{access, refresh?}`).
   Future<bool> _tryRefresh() async {
+    // В тест-режиме (40-символьный токен /api/v1) refresh не применим.
+    if (AppConfig.testAuthEnabled) return false;
     final refresh = await _storage.refreshToken;
     if (refresh == null || refresh.isEmpty) return false;
     try {
       final res = await _dio.post<dynamic>(
-        '/mobile/auth/refresh',
-        data: {'refresh_token': refresh},
+        '${AppConfig.mobileApiBaseUrl}/auth/token/refresh/',
+        data: {'refresh': refresh},
       );
       final data = res.data;
       if (data is! Map<String, dynamic>) return false;
-      final access = data['access_token']?.toString();
+      final access = (data['access'] ?? data['access_token'])?.toString();
       if (access == null || access.isEmpty) return false;
       await _storage.saveTokens(
         access: access,
-        refresh: data['refresh_token']?.toString() ?? refresh,
+        refresh:
+            (data['refresh'] ?? data['refresh_token'])?.toString() ?? refresh,
       );
       return true;
     } catch (_) {

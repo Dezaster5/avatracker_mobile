@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:avatracker_mobile/core/country/country.dart';
 import 'package:avatracker_mobile/core/utils/formatters.dart';
 
 void main() {
@@ -66,6 +67,41 @@ void main() {
 
   test('formatPhone', () {
     expect(formatPhone('+77001234567'), '+7 700 123 45 67');
+  });
+
+  test('splitPhone разделяет код страны и национальный номер', () {
+    final a = splitPhone('+7 700 123 45 67');
+    expect(a.dialCode, '+7');
+    expect(a.number, '7001234567');
+
+    final b = splitPhone('87001234567');
+    expect(b.dialCode, '+7');
+    expect(b.number, '7001234567');
+  });
+
+  group('Телефон с учётом страны', () {
+    final kz = Country.fallback[0];
+    final uz = Country.fallback[1];
+
+    test('KZ — 10 цифр', () {
+      expect(phoneNational('+7 700 123 45 67', kz), '7001234567');
+      expect(fullPhoneFor('+77001234567', kz), '77001234567');
+      expect(isValidPhoneFor('7001234567', kz), true);
+      expect(prettyE164('+77001234567'), '+7 700 123 45 67');
+    });
+
+    test('UZ — 9 цифр', () {
+      expect(phoneNational('+998 90 123 45 67', uz), '901234567');
+      expect(fullPhoneFor('998901234567', uz), '998901234567');
+      expect(isValidPhoneFor('90123456', uz), false);
+      expect(isValidPhoneFor('901234567', uz), true);
+      expect(prettyE164('+998901234567'), '+998 90 123 45 67');
+    });
+
+    test('countryOfE164 различает UZ и KZ', () {
+      expect(countryOfE164('+998901234567').isoCode, 'UZ');
+      expect(countryOfE164('+77001234567').isoCode, 'KZ');
+    });
   });
 
   test('isValidKzPhone', () {

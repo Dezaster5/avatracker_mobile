@@ -42,6 +42,43 @@ void main() {
       expect(employee.hasPhoto, false);
     });
 
+    test('без поля active сотрудник активен (mobile login/profile)', () {
+      // Ответ /api/mobile/auth/login/ и /profile/me/ не содержит active.
+      final employee = Employee.fromJson({
+        'iin': '990101300123',
+        'full_name': 'Тестовый Сотрудник',
+        'phone': '77001234567',
+        'position': 'Проектный менеджер IT',
+      });
+      expect(employee.active, true);
+      expect(employee.position, 'Проектный менеджер IT');
+    });
+
+    test('явный active=false блокирует доступ', () {
+      final employee = Employee.fromJson({
+        'iin': '1',
+        'full_name': 'Тест',
+        'active': false,
+      });
+      expect(employee.active, false);
+    });
+
+    test('названия должности и отдела берутся из *_name вместо UUID', () {
+      final employee = Employee.fromJson({
+        'iin': '990101300123',
+        'full_name': 'Тестовый Сотрудник',
+        'active': true,
+        'position': '11111111-1111-4111-8111-111111111111',
+        'position_name': 'Проектный менеджер IT',
+        'division': '22222222-2222-4222-8222-222222222222',
+        'division_name': 'IT отдел',
+        'organization_guid': '33333333-3333-4333-8333-333333333333',
+      });
+      expect(employee.position, 'Проектный менеджер IT');
+      expect(employee.division, 'IT отдел');
+      expect(employee.organization, isNull);
+    });
+
     test('toJson -> fromJson сохраняет данные', () {
       final original = Employee.fromJson({
         'iin': '642918307154',
@@ -156,8 +193,8 @@ void main() {
         DateTime(2026, 6, 10),
       );
       final analytics = TardinessAnalytics.fromJson(range, {
-        'iin': '050402501662',
-        'employee_name': 'Қуатұлы Әбуханифа',
+        'iin': '990101300123',
+        'employee_name': 'Тестовый Сотрудник',
         'schedule_name': '2/2',
         'schedule_start_time': '09:00:00',
         'period_from': '2026-06-01',
@@ -181,8 +218,8 @@ void main() {
         ],
       });
 
-      expect(analytics.iin, '050402501662');
-      expect(analytics.employeeName, 'Қуатұлы Әбуханифа');
+      expect(analytics.iin, '990101300123');
+      expect(analytics.employeeName, 'Тестовый Сотрудник');
       expect(analytics.scheduleName, '2/2');
       expect(analytics.scheduleStartLabel, '09:00');
       expect(analytics.count, 2);
@@ -202,6 +239,15 @@ void main() {
       expect(range.end, DateTime(2026, 7, 5));
       expect(range.startParam, '2026-06-29');
       expect(range.endParam, '2026-07-05');
+    });
+
+    test('текущий период можно ограничить сегодняшней датой', () {
+      final range = AnalyticsRange.forPeriod(
+        AnalyticsPeriod.month,
+        DateTime(2026, 6, 24),
+      ).clampEnd(DateTime(2026, 6, 24));
+      expect(range.startParam, '2026-06-01');
+      expect(range.endParam, '2026-06-24');
     });
   });
 }

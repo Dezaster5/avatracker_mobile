@@ -1,8 +1,12 @@
-# Miscellaneous
+# OS and temporary files
 *.class
 *.log
 *.pyc
 *.swp
+*.tmp
+*.bak
+*.orig
+Thumbs.db
 .DS_Store
 .atom/
 .build/
@@ -12,22 +16,19 @@
 .swiftpm/
 migrate_working_dir/
 
-# IntelliJ related
+# Editors and IDEs
 *.iml
 *.ipr
 *.iws
 .idea/
+.vscode/
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
-
-# Flutter/Dart/Pub related
+# Flutter, Dart and Pub
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
 .flutter-plugins-dependencies
+.packages
 .pub-cache/
 .pub/
 /build/
@@ -44,18 +45,32 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# Distributable builds are published separately from source control.
+# Local platform configuration
+**/android/local.properties
+**/android/key.properties
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/flutter_export_environment.sh
+
+# Distributable builds are published separately from source control
 *.apk
 *.aab
 *.ipa
 
-# Local backend credentials and Apple/Android signing material.
+# Environment files and credentials
 .env
 .env.*
 !.env.example
+!.env.*.example
+*.pem
+*.key
 *.p8
 *.p12
 *.mobileprovision
+*.jks
+*.keystore
+**/google-services.json
+**/GoogleService-Info.plist
 
-# Vendor documentation is kept locally and is not needed by CI.
+# Local backend/vendor reference files
+api.by_backend
 sms-kz.pdf

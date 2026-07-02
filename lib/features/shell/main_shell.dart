@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../l10n/l10n_ext.dart';
 
 /// Нижняя навигация: Сканер, Табель, Аналитика, Профиль.
 class MainShell extends StatelessWidget {
@@ -15,30 +16,33 @@ class MainShell extends StatelessWidget {
       path: '/scanner',
       icon: Icons.qr_code_scanner_rounded,
       selectedIcon: Icons.qr_code_scanner_rounded,
-      label: 'Сканер',
     ),
     (
       path: '/timesheet',
       icon: Icons.calendar_month_outlined,
       selectedIcon: Icons.calendar_month_rounded,
-      label: 'Табель',
     ),
     (
       path: '/stats',
       icon: Icons.insights_outlined,
       selectedIcon: Icons.insights_rounded,
-      label: 'Аналитика',
     ),
     (
       path: '/profile',
       icon: Icons.person_outline_rounded,
       selectedIcon: Icons.person_rounded,
-      label: 'Профиль',
     ),
   ];
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final labels = [
+      l10n.tabScanner,
+      l10n.tabTimesheet,
+      l10n.tabAnalytics,
+      l10n.tabProfile,
+    ];
     var selected = _tabs.indexWhere((t) => location.startsWith(t.path));
     if (selected < 0) selected = 0;
 
@@ -52,11 +56,11 @@ class MainShell extends StatelessWidget {
           selectedIndex: selected,
           onDestinationSelected: (index) => context.go(_tabs[index].path),
           destinations: [
-            for (final tab in _tabs)
+            for (var i = 0; i < _tabs.length; i++)
               NavigationDestination(
-                icon: Icon(tab.icon),
-                selectedIcon: Icon(tab.selectedIcon),
-                label: tab.label,
+                icon: Icon(_tabs[i].icon),
+                selectedIcon: Icon(_tabs[i].selectedIcon),
+                label: labels[i],
               ),
           ],
         ),

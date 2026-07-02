@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/config/app_config.dart';
 import '../../core/network/api_client.dart';
 import '../../core/network/api_exception.dart';
 import '../../core/services/location_service.dart';
@@ -8,6 +9,9 @@ import 'data/auth_repository.dart';
 import 'domain/employee.dart';
 
 final tokenStorageProvider = Provider<TokenStorage>((ref) => TokenStorage());
+
+/// Показан ли экран-интро с целью приложения (загружается на splash).
+final introSeenProvider = StateProvider<bool>((ref) => false);
 
 final locationServiceProvider =
     Provider<LocationService>((ref) => LocationService());
@@ -55,10 +59,28 @@ class AuthController extends Notifier<AuthSession> {
 
   AuthRepository get _repo => ref.read(authRepositoryProvider);
 
+  /// Профиль текущего сотрудника: в тест-режиме — из `/api/v1/employees/{iin}/`,
+  /// иначе — из мобильного `/profile/me/` по JWT.
+  Future<Employee> _loadEmployee([String? iin]) {
+    if (AppConfig.testAuthEnabled) {
+      return _repo.fetchEmployee(iin ?? AppConfig.testIin);
+    }
+    return _repo.fetchProfile();
+  }
+
   /// Запускается со splash-экрана: проверка токена и активности сотрудника.
   Future<void> bootstrap() async {
     state = const AuthSession(status: AuthStatus.unknown);
     final storage = ref.read(tokenStorageProvider);
+    ref.read(introSeenProvider.notifier).state = await storage.introSeen;
+    if (AppConfig.testAuthEnabled) {
+      await storage.saveSession(
+        accessToken: AppConfig.testBearerToken,
+        refreshToken: AppConfig.testRefreshToken,
+        iin: AppConfig.testIin,
+        phone: AppConfig.testPhone,
+      );
+    }
     final access = await storage.accessToken;
     final iin = await storage.iin;
     if (access == null || access.isEmpty || iin == null || iin.isEmpty) {
@@ -66,7 +88,7 @@ class AuthController extends Notifier<AuthSession> {
       return;
     }
     try {
-      final employee = await _repo.fetchEmployee(iin);
+      final employee = await _loadEmployee(iin);
       if (!employee.active) {
         await logout(message: 'Доступ запрещен. Сотрудник неактивен');
         return;
@@ -93,10 +115,7 @@ class AuthController extends Notifier<AuthSession> {
     var resolved = employee;
     if (resolved == null) {
       final storedIin = iin ?? await ref.read(tokenStorageProvider).iin;
-      if (storedIin == null || storedIin.isEmpty) {
-        throw const ApiException(message: 'Сервер не вернул данные сотрудника');
-      }
-      resolved = await _repo.fetchEmployee(storedIin);
+      resolved = await _loadEmployee(storedIin);
     }
     if (!resolved.active) {
       await logout(message: 'Доступ запрещен. Сотрудник неактивен');
@@ -109,7 +128,7 @@ class AuthController extends Notifier<AuthSession> {
   Future<void> refreshEmployee() async {
     final iin = state.employee?.iin;
     if (iin == null || iin.isEmpty) return;
-    final employee = await _repo.fetchEmployee(iin);
+    final employee = await _loadEmployee(iin);
     if (!employee.active) {
       await logout(message: 'Доступ запрещен. Сотрудник неактивен');
       return;
@@ -250,7 +269,12 @@ class RegistrationController extends Notifier<RegistrationState> {
     try {
       await ref
           .read(authRepositoryProvider)
-          .sendRegisterCode(phone: phone, iin: iin);
+          .register(phone: phone, iin: iin, password: password);
+      // Фиксируем согласие на обработку ПДн (App Store §5.1.1).
+      await ref.read(tokenStorageProvider).saveConsent(
+            iin: iin,
+            version: AppConfig.privacyPolicyVersion,
+          );
       state = state.copyWith(
         sending: false,
         codeSentAt: DateTime.now(),
@@ -269,11 +293,27 @@ class RegistrationController extends Notifier<RegistrationState> {
     }
   }
 
-  Future<bool> resend() => sendCode(
-        phone: state.phone,
-        iin: state.iin,
-        password: state.password,
+  Future<bool> resend() async {
+    state = state.copyWith(sending: true, error: null);
+    try {
+      await ref.read(authRepositoryProvider).resendRegisterCode(state.phone);
+      state = state.copyWith(
+        sending: false,
+        codeSentAt: DateTime.now(),
+        attemptsLeft: 5,
       );
+      return true;
+    } on ApiException catch (e) {
+      state = state.copyWith(sending: false, error: e.message);
+      return false;
+    } catch (_) {
+      state = state.copyWith(
+        sending: false,
+        error: 'Ошибка соединения. Попробуйте позже',
+      );
+      return false;
+    }
+  }
 
   void clearError() => state = state.copyWith(error: null);
 
@@ -288,7 +328,6 @@ class RegistrationController extends Notifier<RegistrationState> {
     try {
       final employee = await ref.read(authRepositoryProvider).verifyRegister(
             phone: state.phone,
-            iin: state.iin,
             code: code,
             password: state.password,
           );
@@ -331,12 +370,12 @@ class PasswordResetState extends SmsFlowState {
     super.error,
     super.codeSentAt,
     super.attemptsLeft,
-    this.verifiedCode,
+    this.resetToken,
     this.saving = false,
   });
 
-  /// Код, прошедший проверку, — нужен для финального запроса сброса.
-  final String? verifiedCode;
+  /// Токен, выданный после проверки кода, — нужен для финального сброса.
+  final String? resetToken;
   final bool saving;
 
   static const _unset = Object();
@@ -348,7 +387,7 @@ class PasswordResetState extends SmsFlowState {
     Object? error = _unset,
     DateTime? codeSentAt,
     int? attemptsLeft,
-    Object? verifiedCode = _unset,
+    Object? resetToken = _unset,
     bool? saving,
   }) {
     return PasswordResetState(
@@ -358,9 +397,9 @@ class PasswordResetState extends SmsFlowState {
       error: identical(error, _unset) ? this.error : error as String?,
       codeSentAt: codeSentAt ?? this.codeSentAt,
       attemptsLeft: attemptsLeft ?? this.attemptsLeft,
-      verifiedCode: identical(verifiedCode, _unset)
-          ? this.verifiedCode
-          : verifiedCode as String?,
+      resetToken: identical(resetToken, _unset)
+          ? this.resetToken
+          : resetToken as String?,
       saving: saving ?? this.saving,
     );
   }
@@ -373,7 +412,7 @@ class PasswordResetController extends Notifier<PasswordResetState> {
   Future<bool> sendCode(String phone) async {
     state = PasswordResetState(phone: phone, sending: true);
     try {
-      await ref.read(authRepositoryProvider).sendResetCode(phone);
+      await ref.read(authRepositoryProvider).requestPasswordReset(phone);
       state = state.copyWith(
         sending: false,
         codeSentAt: DateTime.now(),
@@ -405,10 +444,10 @@ class PasswordResetController extends Notifier<PasswordResetState> {
     }
     state = state.copyWith(verifying: true, error: null);
     try {
-      await ref
+      final token = await ref
           .read(authRepositoryProvider)
-          .verifyResetCode(phone: state.phone, code: code);
-      state = state.copyWith(verifying: false, verifiedCode: code);
+          .verifyPasswordResetCode(phone: state.phone, code: code);
+      state = state.copyWith(verifying: false, resetToken: token);
       return true;
     } on ApiException catch (e) {
       final left = state.attemptsLeft - 1;
@@ -429,18 +468,17 @@ class PasswordResetController extends Notifier<PasswordResetState> {
     }
   }
 
-  /// Финальный шаг: установка нового пароля по проверенному коду.
+  /// Финальный шаг: установка нового пароля по выданному reset_token.
   Future<bool> setNewPassword(String newPassword) async {
-    final code = state.verifiedCode;
-    if (code == null) {
+    final token = state.resetToken;
+    if (token == null) {
       state = state.copyWith(error: 'Сначала подтвердите SMS-код');
       return false;
     }
     state = state.copyWith(saving: true, error: null);
     try {
-      await ref.read(authRepositoryProvider).resetPassword(
-            phone: state.phone,
-            code: code,
+      await ref.read(authRepositoryProvider).confirmPasswordReset(
+            resetToken: token,
             newPassword: newPassword,
           );
       state = const PasswordResetState();

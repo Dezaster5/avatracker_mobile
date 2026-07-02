@@ -10,6 +10,7 @@ import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/error_banner.dart';
 import '../../../core/widgets/pin_code_field.dart';
 import '../../../core/widgets/primary_button.dart';
+import '../../../l10n/l10n_ext.dart';
 import '../providers.dart';
 
 /// Назначение SMS-кода: подтверждение регистрации или сброс пароля.
@@ -108,6 +109,7 @@ class _SmsCodeScreenState extends ConsumerState<SmsCodeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final SmsFlowState flow = widget.flow == SmsFlow.register
         ? ref.watch(registrationControllerProvider)
         : ref.watch(passwordResetControllerProvider);
@@ -116,7 +118,7 @@ class _SmsCodeScreenState extends ConsumerState<SmsCodeScreen> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        title: const Text('Подтверждение'),
+        title: Text(l10n.confirmation),
         leading: BackButton(onPressed: () => context.pop()),
       ),
       body: SafeArea(
@@ -137,13 +139,13 @@ class _SmsCodeScreenState extends ConsumerState<SmsCodeScreen> {
                   size: 40,
                   color: AppColors.primary,
                 ),
-              ),  
+              ),
             ),
             const SizedBox(height: 20),
-            const Center(
+            Center(
               child: Text(
-                'Введите код из SMS',
-                style: TextStyle(
+                l10n.enterSmsCode,
+                style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w800,
                   color: AppColors.navy,
@@ -154,7 +156,7 @@ class _SmsCodeScreenState extends ConsumerState<SmsCodeScreen> {
             const SizedBox(height: 8),
             Center(
               child: Text(
-                'Отправили его на номер\n${formatPhone(flow.phone)}',
+                '${l10n.sentToNumber}\n${prettyE164(flow.phone)}',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: AppColors.textSecondary,
@@ -179,7 +181,7 @@ class _SmsCodeScreenState extends ConsumerState<SmsCodeScreen> {
                 flow.attemptsLeft > 0) ...[
               const SizedBox(height: 12),
               Text(
-                'Осталось попыток: ${flow.attemptsLeft}',
+                l10n.attemptsLeft(flow.attemptsLeft),
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: AppColors.textSecondary,
@@ -200,7 +202,7 @@ class _SmsCodeScreenState extends ConsumerState<SmsCodeScreen> {
               Center(
                 child: _secondsLeft > 0
                     ? Text(
-                        'Отправить код повторно через $_secondsLeft с',
+                        l10n.resendIn(_secondsLeft),
                         style: const TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 14,
@@ -209,13 +211,13 @@ class _SmsCodeScreenState extends ConsumerState<SmsCodeScreen> {
                     : TextButton.icon(
                         onPressed: flow.sending ? null : _resend,
                         icon: const Icon(Icons.refresh_rounded, size: 20),
-                        label: const Text('Отправить код повторно'),
+                        label: Text(l10n.resendCode),
                       ),
               ),
             if (flow.attemptsLeft <= 0) ...[
               const SizedBox(height: 16),
               PrimaryButton(
-                label: 'Запросить новый код',
+                label: l10n.requestNewCode,
                 loading: flow.sending,
                 onPressed: _resend,
               ),

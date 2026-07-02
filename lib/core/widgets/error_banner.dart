@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/l10n_ext.dart';
 import '../theme/app_theme.dart';
 
 /// Плашка ошибки под формой: появляется и исчезает плавно.
@@ -35,7 +36,7 @@ class ErrorBanner extends StatelessWidget {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      message!,
+                      context.localizedMessage(message),
                       style: const TextStyle(
                         color: AppColors.danger,
                         fontSize: 13.5,

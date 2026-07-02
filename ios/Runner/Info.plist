@@ -9,9 +9,11 @@
 	<key>CFBundleDisplayName</key>
 	<string>AvaTracker</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Камера используется для сканирования QR-кодов на точках отметки и FaceID-проверки при входе</string>
+	<string>Камера используется для сканирования QR-кода при отметке прихода и ухода и для фото-верификации при подтверждении личности сотрудника.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Геолокация подтверждает, что вы находитесь не далее 50 метров от точки отметки</string>
+	<string>Геолокация используется только во время отметки, чтобы подтвердить, что сотрудник находится рядом с рабочей точкой.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Микрофон приложением не используется. Строка требуется системным компонентом камеры, задействованным при съёмке для фото-верификации.</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>

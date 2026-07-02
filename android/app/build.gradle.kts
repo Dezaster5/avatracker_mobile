@@ -30,6 +30,11 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+            // R8 в новых AGP по умолчанию переименовывает классы camerax и ломает
+            // запуск камеры (mobile_scanner) в release. Для альфы отключаем
+            // минификацию/обфускацию — камера стартует как в debug.
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 }

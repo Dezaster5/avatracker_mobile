@@ -7,6 +7,7 @@ import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/error_banner.dart';
 import '../../../core/widgets/password_field.dart';
 import '../../../core/widgets/primary_button.dart';
+import '../../../l10n/l10n_ext.dart';
 import '../providers.dart';
 
 /// Сброс пароля, шаг 3 (после SMS-кода): новый пароль + подтверждение.
@@ -39,22 +40,22 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
     if (ok && mounted) {
       ScaffoldMessenger.of(context)
         ..clearSnackBars()
-        ..showSnackBar(const SnackBar(
-          content: Text('Пароль изменен. Войдите с новым паролем'),
-        ));
+        ..showSnackBar(
+            SnackBar(content: Text(context.l10n.passwordChangedLogin)));
       context.go('/login');
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final reset = ref.watch(passwordResetControllerProvider);
 
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        title: const Text('Новый пароль'),
+        title: Text(l10n.newPasswordTitle),
         leading: BackButton(onPressed: () => context.go('/login')),
       ),
       body: SafeArea(
@@ -80,10 +81,10 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              const Center(
+              Center(
                 child: Text(
-                  'Придумайте новый пароль',
-                  style: TextStyle(
+                  l10n.newPasswordHeading,
+                  style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
                     color: AppColors.navy,
@@ -94,7 +95,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
               const SizedBox(height: 8),
               Center(
                 child: Text(
-                  'Код подтвержден для номера\n${formatPhone(reset.phone)}',
+                  '${l10n.codeConfirmedFor}\n${prettyE164(reset.phone)}',
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     color: AppColors.textSecondary,
@@ -104,30 +105,30 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                 ),
               ),
               const SizedBox(height: 28),
-              const FieldLabel('Новый пароль'),
+              FieldLabel(l10n.newPasswordLabel),
               PasswordField(
                 controller: _passwordController,
-                hint: 'Минимум 6 символов',
+                hint: l10n.passwordMinHint,
                 textInputAction: TextInputAction.next,
                 autofillHints: const [AutofillHints.newPassword],
                 validator: (value) => isValidPassword(value ?? '')
                     ? null
-                    : 'Пароль: минимум 6 символов, без пробелов',
+                    : l10n.validatorPassword,
               ),
               const SizedBox(height: 18),
-              const FieldLabel('Подтвердите пароль'),
+              FieldLabel(l10n.confirmPassword),
               PasswordField(
                 controller: _confirmController,
-                hint: 'Повторите пароль',
+                hint: l10n.repeatPassword,
                 validator: (value) => value == _passwordController.text
                     ? null
-                    : 'Пароли не совпадают',
+                    : l10n.validatorPasswordsMatch,
                 onSubmitted: (_) => _submit(),
               ),
               ErrorBanner(message: reset.error),
               const SizedBox(height: 24),
               PrimaryButton(
-                label: 'Сохранить пароль',
+                label: l10n.savePassword,
                 icon: Icons.check_rounded,
                 loading: reset.saving,
                 onPressed: _submit,

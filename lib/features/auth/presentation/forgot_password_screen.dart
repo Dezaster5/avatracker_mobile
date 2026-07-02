@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/country/country_providers.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/error_banner.dart';
 import '../../../core/widgets/primary_button.dart';
+import '../../../l10n/l10n_ext.dart';
 import '../providers.dart';
+import 'widgets/country_phone_field.dart';
 
 /// Сброс пароля, шаг 1: ввод номера — отправляем SMS-код.
 class ForgotPasswordScreen extends ConsumerStatefulWidget {
@@ -30,21 +33,23 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   Future<void> _submit() async {
     FocusScope.of(context).unfocus();
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    final country = ref.read(selectedCountryProvider);
     final ok = await ref
         .read(passwordResetControllerProvider.notifier)
-        .sendCode(normalizePhone(_phoneController.text));
+        .sendCode(e164For(_phoneController.text, country));
     if (ok && mounted) context.push('/sms-reset');
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final reset = ref.watch(passwordResetControllerProvider);
 
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        title: const Text('Сброс пароля'),
+        title: Text(l10n.resetTitle),
         leading: BackButton(onPressed: () => context.pop()),
       ),
       body: SafeArea(
@@ -70,10 +75,10 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              const Center(
+              Center(
                 child: Text(
-                  'Забыли пароль?',
-                  style: TextStyle(
+                  l10n.forgotTitle,
+                  style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
                     color: AppColors.navy,
@@ -82,11 +87,11 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              const Center(
+              Center(
                 child: Text(
-                  'Укажите номер телефона аккаунта —\nпришлем SMS с кодом для сброса',
+                  l10n.forgotSubtitle,
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 14,
                     height: 1.5,
@@ -94,25 +99,16 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                 ),
               ),
               const SizedBox(height: 28),
-              const FieldLabel('Номер телефона'),
-              TextFormField(
+              FieldLabel(l10n.fieldPhone),
+              CountryPhoneField(
                 controller: _phoneController,
-                keyboardType: TextInputType.phone,
-                inputFormatters: [PhoneInputFormatter()],
                 autofocus: true,
-                decoration: const InputDecoration(
-                  hintText: '+7 700 000 00 00',
-                  prefixIcon: Icon(Icons.phone_iphone_rounded, size: 22),
-                ),
-                validator: (value) => isValidKzPhone(value ?? '')
-                    ? null
-                    : 'Введите номер в формате +7 XXX XXX XX XX',
-                onFieldSubmitted: (_) => _submit(),
+                onSubmitted: (_) => _submit(),
               ),
               ErrorBanner(message: reset.error),
               const SizedBox(height: 24),
               PrimaryButton(
-                label: 'Отправить код',
+                label: l10n.sendCode,
                 icon: Icons.sms_outlined,
                 loading: reset.sending,
                 onPressed: _submit,

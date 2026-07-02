@@ -1,6 +1,6 @@
 import 'mark_types.dart';
 
-/// Результат отметки `POST /api/v1/mobile/attendance/scan` (ТЗ 13.6, 27, 28).
+/// Результат отметки `POST /api/qr/scan/` (ТЗ 13.6, 27, 28).
 class ScanResult {
   const ScanResult({
     required this.success,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../l10n/l10n_ext.dart';
 import '../providers.dart';
 
 /// Splash: проверяет токен и активность сотрудника.
@@ -57,9 +58,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                 const SizedBox(height: 14),
                 FadeTransition(
                   opacity: fade,
-                  child: const Text(
-                    'Учет рабочего времени',
-                    style: TextStyle(
+                  child: Text(
+                    context.l10n.appTagline,
+                    style: const TextStyle(
                       color: Colors.white60,
                       fontSize: 14,
                       letterSpacing: 0.3,
@@ -78,8 +79,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                                   color: Colors.white38, size: 32),
                               const SizedBox(height: 10),
                               Text(
-                                auth.message ??
-                                    'Ошибка соединения. Попробуйте позже',
+                                auth.message == null
+                                    ? context.l10n.errorConnection
+                                    : context.localizedMessage(auth.message),
                                 textAlign: TextAlign.center,
                                 style: const TextStyle(
                                     color: Colors.white70, fontSize: 14),
@@ -94,7 +96,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                                 onPressed: () => ref
                                     .read(authControllerProvider.notifier)
                                     .bootstrap(),
-                                child: const Text('Повторить'),
+                                child: Text(context.l10n.actionRetry),
                               ),
                             ],
                           ),

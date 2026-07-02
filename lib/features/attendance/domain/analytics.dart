@@ -23,6 +23,12 @@ class AnalyticsRange {
   final DateTime start;
   final DateTime end;
 
+  AnalyticsRange clampEnd(DateTime maxEnd) {
+    final maxDay = DateTime(maxEnd.year, maxEnd.month, maxEnd.day);
+    if (!end.isAfter(maxDay) || start.isAfter(maxDay)) return this;
+    return AnalyticsRange(start: start, end: maxDay);
+  }
+
   String get startParam => _dateParam(start);
   String get endParam => _dateParam(end);
 

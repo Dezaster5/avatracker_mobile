@@ -7,6 +7,7 @@ import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/error_banner.dart';
 import '../../../core/widgets/password_field.dart';
 import '../../../core/widgets/primary_button.dart';
+import '../../../l10n/l10n_ext.dart';
 import '../../auth/providers.dart';
 
 /// Смена пароля из профиля: текущий пароль + новый + подтверждение.
@@ -42,18 +43,19 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
     if (ok && mounted) {
       ScaffoldMessenger.of(context)
         ..clearSnackBars()
-        ..showSnackBar(const SnackBar(content: Text('Пароль изменен')));
+        ..showSnackBar(SnackBar(content: Text(context.l10n.passwordChanged)));
       context.pop();
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final change = ref.watch(changePasswordControllerProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Сменить пароль'),
+        title: Text(l10n.changePasswordTitle),
         leading: BackButton(onPressed: () => context.pop()),
       ),
       body: SafeArea(
@@ -69,41 +71,35 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const FieldLabel('Текущий пароль'),
+                      FieldLabel(l10n.currentPassword),
                       PasswordField(
                         controller: _currentController,
-                        hint: 'Введите текущий пароль',
+                        hint: l10n.enterCurrentPassword,
                         textInputAction: TextInputAction.next,
                         autofillHints: const [AutofillHints.password],
                         validator: (value) => (value == null || value.isEmpty)
-                            ? 'Введите текущий пароль'
+                            ? l10n.enterCurrentPassword
                             : null,
                       ),
                       const SizedBox(height: 18),
-                      const FieldLabel('Новый пароль'),
+                      FieldLabel(l10n.newPasswordLabel),
                       PasswordField(
                         controller: _passwordController,
-                        hint: 'Минимум 6 символов',
+                        hint: l10n.passwordMinHint,
                         textInputAction: TextInputAction.next,
                         autofillHints: const [AutofillHints.newPassword],
-                        validator: (value) {
-                          if (!isValidPassword(value ?? '')) {
-                            return 'Пароль: минимум 6 символов, без пробелов';
-                          }
-                          if (value == _currentController.text) {
-                            return 'Новый пароль совпадает с текущим';
-                          }
-                          return null;
-                        },
+                        validator: (value) => isValidPassword(value ?? '')
+                            ? null
+                            : l10n.validatorPassword,
                       ),
                       const SizedBox(height: 18),
-                      const FieldLabel('Подтвердите новый пароль'),
+                      FieldLabel(l10n.confirmNewPassword),
                       PasswordField(
                         controller: _confirmController,
-                        hint: 'Повторите новый пароль',
+                        hint: l10n.repeatPassword,
                         validator: (value) => value == _passwordController.text
                             ? null
-                            : 'Пароли не совпадают',
+                            : l10n.validatorPasswordsMatch,
                         onSubmitted: (_) => _submit(),
                       ),
                     ],
@@ -113,18 +109,19 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
               ErrorBanner(message: change.error),
               const SizedBox(height: 20),
               PrimaryButton(
-                label: 'Сохранить',
+                label: l10n.actionSave,
                 icon: Icons.check_rounded,
                 loading: change.saving,
                 onPressed: _submit,
               ),
               const SizedBox(height: 12),
-              const Text(
-                'После смены пароля текущая сессия останется активной. '
-                'Для входа на других устройствах используйте новый пароль.',
+              Text(
+                l10n.changePasswordSessionNote,
                 textAlign: TextAlign.center,
-                style:
-                    TextStyle(color: AppColors.textSecondary, fontSize: 12.5),
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 12.5,
+                ),
               ),
             ],
           ),

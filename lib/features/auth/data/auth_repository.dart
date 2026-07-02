@@ -1,47 +1,19 @@
 import 'package:dio/dio.dart';
 
+import '../../../core/config/app_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/storage/token_storage.dart';
+import '../../../core/utils/formatters.dart';
 import '../domain/employee.dart';
 
-class FaceVerifyResult {
-  const FaceVerifyResult({
-    required this.success,
-    required this.accessGranted,
-    this.verificationToken,
-    this.matchPercent,
-    this.message,
-  });
-
-  final bool success;
-  final bool accessGranted;
-  final String? verificationToken;
-  final double? matchPercent;
-  final String? message;
-
-  factory FaceVerifyResult.fromJson(Map<String, dynamic> json) {
-    final success = json['success'] == true;
-    final granted = json.containsKey('access_granted')
-        ? json['access_granted'] == true
-        : success;
-    return FaceVerifyResult(
-      success: success,
-      accessGranted: granted,
-      verificationToken:
-          (json['verification_token'] ?? json['face_token'])?.toString(),
-      matchPercent: (json['match_percent'] as num?)?.toDouble(),
-      message: json['message']?.toString(),
-    );
-  }
-}
-
-/// Авторизация AvaTracker:
+/// Авторизация мобильного API AvaTracker (`…/api/mobile`, SimpleJWT):
 /// - регистрация: телефон + ИИН + пароль, подтверждение SMS-кодом;
-/// - вход: телефон + пароль;
-/// - сброс пароля: SMS-код -> новый пароль;
-/// - смена пароля: текущий + новый (внутри приложения);
-/// - FaceID-сверка и данные сотрудника (ТЗ 13.1–13.4).
+/// - вход: телефон + пароль; сброс пароля: SMS-код -> reset_token -> новый пароль;
+/// - профиль текущего сотрудника `GET /profile/me/`.
+///
+/// Данные посещаемости (табель, аналитика, скан) и профиль в тест-режиме
+/// берутся из data-API `/api/v1` тем же JWT.
 class AuthRepository {
   AuthRepository({required ApiClient api, required TokenStorage storage})
       : _dio = api.dio,
@@ -50,82 +22,161 @@ class AuthRepository {
   final Dio _dio;
   final TokenStorage _storage;
 
-  /// `POST /mobile/auth/register/send-code` — SMS для подтверждения регистрации.
-  Future<void> sendRegisterCode({
-    required String phone,
-    required String iin,
-  }) =>
-      _postExpectSuccess('/mobile/auth/register/send-code', {
-        'phone': phone,
-        'iin': iin,
-      });
+  String _mobile(String path) => '${AppConfig.mobileApiBaseUrl}$path';
 
-  /// `POST /mobile/auth/register/verify` — код + пароль, создает аккаунт
-  /// и возвращает сессию.
-  Future<Employee?> verifyRegister({
+  /// Полный номер с кодом страны без «+» (например `77714322337`).
+  /// verify-шаги (`register/verify/`, `password-reset/verify/`) ждут именно
+  /// его, тогда как login/register/resend/request берут национальный `phone`
+  /// + отдельный `dial_code`. Страна определяется из E.164-номера.
+  static String _fullPhone(String phone) =>
+      fullPhoneFor(phone, countryOfE164(phone));
+
+  // ─── Регистрация ──────────────────────────────────────────────────────────
+
+  /// Шаг 1: `POST /auth/register/` — заводит challenge и отправляет SMS.
+  /// Пароль задаётся уже здесь (бэкенд хранит его до подтверждения кода).
+  Future<void> register({
     required String phone,
     required String iin,
-    required String code,
     required String password,
   }) async {
-    final data = await _post('/mobile/auth/register/verify', {
-      'phone': phone,
+    final p = splitPhoneFor(phone, countryOfE164(phone));
+    await _postMobile('/auth/register/', {
+      'phone': p.number,
+      'dial_code': p.dialCode,
       'iin': iin,
-      'code': code,
       'password': password,
+      'password2': password,
     });
-    return _saveSession(data, phone: phone, fallbackIin: iin);
   }
 
-  /// `POST /mobile/auth/login` — вход по телефону и паролю.
-  Future<Employee?> login({
+  /// Шаг 2: `POST /auth/register/verify/` — код подтверждения.
+  /// Если бэкенд вернул JWT — входим сразу; иначе логинимся паролем.
+  Future<Employee> verifyRegister({
+    required String phone,
+    required String code,
+    required String password,
+  }) async {
+    final data = await _postMobile('/auth/register/verify/', {
+      'phone': _fullPhone(phone),
+      'code': code,
+    });
+    if (_accessOf(data) != null) {
+      return _persistAndLoad(data, phone: phone);
+    }
+    // Регистрация подтверждена, но токены не пришли — получаем сессию входом.
+    return login(phone: phone, password: password);
+  }
+
+  /// `POST /auth/register/resend/` — повторная отправка кода регистрации.
+  Future<void> resendRegisterCode(String phone) async {
+    final p = splitPhoneFor(phone, countryOfE164(phone));
+    await _postMobile('/auth/register/resend/', {
+      'phone': p.number,
+      'dial_code': p.dialCode,
+    });
+  }
+
+  // ─── Вход ─────────────────────────────────────────────────────────────────
+
+  /// `POST /auth/login/` — вход по телефону и паролю, возвращает JWT.
+  Future<Employee> login({
     required String phone,
     required String password,
   }) async {
-    final data = await _post('/mobile/auth/login', {
-      'phone': phone,
+    final p = splitPhoneFor(phone, countryOfE164(phone));
+    final data = await _postMobile('/auth/login/', {
+      'phone': p.number,
+      'dial_code': p.dialCode,
       'password': password,
     });
-    return _saveSession(data, phone: phone);
+    return _persistAndLoad(data, phone: phone);
   }
 
-  /// `POST /mobile/auth/password/forgot` — SMS-код для сброса пароля.
-  Future<void> sendResetCode(String phone) =>
-      _postExpectSuccess('/mobile/auth/password/forgot', {'phone': phone});
+  // ─── Сброс пароля ─────────────────────────────────────────────────────────
 
-  /// `POST /mobile/auth/password/verify-code` — проверка кода сброса.
-  Future<void> verifyResetCode({
+  /// `POST /password-reset/request/` — SMS-код для сброса пароля.
+  Future<void> requestPasswordReset(String phone) async {
+    final p = splitPhoneFor(phone, countryOfE164(phone));
+    await _postMobile('/password-reset/request/', {
+      'phone': p.number,
+      'dial_code': p.dialCode,
+    });
+  }
+
+  /// `POST /password-reset/verify/` — проверка кода, возвращает `reset_token`
+  /// для финального шага.
+  Future<String> verifyPasswordResetCode({
     required String phone,
     required String code,
-  }) =>
-      _postExpectSuccess('/mobile/auth/password/verify-code', {
-        'phone': phone,
-        'code': code,
-      });
+  }) async {
+    final data = await _postMobile('/password-reset/verify/', {
+      'phone': _fullPhone(phone),
+      'code': code,
+    });
+    final token = (data['reset_token'] ?? data['token'])?.toString();
+    if (token == null || token.isEmpty) {
+      throw const ApiException(message: 'Сервер не вернул токен сброса');
+    }
+    return token;
+  }
 
-  /// `POST /mobile/auth/password/reset` — установка нового пароля по коду.
-  Future<void> resetPassword({
-    required String phone,
-    required String code,
+  /// `POST /password-reset/confirm/` — установка нового пароля по reset_token.
+  Future<void> confirmPasswordReset({
+    required String resetToken,
     required String newPassword,
-  }) =>
-      _postExpectSuccess('/mobile/auth/password/reset', {
-        'phone': phone,
-        'code': code,
-        'new_password': newPassword,
-      });
+  }) async {
+    await _postMobile('/password-reset/confirm/', {
+      'reset_token': resetToken,
+      'password': newPassword,
+      'password2': newPassword,
+    });
+  }
 
-  /// `POST /mobile/auth/password/change` — смена пароля внутри приложения.
+  /// `POST /auth/change-password/` — смена пароля внутри приложения (по JWT).
   Future<void> changePassword({
     required String currentPassword,
     required String newPassword,
-  }) =>
-      _postExpectSuccess('/mobile/auth/password/change', {
-        'current_password': currentPassword,
-        'new_password': newPassword,
-      });
+  }) async {
+    await _postMobile('/auth/change-password/', {
+      'current_password': currentPassword,
+      'new_password': newPassword,
+      'new_password_confirm': newPassword,
+    });
+  }
 
-  /// `GET /employees/{iin}/` — данные и активность сотрудника (ТЗ 13.1).
+  // ─── Профиль и FaceID ─────────────────────────────────────────────────────
+
+  /// Сырой профиль из `GET /profile/me/` (бэкенд НЕ присылает здесь `photo`).
+  Future<Map<String, dynamic>> _profileJson() async {
+    try {
+      final res = await _dio.get<dynamic>(_mobile('/profile/me/'));
+      return _unwrap(res.data);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// Дополняет профиль полем `photo` из кеша, если бэкенд его не прислал
+  /// (`/profile/me/` фото не отдаёт, а `login`/`register` — отдают).
+  Future<Map<String, dynamic>> _withCachedPhoto(
+    Map<String, dynamic> json,
+  ) async {
+    if ((json['photo'] ?? json['photo_url']) != null) return json;
+    final cached = await _storage.readEmployeeJson();
+    final photo = cached?['photo'] ?? cached?['photo_url'];
+    return photo == null ? json : {...json, 'photo': photo};
+  }
+
+  /// `GET /profile/me/` — профиль текущего сотрудника по JWT (с фото из кеша).
+  Future<Employee> fetchProfile() async {
+    final employee =
+        Employee.fromJson(await _withCachedPhoto(await _profileJson()));
+    await _storage.saveEmployeeJson(employee.toJson());
+    return employee;
+  }
+
+  /// `GET /api/v1/employees/{iin}/` — профиль из data-API (тест-режим).
   Future<Employee> fetchEmployee(String iin) async {
     try {
       final res = await _dio.get<dynamic>('/employees/$iin/');
@@ -137,21 +188,25 @@ class AuthRepository {
     }
   }
 
-  /// `POST /mobile/auth/face-verify` (ТЗ 13.4).
-  Future<FaceVerifyResult> faceVerify({
+  /// `POST /api/v1/mobile/account/delete-request` — запрос на удаление аккаунта.
+  Future<String> requestAccountDeletion({
     required String iin,
-    required String imageBase64,
-    required String qrId,
+    required String phone,
+    String reason = 'user_requested_account_deletion',
   }) async {
-    final data = await _post(
-        '/mobile/auth/face-verify',
-        {
-          'iin': iin,
-          'image': imageBase64,
-          'qr_id': qrId,
-        },
-        validateSuccess: false);
-    return FaceVerifyResult.fromJson(data);
+    try {
+      final res = await _dio.post<dynamic>(
+        '/mobile/account/delete-request',
+        data: {'iin': iin, 'phone': phone, 'reason': reason},
+      );
+      final data = res.data;
+      return (data is Map<String, dynamic>
+              ? data['message']?.toString()
+              : null) ??
+          'Запрос на удаление аккаунта отправлен';
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
   }
 
   Future<Employee?> cachedEmployee() async {
@@ -166,73 +221,74 @@ class AuthRepository {
 
   Future<void> logout() => _storage.clearSession();
 
-  /// POST с разбором ответа: `success: false` превращается в [ApiException].
-  Future<Map<String, dynamic>> _post(
+  // ─── Внутреннее ───────────────────────────────────────────────────────────
+
+  /// POST на мобильный auth-API. Ошибки DRF (`detail` / поля) превращаются
+  /// в [ApiException]. Возвращает тело-Map (или пустую Map, если тела нет).
+  Future<Map<String, dynamic>> _postMobile(
     String path,
-    Map<String, dynamic> body, {
-    bool validateSuccess = true,
-  }) async {
+    Map<String, dynamic> body,
+  ) async {
     try {
-      final res = await _dio.post<dynamic>(path, data: body);
+      final res = await _dio.post<dynamic>(_mobile(path), data: body);
       final data = res.data;
-      if (data is! Map<String, dynamic>) {
-        throw const ApiException(message: 'Неверный формат ответа сервера');
-      }
-      if (validateSuccess && data['success'] == false) {
-        throw ApiException(
-          message: data['message']?.toString() ?? 'Запрос отклонен сервером',
-        );
-      }
-      return data;
+      return data is Map<String, dynamic> ? data : <String, dynamic>{};
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }
   }
 
-  Future<void> _postExpectSuccess(String path, Map<String, dynamic> body) =>
-      _post(path, body);
+  static String? _accessOf(Map<String, dynamic> data) =>
+      (data['access'] ?? data['access_token'])?.toString();
 
-  /// Сохраняет токены и профиль из ответа авторизации.
-  Future<Employee?> _saveSession(
+  /// Сохраняет JWT и собирает сотрудника из ответа входа + `/profile/me/`.
+  ///
+  /// Ответ `login`/`register` содержит `employee` с `photo` (но без парка),
+  /// а `/profile/me/` — с парком, но без `photo`. Сливаем оба, чтобы было
+  /// и фото (профиль + FaceID), и парк.
+  Future<Employee> _persistAndLoad(
     Map<String, dynamic> data, {
     required String phone,
-    String? fallbackIin,
   }) async {
-    final access = data['access_token']?.toString();
-    final refresh = data['refresh_token']?.toString();
-    if (data['success'] != true || access == null || refresh == null) {
+    final access = _accessOf(data);
+    final refresh = (data['refresh'] ?? data['refresh_token'])?.toString();
+    if (access == null || access.isEmpty) {
       throw ApiException(
-        message: data['message']?.toString() ?? 'Не удалось войти',
+        message: data['detail']?.toString() ?? 'Не удалось войти',
       );
     }
+    // Токен нужен раньше профиля — сохраняем, чтобы запрос /profile/me/ его нёс.
+    await _storage.saveTokens(access: access, refresh: refresh ?? access);
 
-    Employee? employee;
-    final employeeJson = data['employee'];
-    if (employeeJson is Map<String, dynamic>) {
-      employee = Employee.fromJson(employeeJson);
+    final authEmployee = data['employee'] is Map
+        ? Map<String, dynamic>.from(data['employee'] as Map)
+        : <String, dynamic>{};
+    Map<String, dynamic> profile;
+    try {
+      profile = await _profileJson();
+    } catch (_) {
+      profile = const {}; // профиль не критичен — фолбэк на employee из входа
     }
-    final iin = employee?.iin.isNotEmpty == true
-        ? employee!.iin
-        : (data['iin']?.toString() ?? fallbackIin ?? '');
-    if (iin.isEmpty) {
-      throw const ApiException(message: 'Сервер не вернул ИИН сотрудника');
+    // Поля профиля имеют приоритет, но photo (только у authEmployee) сохраняется.
+    final merged = {...authEmployee, ...profile};
+    if (merged.isEmpty) {
+      throw const ApiException(message: 'Сервер не вернул данные сотрудника');
     }
+    final employee = Employee.fromJson(merged);
 
     await _storage.saveSession(
       accessToken: access,
-      refreshToken: refresh,
-      iin: iin,
+      refreshToken: refresh ?? access,
+      iin: employee.iin,
       phone: phone,
     );
-    if (employee != null) {
-      await _storage.saveEmployeeJson(employee.toJson());
-    }
+    await _storage.saveEmployeeJson(employee.toJson());
     return employee;
   }
 
   static Map<String, dynamic> _unwrap(dynamic data) {
     if (data is Map<String, dynamic>) {
-      final inner = data['data'];
+      final inner = data['data'] ?? data['employee'] ?? data['profile'];
       if (inner is Map<String, dynamic> && inner.containsKey('iin')) {
         return inner;
       }

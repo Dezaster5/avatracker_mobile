@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/config/app_config.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/status_chip.dart';
+import '../../../l10n/l10n_ext.dart';
 import '../../auth/providers.dart';
 
 /// Экран «Мои данные» (ТЗ 11, 19.7).
@@ -12,21 +14,22 @@ class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
   Future<void> _confirmLogout(BuildContext context, WidgetRef ref) async {
+    final l10n = context.l10n;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Выйти из аккаунта?'),
-        content: const Text('Для входа понадобятся номер телефона и пароль'),
+        title: Text(l10n.logout),
+        content: Text(l10n.logoutConfirmMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Отмена'),
+            child: Text(l10n.actionCancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text(
-              'Выйти',
-              style: TextStyle(color: AppColors.danger),
+            child: Text(
+              l10n.logout,
+              style: const TextStyle(color: AppColors.danger),
             ),
           ),
         ],
@@ -39,10 +42,11 @@ class ProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final employee = ref.watch(authControllerProvider).employee;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Мои данные')),
+      appBar: AppBar(title: Text(l10n.myData)),
       body: employee == null
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
@@ -54,7 +58,7 @@ class ProfileScreen extends ConsumerWidget {
                 } catch (e) {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(e.toString())),
+                      SnackBar(content: Text(context.localizedMessage(e))),
                     );
                   }
                 }
@@ -118,7 +122,9 @@ class ProfileScreen extends ConsumerWidget {
                   const SizedBox(height: 10),
                   Center(
                     child: StatusChip(
-                      label: employee.active ? 'Активен' : 'Неактивен',
+                      label: employee.active
+                          ? l10n.statusActive
+                          : l10n.statusInactive,
                       color: employee.active
                           ? AppColors.success
                           : AppColors.danger,
@@ -133,37 +139,32 @@ class ProfileScreen extends ConsumerWidget {
                         children: [
                           _ProfileRow(
                             icon: Icons.badge_outlined,
-                            label: 'ИИН',
+                            label: l10n.labelIin,
                             value: employee.iin,
                           ),
                           _ProfileRow(
                             icon: Icons.phone_iphone_rounded,
-                            label: 'Телефон',
+                            label: l10n.labelPhone,
                             value: employee.phone != null
-                                ? formatPhone(employee.phone!)
+                                ? prettyE164(employee.phone!)
                                 : null,
                           ),
                           _ProfileRow(
                             icon: Icons.work_outline_rounded,
-                            label: 'Должность',
+                            label: l10n.labelPosition,
                             value: employee.position,
                           ),
                           _ProfileRow(
                             icon: Icons.groups_outlined,
-                            label: 'Отдел',
+                            label: l10n.labelDivision,
                             value: employee.division,
                           ),
                           _ProfileRow(
-                            icon: Icons.apartment_rounded,
-                            label: 'Организация',
-                            value: employee.organization,
-                          ),
-                          _ProfileRow(
                             icon: Icons.attractions_rounded,
-                            label: 'Парк / филиал',
+                            label: l10n.labelPark,
                             value: employee.parkName ??
                                 (employee.parkId != null
-                                    ? 'Парк №${employee.parkId}'
+                                    ? l10n.parkNumber(employee.parkId!)
                                     : null),
                             isLast: true,
                           ),
@@ -190,9 +191,9 @@ class ProfileScreen extends ConsumerWidget {
                             child: const Icon(Icons.lock_outline_rounded,
                                 color: AppColors.primary, size: 20),
                           ),
-                          title: const Text(
-                            'Сменить пароль',
-                            style: TextStyle(
+                          title: Text(
+                            l10n.changePasswordTitle,
+                            style: const TextStyle(
                               fontWeight: FontWeight.w600,
                               fontSize: 15,
                               color: AppColors.navy,
@@ -201,6 +202,34 @@ class ProfileScreen extends ConsumerWidget {
                           trailing: const Icon(Icons.chevron_right_rounded,
                               color: AppColors.textSecondary),
                           onTap: () => context.push('/change-password'),
+                        ),
+                        const Divider(
+                            height: 1,
+                            indent: 16,
+                            endIndent: 16,
+                            color: AppColors.outline),
+                        ListTile(
+                          leading: Container(
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(Icons.info_outline_rounded,
+                                color: AppColors.primary, size: 20),
+                          ),
+                          title: Text(
+                            l10n.about,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 15,
+                              color: AppColors.navy,
+                            ),
+                          ),
+                          trailing: const Icon(Icons.chevron_right_rounded,
+                              color: AppColors.textSecondary),
+                          onTap: () => context.push('/about'),
                         ),
                         const Divider(
                             height: 1,
@@ -222,9 +251,9 @@ class ProfileScreen extends ConsumerWidget {
                             child: const Icon(Icons.logout_rounded,
                                 color: AppColors.danger, size: 20),
                           ),
-                          title: const Text(
-                            'Выйти из аккаунта',
-                            style: TextStyle(
+                          title: Text(
+                            l10n.logout,
+                            style: const TextStyle(
                               fontWeight: FontWeight.w600,
                               fontSize: 15,
                               color: AppColors.danger,
@@ -244,7 +273,7 @@ class ProfileScreen extends ConsumerWidget {
                           BrandMark(size: 26),
                           SizedBox(height: 6),
                           Text(
-                            'AvaTracker Mobile v0.2.0',
+                            'AvaTracker Mobile ${AppConfig.appVersion}',
                             style: TextStyle(
                               color: AppColors.textSecondary,
                               fontSize: 12,

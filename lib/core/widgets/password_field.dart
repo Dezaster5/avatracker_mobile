@@ -5,7 +5,7 @@ class PasswordField extends StatefulWidget {
   const PasswordField({
     super.key,
     required this.controller,
-    this.hint = 'Пароль',
+    this.hint,
     this.validator,
     this.textInputAction = TextInputAction.done,
     this.onSubmitted,
@@ -13,7 +13,7 @@ class PasswordField extends StatefulWidget {
   });
 
   final TextEditingController controller;
-  final String hint;
+  final String? hint;
   final String? Function(String?)? validator;
   final TextInputAction textInputAction;
   final ValueChanged<String>? onSubmitted;

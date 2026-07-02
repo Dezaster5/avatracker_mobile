@@ -12,19 +12,28 @@ import '../features/auth/presentation/reset_password_screen.dart';
 import '../features/auth/presentation/sms_code_screen.dart';
 import '../features/auth/presentation/splash_screen.dart';
 import '../features/auth/providers.dart';
+import '../features/legal/presentation/about_screen.dart';
+import '../features/legal/presentation/delete_account_screen.dart';
+import '../features/legal/presentation/intro_screen.dart';
+import '../features/legal/presentation/privacy_policy_screen.dart';
 import '../features/profile/presentation/change_password_screen.dart';
 import '../features/profile/presentation/profile_screen.dart';
 import '../features/shell/main_shell.dart';
 
-/// Страницы, доступные без сессии (вход/регистрация/сброс пароля).
-const _authLocations = {
+/// Страницы auth-флоу (авторизованного пользователя выкидываем отсюда).
+const _authFlow = {
   '/login',
   '/register',
   '/sms-register',
   '/forgot',
   '/sms-reset',
   '/reset-password',
+  '/intro',
 };
+
+/// Страницы, доступные без сессии: auth-флоу + Политика конфиденциальности.
+bool _isPublic(String location) =>
+    _authFlow.contains(location) || location == '/privacy';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final refresh = ValueNotifier(0);
@@ -37,21 +46,31 @@ final routerProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final auth = ref.read(authControllerProvider);
       final location = state.matchedLocation;
-      final onAuthPages = _authLocations.contains(location);
 
       switch (auth.status) {
         case AuthStatus.unknown:
         case AuthStatus.failed:
           return location == '/splash' ? null : '/splash';
         case AuthStatus.unauthenticated:
-          return onAuthPages ? null : '/login';
+          if (_isPublic(location)) return null;
+          // До входа сначала показываем экран с целью приложения (App Review).
+          return ref.read(introSeenProvider) ? '/login' : '/intro';
         case AuthStatus.authenticated:
-          final onGuardPages = location == '/splash' || onAuthPages;
+          final onGuardPages =
+              location == '/splash' || _authFlow.contains(location);
           return onGuardPages ? '/scanner' : null;
       }
     },
     routes: [
       GoRoute(path: '/splash', builder: (_, __) => const SplashScreen()),
+      GoRoute(path: '/intro', builder: (_, __) => const IntroScreen()),
+      GoRoute(
+          path: '/privacy', builder: (_, __) => const PrivacyPolicyScreen()),
+      GoRoute(path: '/about', builder: (_, __) => const AboutScreen()),
+      GoRoute(
+        path: '/delete-account',
+        builder: (_, __) => const DeleteAccountScreen(),
+      ),
       GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
       GoRoute(path: '/register', builder: (_, __) => const RegisterScreen()),
       GoRoute(
