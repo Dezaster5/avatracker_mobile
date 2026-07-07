@@ -596,4 +596,23 @@ class AppLocalizationsKk extends AppLocalizations {
 
   @override
   String get errorConfirmSmsFirst => 'Алдымен SMS кодын растаңыз';
+
+  @override
+  String get deleteAccountTitle => 'Аккаунтты жою';
+
+  @override
+  String get deleteAccountAction => 'Аккаунтты жою';
+
+  @override
+  String get deleteConfirmTitle => 'Аккаунтты жоясыз ба?';
+
+  @override
+  String get deleteConfirmBody =>
+      'Қосымша аккаунты қалпына келтірусіз жойылады. Жұмыс уақытын есепке алу деректері компания жүйесінде сақталады. Кіру үшін қайта тіркелу қажет.';
+
+  @override
+  String get actionDelete => 'Жою';
+
+  @override
+  String get accountDeleted => 'Аккаунт жойылды. Қайта тіркеліңіз';
 }

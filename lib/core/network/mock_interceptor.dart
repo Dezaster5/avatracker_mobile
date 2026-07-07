@@ -156,11 +156,12 @@ class MockInterceptor extends Interceptor {
       return _ok(handler, options, _employee(iin, phone: phone));
     }
 
-    if (p.endsWith('/account/delete-request')) {
-      return _ok(handler, options, {
-        'success': true,
-        'message': 'Запрос на удаление аккаунта отправлен',
-      });
+    if (p.endsWith('/profile/delete/')) {
+      // Полное удаление аккаунта: убираем демо-аккаунт, нужна регистрация.
+      _accounts.remove(_sessionPhone);
+      _sessionPhone = null;
+      _sessionIin = null;
+      return _ok(handler, options, {'success': true});
     }
 
     // QR-скан с фото лица: сервер сверяет лицо с базой при отметке.

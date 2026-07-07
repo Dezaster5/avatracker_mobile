@@ -5,10 +5,13 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/error_banner.dart';
 import '../../../core/widgets/primary_button.dart';
+import '../../../l10n/l10n_ext.dart';
 import '../../auth/providers.dart';
 import '../legal_content.dart';
 
-/// Запрос на удаление учётной записи (App Store §5.1.1(v)).
+/// Удаление учётной записи приложения (App Store §5.1.1(v)).
+/// `DELETE /api/mobile/profile/delete/` — полное удаление; данные сотрудника
+/// в системе сохраняются, для входа нужна повторная регистрация.
 class DeleteAccountScreen extends ConsumerStatefulWidget {
   const DeleteAccountScreen({super.key});
 
@@ -18,36 +21,25 @@ class DeleteAccountScreen extends ConsumerStatefulWidget {
 }
 
 class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
-  bool _sending = false;
+  bool _deleting = false;
   String? _error;
 
   Future<void> _submit() async {
-    final employee = ref.read(authControllerProvider).employee;
-    final iin = employee?.iin ?? '';
-    final phone =
-        await ref.read(tokenStorageProvider).phone ?? (employee?.phone ?? '');
-    if (iin.isEmpty) {
-      setState(() => _error = 'Нет данных сотрудника');
-      return;
-    }
-    if (!mounted) return;
-
+    final l10n = context.l10n;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Отправить запрос на удаление?'),
-        content: const Text(
-          'Запрос будет направлен ответственному сотруднику для подтверждения.',
-        ),
+        title: Text(l10n.deleteConfirmTitle),
+        content: Text(l10n.deleteConfirmBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Отмена'),
+            child: Text(l10n.actionCancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Отправить',
-                style: TextStyle(color: AppColors.danger)),
+            child: Text(l10n.actionDelete,
+                style: const TextStyle(color: AppColors.danger)),
           ),
         ],
       ),
@@ -55,44 +47,32 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
     if (confirmed != true) return;
 
     setState(() {
-      _sending = true;
+      _deleting = true;
       _error = null;
     });
     try {
-      final message = await ref
-          .read(authRepositoryProvider)
-          .requestAccountDeletion(iin: iin, phone: phone);
+      await ref.read(authRepositoryProvider).deleteAccount();
       if (!mounted) return;
-      await showDialog<void>(
-        context: context,
-        builder: (dialogContext) => AlertDialog(
-          title: const Text('Запрос отправлен'),
-          content: Text(message),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Понятно'),
-            ),
-          ],
-        ),
-      );
-      if (mounted) Navigator.of(context).maybePop();
+      // Аккаунт удалён — очищаем сессию и уводим на вход (нужна регистрация).
+      await ref
+          .read(authControllerProvider.notifier)
+          .logout(message: l10n.accountDeleted);
+      // Роутер сам перенаправит на экран входа.
     } on ApiException catch (e) {
       if (mounted) setState(() => _error = e.message);
     } catch (_) {
-      if (mounted) {
-        setState(() => _error = 'Ошибка соединения. Попробуйте позже');
-      }
+      if (mounted) setState(() => _error = context.l10n.errorConnection);
     } finally {
-      if (mounted) setState(() => _sending = false);
+      if (mounted) setState(() => _deleting = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Удаление аккаунта'),
+        title: Text(l10n.deleteAccountTitle),
         leading: BackButton(onPressed: () => Navigator.of(context).maybePop()),
       ),
       body: SafeArea(
@@ -122,9 +102,9 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
             ErrorBanner(message: _error),
             const SizedBox(height: 24),
             PrimaryButton(
-              label: 'Отправить запрос на удаление',
-              icon: Icons.send_rounded,
-              loading: _sending,
+              label: l10n.deleteAccountAction,
+              icon: Icons.delete_outline_rounded,
+              loading: _deleting,
               onPressed: _submit,
             ),
           ],

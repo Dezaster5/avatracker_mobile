@@ -603,4 +603,23 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get errorConfirmSmsFirst => 'Сначала подтвердите SMS-код';
+
+  @override
+  String get deleteAccountTitle => 'Удаление аккаунта';
+
+  @override
+  String get deleteAccountAction => 'Удалить аккаунт';
+
+  @override
+  String get deleteConfirmTitle => 'Удалить аккаунт?';
+
+  @override
+  String get deleteConfirmBody =>
+      'Аккаунт приложения будет удалён без возможности восстановления. Данные учёта рабочего времени сохраняются в системе компании. Для входа потребуется повторная регистрация.';
+
+  @override
+  String get actionDelete => 'Удалить';
+
+  @override
+  String get accountDeleted => 'Аккаунт удалён. Зарегистрируйтесь заново';
 }

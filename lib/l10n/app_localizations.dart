@@ -1155,6 +1155,42 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Сначала подтвердите SMS-код'**
   String get errorConfirmSmsFirst;
+
+  /// No description provided for @deleteAccountTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удаление аккаунта'**
+  String get deleteAccountTitle;
+
+  /// No description provided for @deleteAccountAction.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить аккаунт'**
+  String get deleteAccountAction;
+
+  /// No description provided for @deleteConfirmTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить аккаунт?'**
+  String get deleteConfirmTitle;
+
+  /// No description provided for @deleteConfirmBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Аккаунт приложения будет удалён без возможности восстановления. Данные учёта рабочего времени сохраняются в системе компании. Для входа потребуется повторная регистрация.'**
+  String get deleteConfirmBody;
+
+  /// No description provided for @actionDelete.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить'**
+  String get actionDelete;
+
+  /// No description provided for @accountDeleted.
+  ///
+  /// In ru, this message translates to:
+  /// **'Аккаунт удалён. Зарегистрируйтесь заново'**
+  String get accountDeleted;
 }
 
 class _AppLocalizationsDelegate
