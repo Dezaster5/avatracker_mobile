@@ -128,19 +128,22 @@ class _FaceIdScreenState extends ConsumerState<FaceIdScreen>
       // Снимок отправится в /api/qr/scan/ — сервер сверит лицо при отметке.
       Navigator.of(context).pop(imageBase64);
     } on CameraException {
-      _fail(context.l10n.photoCaptureFailed);
+      _fail();
     } catch (_) {
-      _fail(context.l10n.photoCaptureFailed);
+      _fail();
     } finally {
       if (mounted) setState(() => _checking = false);
     }
   }
 
-  void _fail(String message) {
+  /// Сырой (нелокализованный) ключ — переводится на показе через
+  /// `localizedMessage`, чтобы текст не «замораживался» в языке момента
+  /// ошибки при последующей смене языка.
+  void _fail() {
     if (!mounted) return;
     setState(() {
       _attemptsLeft -= 1;
-      _error = message;
+      _error = 'Не удалось сделать снимок. Попробуйте ещё раз';
     });
   }
 
@@ -183,7 +186,9 @@ class _FaceIdScreenState extends ConsumerState<FaceIdScreen>
       return _MessageView(
         icon: Icons.lock_outline,
         title: l10n.faceAttemptsExceeded,
-        subtitle: _error ?? l10n.scanQrTryAgain,
+        subtitle: _error == null
+            ? l10n.scanQrTryAgain
+            : context.localizedMessage(_error),
         actionLabel: l10n.backToScanner,
         onAction: _cancel,
       );
@@ -291,7 +296,7 @@ class _FaceIdScreenState extends ConsumerState<FaceIdScreen>
         if (_error != null) ...[
           const SizedBox(height: 12),
           Text(
-            _error!,
+            context.localizedMessage(_error),
             textAlign: TextAlign.center,
             style: const TextStyle(color: AppColors.danger),
           ),

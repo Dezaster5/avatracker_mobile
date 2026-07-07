@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/primary_button.dart';
 import '../../../l10n/l10n_ext.dart';
+import '../../auth/presentation/widgets/lang_country_bar.dart';
 import '../../auth/providers.dart';
 import '../legal_content.dart';
 
@@ -30,7 +31,9 @@ class IntroScreen extends ConsumerWidget {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
                 children: [
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 4),
+                  const LanguageBar(),
+                  const SizedBox(height: 16),
                   const Center(child: BrandLogo(height: 40)),
                   const SizedBox(height: 28),
                   const Text(

@@ -54,14 +54,18 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
       await ref.read(authRepositoryProvider).deleteAccount();
       if (!mounted) return;
       // Аккаунт удалён — очищаем сессию и уводим на вход (нужна регистрация).
+      // Сырой (нелокализованный) текст — экран входа сам переведёт через
+      // localizeKnownMessage под актуальный язык на момент показа.
       await ref
           .read(authControllerProvider.notifier)
-          .logout(message: l10n.accountDeleted);
+          .logout(message: 'Аккаунт удалён. Зарегистрируйтесь заново');
       // Роутер сам перенаправит на экран входа.
     } on ApiException catch (e) {
       if (mounted) setState(() => _error = e.message);
     } catch (_) {
-      if (mounted) setState(() => _error = context.l10n.errorConnection);
+      if (mounted) {
+        setState(() => _error = 'Ошибка соединения. Попробуйте позже');
+      }
     } finally {
       if (mounted) setState(() => _deleting = false);
     }

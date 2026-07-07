@@ -94,6 +94,25 @@ Future<void> showLanguagePicker(BuildContext context, WidgetRef ref) async {
   }
 }
 
+/// Только выбор языка (без страны) — для экранов до ввода телефона (intro).
+class LanguageBar extends ConsumerWidget {
+  const LanguageBar({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final localeCode = ref.watch(localeProvider).languageCode;
+    return Align(
+      alignment: Alignment.centerRight,
+      child: _BarButton(
+        leading: const Icon(Icons.language_rounded,
+            size: 16, color: AppColors.textSecondary),
+        label: languageName(context, localeCode),
+        onTap: () => showLanguagePicker(context, ref),
+      ),
+    );
+  }
+}
+
 /// Панель выбора страны и языка вверху экранов входа/регистрации.
 class LangCountryBar extends ConsumerWidget {
   const LangCountryBar({super.key});

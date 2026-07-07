@@ -92,9 +92,9 @@ Videos**, но в описании назначения (Purpose) и в Review N
   HTTPS/TLS (`https://avatracker.online`).
 - **Data deletion**: **Yes** — реализовано через `/delete-account`
   (`DELETE /api/mobile/profile/delete/`), см. §3.
-- Privacy Policy URL: `https://avatracker.online/privacy` (нужно опубликовать
-  общедоступную страницу — см. §5). Черновик текста для вычитки —
-  `PRIVACY_POLICY.txt` в корне репозитория.
+- Privacy Policy URL: `https://avatracker.online/privacy-policy/` — уже
+  опубликована (см. §5). Сверить с черновиком `PRIVACY_POLICY.txt` в корне
+  репозитория, если текст на сайте позже поменяется.
 
 ### Почему приложение может показаться ревьюеру «непонятным» для App Store
 
@@ -145,17 +145,23 @@ AvaTracker — вход только по корпоративному ИИН к
    QR-изображение и приложить в Review Notes.
 4. **Фото-верификация для тестового аккаунта**: пропускать сверку лица (иначе
    ревьюер не пройдёт проверку — его лицо не совпадёт с фото сотрудника).
-5. **Публичная страница Privacy Policy** по адресу из App Store Connect
-   (текст — в приложении, раздел `/privacy`).
+5. ~~Публичная страница Privacy Policy~~ — **готово**:
+   `https://avatracker.online/privacy-policy/` (текст также доступен в
+   приложении, раздел `/privacy`).
 
 ---
 
 ## 5. Privacy Policy URL
 
 App Store Connect требует **публичный URL** политики (в дополнение к экрану в
-приложении). Опубликуйте страницу с тем же текстом, что в приложении
-(`lib/features/legal/legal_content.dart` → `privacySections`), по адресу
-`AppConfig.privacyPolicyUrl` (`https://avatracker.online/privacy`).
+приложении). Опубликована по адресу `AppConfig.privacyPolicyUrl`
+(`https://avatracker.online/privacy-policy/`) — этот же URL указывается в
+App Store Connect и Google Play Console.
+
+Текст на сайте должен совпадать с текстом в приложении
+(`lib/features/legal/legal_content.dart` → `privacySections`, черновик —
+`PRIVACY_POLICY.txt`) — при правке одного места не забыть синхронизировать
+второе.
 
 Также заполните контакты ответственного лица (`AppConfig.supportEmail`,
 `AppConfig.companyName`) актуальными значениями компании.
@@ -191,5 +197,5 @@ Manager после прохождения App Review; bundle id: `kz.avatariya.a
 - [`GOOGLE_PLAY_REVIEW.md`](./GOOGLE_PLAY_REVIEW.md) — заполнение Data Safety
   для Google Play Console (аналог этого документа для Android).
 - [`PRIVACY_POLICY.txt`](./PRIVACY_POLICY.txt) — рабочий текст Политики
-  конфиденциальности для вычитки перед публикацией на
-  `https://avatracker.online/privacy`.
+  конфиденциальности; опубликована на
+  `https://avatracker.online/privacy-policy/`.

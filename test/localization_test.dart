@@ -44,4 +44,31 @@ void main() {
       'Специальное сообщение backend',
     );
   });
+
+  test('удаление аккаунта и неудачный снимок — тоже известные ключи', () {
+    final kk = lookupAppLocalizations(const Locale('kk'));
+
+    expect(
+      kk.localizeKnownMessage('Аккаунт удалён. Зарегистрируйтесь заново'),
+      kk.accountDeleted,
+    );
+    expect(
+      kk.localizeKnownMessage('Не удалось сделать снимок. Попробуйте ещё раз'),
+      kk.photoCaptureFailed,
+    );
+  });
+
+  test(
+      'один и тот же сырой текст переводится под текущую локаль, '
+      'а не остаётся «замороженным» в языке момента ошибки', () {
+    const raw = 'Ошибка соединения. Попробуйте позже';
+    final ru = lookupAppLocalizations(const Locale('ru'));
+    final kk = lookupAppLocalizations(const Locale('kk'));
+
+    // Экраны хранят именно `raw`, а не заранее переведённую строку — иначе
+    // при смене языка после ошибки текст остался бы в старом языке.
+    expect(ru.localizeKnownMessage(raw), ru.errorConnection);
+    expect(kk.localizeKnownMessage(raw), kk.errorConnection);
+    expect(ru.errorConnection == kk.errorConnection, isFalse);
+  });
 }

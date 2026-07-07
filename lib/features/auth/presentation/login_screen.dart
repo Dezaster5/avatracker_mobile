@@ -28,6 +28,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _passwordController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    // Экран пересоздаётся при каждом переходе на /login (в т.ч. после
+    // логаута) — но loginControllerProvider не autoDispose, поэтому старая
+    // ошибка предыдущей попытки/сессии иначе осталась бы висеть на баннере.
+    Future.microtask(
+      () => ref.read(loginControllerProvider.notifier).clearError(),
+    );
+  }
+
+  @override
   void dispose() {
     _phoneController.dispose();
     _passwordController.dispose();

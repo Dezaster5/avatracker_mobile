@@ -44,9 +44,9 @@ AvaTracker — корпоративное приложение учёта раб
 - **"You can request that data be deleted"** → **Yes** — в приложении есть
   самостоятельное удаление аккаунта: `/delete-account` →
   `DELETE /api/mobile/profile/delete/` (Профиль → О приложении → Удалить
-  аккаунт). Добавить ссылку на `https://avatracker.online/privacy` (раздел
-  8 Политики) как способ узнать процедуру и для пользователей без доступа
-  к приложению.
+  аккаунт). Процедура также описана на публичной странице
+  `https://avatracker.online/privacy-policy/` (раздел 8 Политики) — для
+  пользователей без доступа к приложению.
 - **"Committed to follow the Play Families Policy"** → N/A, приложение не
   для детей.
 
@@ -117,8 +117,9 @@ Google Play после того, как определится модель ра
 
 ## 5. TODO
 
-1. Опубликовать `https://avatracker.online/privacy` (текст — см.
-   `PRIVACY_POLICY.txt` в корне репозитория, вычитать перед публикацией).
+1. ~~Опубликовать страницу Privacy Policy~~ — **готово**:
+   `https://avatracker.online/privacy-policy/` (черновик текста —
+   `PRIVACY_POLICY.txt` в корне репозитория).
 2. Подтвердить у бэкендера, шифруются ли данные на сервере "at rest" —
    от этого зависит, отмечать ли соответствующий пункт Security practices
    в Data Safety.

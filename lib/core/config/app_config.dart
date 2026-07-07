@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart' show kDebugMode;
+
 /// Конфигурация приложения.
 ///
 /// Базовый URL и mock-режим задаются при сборке:
@@ -5,6 +7,7 @@
 /// flutter run --dart-define=API_BASE_URL=https://avatracker.online/api/v1
 /// flutter run --dart-define=MOCK_API=true   # демо без бэкенда
 /// flutter run --dart-define=TEST_IIN=... --dart-define=TEST_BEARER_TOKEN=...
+/// flutter build apk --release --dart-define=DEV_TOOLS=true   # dev-сборка с панелью логов
 /// ```
 abstract final class AppConfig {
   /// База data-API (профиль в тест-режиме, табель, аналитика, скан).
@@ -61,11 +64,18 @@ abstract final class AppConfig {
   static const companyName = 'ТОО "AVA TECH.IO"';
   static const supportEmail = 'info@avtch.io';
 
-  /// Публичный URL Политики (нужен для метаданных App Store Connect).
-  static const privacyPolicyUrl = 'https://avatracker.online/privacy';
+  /// Публичный URL Политики (нужен для метаданных App Store Connect / Google Play).
+  static const privacyPolicyUrl = 'https://avatracker.online/privacy-policy/';
 
   /// Mock-режим: все запросы к API обслуживаются локальными заглушками.
   static const mockApi = bool.fromEnvironment('MOCK_API', defaultValue: false);
+
+  /// Панель разработчика (плавающая шестерёнка → лог сети и приложения).
+  /// Включена автоматически в debug-режиме и в release-сборках, собранных
+  /// с `--dart-define=DEV_TOOLS=true` (отдельная "dev"-сборка для тестов,
+  /// не путать с обычным альфа-APK для сотрудников).
+  static const _devToolsFlag = bool.fromEnvironment('DEV_TOOLS');
+  static const devToolsEnabled = _devToolsFlag || kDebugMode;
 
   /// Локальный тест без готовой auth-апишки: приложение на splash сохранит
   /// этот ИИН и Bearer-токен как текущую сессию и пойдет в реальные эндпоинты.
