@@ -26,6 +26,16 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
   final _confirmController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    // changePasswordControllerProvider не autoDispose — без сброса ошибка
+    // прошлой попытки смены пароля осталась бы висеть при повторном заходе.
+    Future.microtask(
+      () => ref.read(changePasswordControllerProvider.notifier).clearError(),
+    );
+  }
+
+  @override
   void dispose() {
     _currentController.dispose();
     _passwordController.dispose();

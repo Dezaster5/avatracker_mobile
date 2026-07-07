@@ -49,6 +49,7 @@ extension AppLocalizationsFormatX on AppLocalizations {
         photoCaptureFailed,
       'Отметка успешно засчитана' => markAccepted,
       'Отметка не засчитана' => markNotAccepted,
+      'Аккаунт удалён. Зарегистрируйтесь заново' => accountDeleted,
       _ => message,
     };
   }

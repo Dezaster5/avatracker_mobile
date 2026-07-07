@@ -25,6 +25,16 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   final _phoneController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    // Точка входа во флоу сброса пароля — чистим ошибку прошлой попытки
+    // (passwordResetControllerProvider не autoDispose).
+    Future.microtask(
+      () => ref.read(passwordResetControllerProvider.notifier).clearError(),
+    );
+  }
+
+  @override
   void dispose() {
     _phoneController.dispose();
     super.dispose();

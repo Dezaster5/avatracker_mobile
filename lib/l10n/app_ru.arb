@@ -235,5 +235,12 @@
   "errorResetTokenMissing": "Сервер не вернул токен сброса",
   "errorLoginFailed": "Не удалось войти",
   "errorAttemptsExceeded": "Превышено количество попыток. Запросите новый код",
-  "errorConfirmSmsFirst": "Сначала подтвердите SMS-код"
+  "errorConfirmSmsFirst": "Сначала подтвердите SMS-код",
+
+  "deleteAccountTitle": "Удаление аккаунта",
+  "deleteAccountAction": "Удалить аккаунт",
+  "deleteConfirmTitle": "Удалить аккаунт?",
+  "deleteConfirmBody": "Аккаунт приложения будет удалён без возможности восстановления. Данные учёта рабочего времени сохраняются в системе компании. Для входа потребуется повторная регистрация.",
+  "actionDelete": "Удалить",
+  "accountDeleted": "Аккаунт удалён. Зарегистрируйтесь заново"
 }

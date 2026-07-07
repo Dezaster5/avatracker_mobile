@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 
 import '../config/app_config.dart';
+import '../devtools/dev_http_interceptor.dart';
 import '../storage/token_storage.dart';
 import 'mock_interceptor.dart';
 
@@ -26,12 +26,8 @@ class ApiClient {
     _dio.interceptors.add(
       InterceptorsWrapper(onRequest: _onRequest, onError: _onError),
     );
-    if (kDebugMode) {
-      _dio.interceptors.add(LogInterceptor(
-        requestBody: true,
-        responseBody: true,
-        logPrint: (o) => debugPrint('[API] $o'),
-      ));
+    if (AppConfig.devToolsEnabled) {
+      _dio.interceptors.add(DevHttpInterceptor());
     }
   }
 

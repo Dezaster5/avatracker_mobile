@@ -193,5 +193,12 @@
   "errorResetTokenMissing": "Server tiklash tokenini qaytarmadi",
   "errorLoginFailed": "Kirish amalga oshmadi",
   "errorAttemptsExceeded": "Urinishlar soni oshib ketdi. Yangi kod soʻrang",
-  "errorConfirmSmsFirst": "Avval SMS kodini tasdiqlang"
+  "errorConfirmSmsFirst": "Avval SMS kodini tasdiqlang",
+
+  "deleteAccountTitle": "Hisobni oʻchirish",
+  "deleteAccountAction": "Hisobni oʻchirish",
+  "deleteConfirmTitle": "Hisobni oʻchirasizmi?",
+  "deleteConfirmBody": "Ilova hisobi tiklab boʻlmaydigan tarzda oʻchiriladi. Ish vaqtini hisobga olish maʼlumotlari kompaniya tizimida saqlanadi. Kirish uchun qayta roʻyxatdan oʻtish talab qilinadi.",
+  "actionDelete": "Oʻchirish",
+  "accountDeleted": "Hisob oʻchirildi. Qayta roʻyxatdan oʻting"
 }

@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -35,12 +35,18 @@ const _authFlow = {
 bool _isPublic(String location) =>
     _authFlow.contains(location) || location == '/privacy';
 
+/// Ключ корневого `Navigator`, созданного go_router. `MaterialApp.builder`
+/// (см. `DevToolsOverlay`) рисуется НАД этим навигатором, а не под ним, поэтому
+/// `Navigator.of(context)` из builder'а его не находит — берём напрямую по ключу.
+final rootNavigatorKey = GlobalKey<NavigatorState>();
+
 final routerProvider = Provider<GoRouter>((ref) {
   final refresh = ValueNotifier(0);
   ref.listen<AuthSession>(authControllerProvider, (_, __) => refresh.value++);
   ref.onDispose(refresh.dispose);
 
   return GoRouter(
+    navigatorKey: rootNavigatorKey,
     initialLocation: '/splash',
     refreshListenable: refresh,
     redirect: (context, state) {

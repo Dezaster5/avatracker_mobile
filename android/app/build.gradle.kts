@@ -32,6 +32,17 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        // Dev-сборка (панель логов, см. DEV_TOOLS в lib/core/config/app_config.dart)
+        // ставится на устройство ОТДЕЛЬНО от обычного альфа-APK: свой
+        // applicationId и подпись в лаунчере. Обычная сборка (без этой
+        // переменной окружения) не меняется вообще.
+        val isDevBuild = System.getenv("AVATRACKER_DEV_BUILD") == "true"
+        if (isDevBuild) {
+            applicationIdSuffix = ".dev"
+            versionNameSuffix = "-dev"
+        }
+        manifestPlaceholders["appLabel"] = if (isDevBuild) "AvaTracker Dev" else "AvaTracker"
     }
 
     signingConfigs {

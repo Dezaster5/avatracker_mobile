@@ -596,4 +596,23 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get errorConfirmSmsFirst => 'Avval SMS kodini tasdiqlang';
+
+  @override
+  String get deleteAccountTitle => 'Hisobni oʻchirish';
+
+  @override
+  String get deleteAccountAction => 'Hisobni oʻchirish';
+
+  @override
+  String get deleteConfirmTitle => 'Hisobni oʻchirasizmi?';
+
+  @override
+  String get deleteConfirmBody =>
+      'Ilova hisobi tiklab boʻlmaydigan tarzda oʻchiriladi. Ish vaqtini hisobga olish maʼlumotlari kompaniya tizimida saqlanadi. Kirish uchun qayta roʻyxatdan oʻtish talab qilinadi.';
+
+  @override
+  String get actionDelete => 'Oʻchirish';
+
+  @override
+  String get accountDeleted => 'Hisob oʻchirildi. Qayta roʻyxatdan oʻting';
 }

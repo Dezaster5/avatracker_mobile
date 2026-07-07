@@ -32,6 +32,16 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   bool _consent = false;
 
   @override
+  void initState() {
+    super.initState();
+    // Сбрасываем ошибку прошлой попытки регистрации (registrationControllerProvider
+    // не autoDispose и переживает возврат на этот экран/новую сессию).
+    Future.microtask(
+      () => ref.read(registrationControllerProvider.notifier).clearError(),
+    );
+  }
+
+  @override
   void dispose() {
     _phoneController.dispose();
     _iinController.dispose();

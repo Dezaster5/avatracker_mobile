@@ -188,25 +188,16 @@ class AuthRepository {
     }
   }
 
-  /// `POST /api/v1/mobile/account/delete-request` — запрос на удаление аккаунта.
-  Future<String> requestAccountDeletion({
-    required String iin,
-    required String phone,
-    String reason = 'user_requested_account_deletion',
-  }) async {
+  /// `DELETE /api/mobile/profile/delete/` — полное удаление мобильного аккаунта
+  /// (по JWT). Данные сотрудника в основной системе сохраняются; для входа
+  /// нужна повторная регистрация. Локальная сессия очищается при успехе.
+  Future<void> deleteAccount() async {
     try {
-      final res = await _dio.post<dynamic>(
-        '/mobile/account/delete-request',
-        data: {'iin': iin, 'phone': phone, 'reason': reason},
-      );
-      final data = res.data;
-      return (data is Map<String, dynamic>
-              ? data['message']?.toString()
-              : null) ??
-          'Запрос на удаление аккаунта отправлен';
+      await _dio.delete<dynamic>(_mobile('/profile/delete/'));
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }
+    await _storage.clearSession();
   }
 
   Future<Employee?> cachedEmployee() async {

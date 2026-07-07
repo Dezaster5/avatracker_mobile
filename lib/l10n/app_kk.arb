@@ -193,5 +193,12 @@
   "errorResetTokenMissing": "Сервер қалпына келтіру токенін қайтармады",
   "errorLoginFailed": "Кіру мүмкін болмады",
   "errorAttemptsExceeded": "Әрекеттер саны асып кетті. Жаңа код сұраңыз",
-  "errorConfirmSmsFirst": "Алдымен SMS кодын растаңыз"
+  "errorConfirmSmsFirst": "Алдымен SMS кодын растаңыз",
+
+  "deleteAccountTitle": "Аккаунтты жою",
+  "deleteAccountAction": "Аккаунтты жою",
+  "deleteConfirmTitle": "Аккаунтты жоясыз ба?",
+  "deleteConfirmBody": "Қосымша аккаунты қалпына келтірусіз жойылады. Жұмыс уақытын есепке алу деректері компания жүйесінде сақталады. Кіру үшін қайта тіркелу қажет.",
+  "actionDelete": "Жою",
+  "accountDeleted": "Аккаунт жойылды. Қайта тіркеліңіз"
 }
