@@ -33,6 +33,18 @@ Release.
 
 Приложение не должно сохранять пароль, SMS-код или снимок для Face verification.
 
+Сохранение логина/пароля пользователем выполняется только через системный
+менеджер паролей устройства:
+
+- iOS Passwords / Keychain с доступом через Face ID или код устройства;
+- Android Password Manager / Google Password Manager.
+
+Для этого поля входа и регистрации размечены `AutofillHints.username`,
+`AutofillHints.telephoneNumber`, `AutofillHints.password` и
+`AutofillHints.newPassword`, а после успешной авторизации приложение вызывает
+`TextInput.finishAutofillContext(shouldSave: true)`. Пароль при этом не
+появляется в `flutter_secure_storage` и не пишется в кеш приложения.
+
 ## Отчёт об уязвимости
 
 Не создавайте публичный issue с токенами, персональными данными или инструкцией

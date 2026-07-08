@@ -82,7 +82,7 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get registerSubtitle =>
-      'Maʼlumotlar AvaTracker xodimlar bazasi boʻyicha tekshiriladi. Koʻrsatilgan raqamga tasdiqlash kodi bilan SMS keladi.';
+      'Telefon, IIN va parolni kiriting. Tasdiqlash kodi SMS orqali keladi.';
 
   @override
   String get fieldIin => 'IIN';
@@ -92,7 +92,7 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get iinExplanation =>
-      'IIN faqat AvaTracker tizimida kompaniyaning faol xodimi ekaningizni tasdiqlash uchun ishlatiladi.';
+      'Faqat AvaTracker tizimidagi xodimni tekshirish uchun kerak.';
 
   @override
   String get passwordMinHint => 'Kamida 6 belgi';
@@ -240,6 +240,13 @@ class AppLocalizationsUz extends AppLocalizations {
   String get support => 'Qoʻllab-quvvatlashga murojaat';
 
   @override
+  String get supportBody =>
+      'Ilova ishlashi va maʼlumotlarni qayta ishlash bo‘yicha:';
+
+  @override
+  String get writeEmail => 'Xat yozish';
+
+  @override
   String get deleteAccountMenu => 'Hisobni oʻchirishni soʻrash';
 
   @override
@@ -270,8 +277,7 @@ class AppLocalizationsUz extends AppLocalizations {
   String get pointCameraAtQr => 'Kamerani QR-kodga qarating';
 
   @override
-  String get within50m =>
-      'Belgi nuqtasidan 50 m dan uzoqda boʻlmasligingiz kerak';
+  String get within50m => 'Belgi nuqtasidan 50 m radiusda boʻlishingiz kerak';
 
   @override
   String get stageCheckingPoint => 'Belgi nuqtasi tekshirilmoqda…';
@@ -384,7 +390,8 @@ class AppLocalizationsUz extends AppLocalizations {
   String get latesThisMonth => 'Oydagi kechikishlar';
 
   @override
-  String get redMarksLate => 'Qizil rang bilan kechikish kunlari belgilangan';
+  String get redMarksLate =>
+      'To\'q sariq rang bilan kechikish kunlari belgilangan';
 
   @override
   String get cameAt => 'Keldi';
@@ -554,6 +561,9 @@ class AppLocalizationsUz extends AppLocalizations {
   String get metricAverage => 'oʻrtacha';
 
   @override
+  String get metricMax => 'eng katta kechikish';
+
+  @override
   String maxLateness(String duration) {
     return 'Eng katta kechikish: $duration';
   }
@@ -608,7 +618,7 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get deleteConfirmBody =>
-      'Ilova hisobi tiklab boʻlmaydigan tarzda oʻchiriladi. Ish vaqtini hisobga olish maʼlumotlari kompaniya tizimida saqlanadi. Kirish uchun qayta roʻyxatdan oʻtish talab qilinadi.';
+      'Ilova hisobini oʻchirishni tasdiqlang. Qayta kirish uchun yangidan roʻyxatdan oʻtish kerak.';
 
   @override
   String get actionDelete => 'Oʻchirish';

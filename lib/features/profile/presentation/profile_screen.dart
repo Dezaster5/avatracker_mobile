@@ -73,7 +73,7 @@ class ProfileScreen extends ConsumerWidget {
                       padding: const EdgeInsets.all(4),
                       decoration: const BoxDecoration(
                         shape: BoxShape.circle,
-                        gradient: AppColors.blueGradient,
+                        color: AppColors.navy,
                       ),
                       child: CircleAvatar(
                         radius: 47,
@@ -107,18 +107,6 @@ class ProfileScreen extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  if (employee.position != null) ...[
-                    const SizedBox(height: 4),
-                    Center(
-                      child: Text(
-                        employee.position!,
-                        style: const TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 13.5,
-                        ),
-                      ),
-                    ),
-                  ],
                   const SizedBox(height: 10),
                   Center(
                     child: StatusChip(

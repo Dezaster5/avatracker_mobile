@@ -17,12 +17,14 @@ class CountryPhoneField extends ConsumerStatefulWidget {
     this.autofocus = false,
     this.textInputAction,
     this.onSubmitted,
+    this.autofillHints = const [AutofillHints.telephoneNumber],
   });
 
   final TextEditingController controller;
   final bool autofocus;
   final TextInputAction? textInputAction;
   final ValueChanged<String>? onSubmitted;
+  final Iterable<String>? autofillHints;
 
   @override
   ConsumerState<CountryPhoneField> createState() => _CountryPhoneFieldState();
@@ -36,7 +38,10 @@ class _CountryPhoneFieldState extends ConsumerState<CountryPhoneField> {
     // При смене страны переформатируем уже введённый номер.
     ref.listen<Country>(selectedCountryProvider, (prev, next) {
       final national = phoneNational(widget.controller.text, next);
-      final text = national.isEmpty ? '' : formatNational(national, next);
+      final allowed = national.length > next.nationalLength
+          ? national.substring(0, next.nationalLength)
+          : national;
+      final text = allowed.isEmpty ? '' : formatNational(allowed, next);
       widget.controller.value = TextEditingValue(
         text: text,
         selection: TextSelection.collapsed(offset: text.length),
@@ -48,7 +53,7 @@ class _CountryPhoneFieldState extends ConsumerState<CountryPhoneField> {
       autofocus: widget.autofocus,
       keyboardType: TextInputType.phone,
       textInputAction: widget.textInputAction,
-      autofillHints: const [AutofillHints.telephoneNumber],
+      autofillHints: widget.autofillHints,
       inputFormatters: [CountryPhoneInputFormatter(country)],
       decoration: InputDecoration(
         hintText: country.isoCode == 'UZ' ? '90 123 45 67' : '700 123 45 67',

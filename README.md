@@ -1,7 +1,7 @@
 # AvaTracker Mobile
 
 Корпоративное Flutter-приложение для учёта рабочего времени сотрудников
-AvaTracker. Текущая версия: `1.0.0+8`.
+AvaTracker. Текущая версия: `1.0.0+9`.
 
 ## Возможности
 
@@ -11,6 +11,8 @@ AvaTracker. Текущая версия: `1.0.0+8`.
 - фото-верификация сотрудника непосредственно перед QR-отметкой;
 - табель и аналитика опозданий;
 - профиль сотрудника и смена пароля;
+- поддержка системного автозаполнения логина/пароля через iOS Passwords /
+  Keychain и Android Password Manager;
 - локализация на казахский, русский и узбекский;
 - телефонные номера Казахстана (`+7`) и Узбекистана (`+998`);
 - локальный mock-режим для разработки без backend.
@@ -72,6 +74,7 @@ flutter run --dart-define=MOCK_API=true
 ```powershell
 flutter run `
   --dart-define=MOCK_API=false `
+  --dart-define=TEST_AUTH=false `
   --dart-define=API_BASE_URL=https://avatracker.online/api/v1
 ```
 
@@ -94,7 +97,7 @@ flutter run `
 Для production API замените аргумент на:
 
 ```text
---dart-define=MOCK_API=false --dart-define=API_BASE_URL=https://avatracker.online/api/v1
+--dart-define=MOCK_API=false --dart-define=TEST_AUTH=false --dart-define=API_BASE_URL=https://avatracker.online/api/v1
 ```
 
 Камеру, Face verification и геолокацию корректнее проверять на физическом
@@ -157,6 +160,7 @@ Production Android-сборка:
 ```powershell
 flutter build apk --release `
   --dart-define=MOCK_API=false `
+  --dart-define=TEST_AUTH=false `
   --dart-define=API_BASE_URL=https://avatracker.online/api/v1
 ```
 
@@ -194,6 +198,11 @@ QR -> проверка точки -> снимок лица -> GPS -> POST /api/q
 refresh token, ИИН, телефон и кеш профиля хранятся через
 `flutter_secure_storage` в Android Keystore или iOS Keychain.
 
+Телефон и пароль на экранах входа/регистрации размечены через autofill hints.
+После успешного входа или регистрации приложение завершает autofill-контекст
+с `shouldSave: true`, поэтому iOS Passwords/Keychain и Android Password Manager
+могут предложить сохранить данные. Сам пароль остаётся вне storage приложения.
+
 Не коммитьте `.env.local`, Bearer-токены, keystore, `key.properties`, APK/AAB
 и provisioning profiles. Дополнительные правила описаны в
 [SECURITY.md](SECURITY.md).
@@ -206,7 +215,7 @@ lib/
   features/
     auth/               регистрация, вход, SMS, пароли, фото-верификация
     attendance/         QR, геолокация, табель, аналитика
-    legal/              intro, политика, согласие, удаление аккаунта
+    legal/              политика, удаление аккаунта, экран «О приложении»
     profile/            профиль сотрудника
     shell/              нижняя навигация
   l10n/                 ARB и сгенерированные локализации

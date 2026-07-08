@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
 
 /// Палитра AvaTracker (logo/New: слэш #0843FD, фон #121926, текст #FBFBFB).
@@ -54,8 +53,12 @@ abstract final class AppTheme {
       splashFactory: InkSparkle.splashFactory,
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
-          TargetPlatform.android: FadeForwardsPageTransitionsBuilder(),
-          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.android: _NoPageTransitionsBuilder(),
+          TargetPlatform.iOS: _NoPageTransitionsBuilder(),
+          TargetPlatform.linux: _NoPageTransitionsBuilder(),
+          TargetPlatform.macOS: _NoPageTransitionsBuilder(),
+          TargetPlatform.windows: _NoPageTransitionsBuilder(),
+          TargetPlatform.fuchsia: _NoPageTransitionsBuilder(),
         },
       ),
       appBarTheme: const AppBarTheme(
@@ -191,6 +194,20 @@ abstract final class AppTheme {
           const ProgressIndicatorThemeData(color: AppColors.primary),
     );
   }
+}
+
+class _NoPageTransitionsBuilder extends PageTransitionsBuilder {
+  const _NoPageTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) =>
+      child;
 }
 
 /// Полный логотип AvaTracker из актуального брендбука.

@@ -2,124 +2,83 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/config/app_config.dart';
 import '../../../core/i18n/locale_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../l10n/l10n_ext.dart';
-import '../../auth/providers.dart';
+import '../../auth/presentation/widgets/lang_country_bar.dart';
 
-/// Раздел «О приложении»: версия, язык, Политика, согласие, удаление, поддержка.
+/// Раздел «О приложении»: версия, язык, Политика, удаление, поддержка.
 class AboutScreen extends ConsumerWidget {
   const AboutScreen({super.key});
-
-  String _languageName(BuildContext context, String code) => switch (code) {
-        'kk' => context.l10n.languageKazakh,
-        'uz' => context.l10n.languageUzbek,
-        _ => context.l10n.languageRussian,
-      };
-
-  Future<void> _pickLanguage(BuildContext context, WidgetRef ref) async {
-    final current = ref.read(localeProvider).languageCode;
-    final selected = await showModalBottomSheet<String>(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (sheetContext) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 16),
-            Text(
-              sheetContext.l10n.chooseLanguage,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: AppColors.navy,
-              ),
-            ),
-            const SizedBox(height: 8),
-            for (final code in const ['ru', 'kk', 'uz'])
-              ListTile(
-                title: Text(_languageName(sheetContext, code)),
-                trailing: code == current
-                    ? const Icon(Icons.check_rounded, color: AppColors.primary)
-                    : null,
-                onTap: () => Navigator.of(sheetContext).pop(code),
-              ),
-            const SizedBox(height: 12),
-          ],
-        ),
-      ),
-    );
-    if (selected != null && selected != current) {
-      ref.read(localeProvider.notifier).state = Locale(selected);
-      await ref.read(tokenStorageProvider).saveLocale(selected);
-    }
-  }
-
-  Future<void> _showConsent(BuildContext context, WidgetRef ref) async {
-    final consent = await ref.read(tokenStorageProvider).readConsent();
-    if (!context.mounted) return;
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(dialogContext.l10n.consentMenu),
-        content: Text(
-          consent == null
-              ? 'Согласие оформляется при регистрации аккаунта.'
-              : 'Вы дали согласие на обработку персональных данных.\n\n'
-                  'Версия: ${consent['consent_version'] ?? '—'}\n'
-                  'Дата: ${consent['consent_given_at'] ?? '—'}',
-          style: const TextStyle(height: 1.5),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text(dialogContext.l10n.actionClose),
-          ),
-        ],
-      ),
-    );
-  }
 
   void _showSupport(BuildContext context) {
     showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text(dialogContext.l10n.support),
+        titlePadding: const EdgeInsets.fromLTRB(24, 18, 12, 0),
+        title: Row(
+          children: [
+            Expanded(child: Text(dialogContext.l10n.support)),
+            IconButton(
+              tooltip: dialogContext.l10n.actionClose,
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              icon: const Icon(Icons.close_rounded),
+            ),
+          ],
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'По вопросам работы приложения и обработки данных:',
-              style: TextStyle(height: 1.5),
-            ),
-            const SizedBox(height: 10),
-            const SelectableText(
-              AppConfig.supportEmail,
-              style: TextStyle(
-                color: AppColors.primary,
-                fontWeight: FontWeight.w700,
+            SelectableText.rich(
+              TextSpan(
+                text: '${dialogContext.l10n.supportBody}\n',
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  height: 1.5,
+                ),
+                children: const [
+                  TextSpan(
+                    text: AppConfig.supportEmail,
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
         ),
         actions: [
-          TextButton(
-            onPressed: () {
-              Clipboard.setData(
-                  const ClipboardData(text: AppConfig.supportEmail));
-              Navigator.of(dialogContext).pop();
-            },
-            child: const Text('Скопировать e-mail'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text(dialogContext.l10n.actionClose),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: () async {
+                final uri = Uri(
+                  scheme: 'mailto',
+                  path: AppConfig.supportEmail,
+                  queryParameters: const {'subject': 'AvaTracker'},
+                );
+                final opened = await launchUrl(
+                  uri,
+                  mode: LaunchMode.externalApplication,
+                );
+                if (!opened) {
+                  await Clipboard.setData(
+                    const ClipboardData(text: AppConfig.supportEmail),
+                  );
+                }
+                if (dialogContext.mounted) {
+                  Navigator.of(dialogContext).pop();
+                }
+              },
+              icon: const Icon(Icons.mail_outline_rounded),
+              label: Text(dialogContext.l10n.writeEmail),
+            ),
           ),
         ],
       ),
@@ -176,8 +135,8 @@ class AboutScreen extends ConsumerWidget {
                   _AboutTile(
                     icon: Icons.translate_rounded,
                     title: l10n.language,
-                    trailingText: _languageName(context, localeCode),
-                    onTap: () => _pickLanguage(context, ref),
+                    trailingText: languageName(context, localeCode),
+                    onTap: () => showLanguagePicker(context, ref),
                     first: true,
                   ),
                   const _AboutDivider(),
@@ -185,12 +144,6 @@ class AboutScreen extends ConsumerWidget {
                     icon: Icons.privacy_tip_outlined,
                     title: l10n.privacyPolicy,
                     onTap: () => context.push('/privacy'),
-                  ),
-                  const _AboutDivider(),
-                  _AboutTile(
-                    icon: Icons.fact_check_outlined,
-                    title: l10n.consentMenu,
-                    onTap: () => _showConsent(context, ref),
                   ),
                   const _AboutDivider(),
                   _AboutTile(

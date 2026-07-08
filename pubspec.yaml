@@ -33,6 +33,9 @@ dependencies:
   # Камера для FaceID-снимка
   camera: ^0.11.0+2
 
+  # Открытие mailto-ссылок для поддержки
+  url_launcher: ^6.3.1
+
   # Форматирование дат (версию пинит flutter_localizations)
   intl: any
 

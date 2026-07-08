@@ -13,7 +13,7 @@
   "errorConnection": "Ошибка соединения. Попробуйте позже",
   "privacyPolicy": "Политика конфиденциальности",
 
-  "loginWelcome": "С возвращением!",
+  "loginWelcome": "Добро пожаловать!",
   "loginSubtitle": "Войдите по номеру телефона и паролю",
   "fieldPhone": "Номер телефона",
   "fieldPassword": "Пароль",
@@ -27,10 +27,10 @@
 
   "registerTitle": "Регистрация",
   "createAccount": "Создайте аккаунт сотрудника",
-  "registerSubtitle": "Данные проверяются по базе сотрудников AvaTracker. На указанный номер придет SMS с кодом подтверждения.",
+  "registerSubtitle": "Введите телефон, ИИН и пароль. Код подтверждения придёт по SMS.",
   "fieldIin": "ИИН",
   "iinHint": "12 цифр",
-  "iinExplanation": "ИИН используется только для подтверждения, что вы являетесь активным сотрудником компании в системе AvaTracker.",
+  "iinExplanation": "Нужен только для проверки сотрудника в AvaTracker.",
   "passwordMinHint": "Минимум 6 символов",
   "confirmPassword": "Подтвердите пароль",
   "repeatPassword": "Повторите пароль",
@@ -85,6 +85,8 @@
   "@versionLabel": { "placeholders": { "version": { "type": "String" } } },
   "consentMenu": "Согласие на обработку данных",
   "support": "Связаться с поддержкой",
+  "supportBody": "По вопросам работы приложения и обработки данных:",
+  "writeEmail": "Написать письмо",
   "deleteAccountMenu": "Запросить удаление аккаунта",
 
   "chooseLanguage": "Выберите язык",
@@ -98,7 +100,7 @@
 
   "scanQrTitle": "Отметка по QR-коду",
   "pointCameraAtQr": "Наведите камеру на QR-код",
-  "within50m": "Вы должны находиться не далее 50 м от точки отметки",
+  "within50m": "Вы должны находиться в радиусе 50 м от точки отметки",
   "stageCheckingPoint": "Проверка точки отметки…",
   "stageCheckingFace": "Проверка лица…",
   "stageCheckingLocation": "Проверка геолокации…",
@@ -137,7 +139,7 @@
   "markPresence": "Проверка присутствия",
 
   "latesThisMonth": "Опозданий за месяц",
-  "redMarksLate": "Красным отмечены дни опозданий",
+  "redMarksLate": "Оранжевым отмечены дни опозданий",
   "cameAt": "Пришёл",
   "bySchedule": "По графику",
   "latenessLabel": "Опоздание",
@@ -216,6 +218,7 @@
   "metricCases": "случаев",
   "metricTotal": "суммарно",
   "metricAverage": "в среднем",
+  "metricMax": "макс. опоздание",
   "maxLateness": "Максимальное опоздание: {duration}",
   "@maxLateness": { "placeholders": { "duration": { "type": "String" } } },
   "latenessHistory": "История опозданий",
@@ -240,7 +243,7 @@
   "deleteAccountTitle": "Удаление аккаунта",
   "deleteAccountAction": "Удалить аккаунт",
   "deleteConfirmTitle": "Удалить аккаунт?",
-  "deleteConfirmBody": "Аккаунт приложения будет удалён без возможности восстановления. Данные учёта рабочего времени сохраняются в системе компании. Для входа потребуется повторная регистрация.",
+  "deleteConfirmBody": "Подтвердите удаление аккаунта приложения. Для повторного входа потребуется новая регистрация.",
   "actionDelete": "Удалить",
   "accountDeleted": "Аккаунт удалён. Зарегистрируйтесь заново"
 }

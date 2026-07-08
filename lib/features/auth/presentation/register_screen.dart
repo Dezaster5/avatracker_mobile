@@ -59,6 +59,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           iin: _iinController.text.trim(),
           password: _passwordController.text,
         );
+    if (ok) TextInput.finishAutofillContext(shouldSave: true);
     if (ok && mounted) context.push('/sms-register');
   }
 
@@ -75,108 +76,116 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         leading: BackButton(onPressed: () => context.pop()),
       ),
       body: SafeArea(
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-            children: [
-              const SizedBox(height: 4),
-              const LangCountryBar(),
-              const SizedBox(height: 12),
-              Text(
-                l10n.createAccount,
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.navy,
-                  letterSpacing: 0,
+        child: AutofillGroup(
+          child: Form(
+            key: _formKey,
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+              children: [
+                const SizedBox(height: 4),
+                const LangCountryBar(),
+                const SizedBox(height: 12),
+                Text(
+                  l10n.createAccount,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.navy,
+                    letterSpacing: 0,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                l10n.registerSubtitle,
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 13.5,
-                  height: 1.45,
+                const SizedBox(height: 6),
+                Text(
+                  l10n.registerSubtitle,
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 13.5,
+                    height: 1.45,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 24),
-              FieldLabel(l10n.fieldPhone),
-              CountryPhoneField(
-                controller: _phoneController,
-                textInputAction: TextInputAction.next,
-              ),
-              const SizedBox(height: 18),
-              FieldLabel(l10n.fieldIin),
-              TextFormField(
-                controller: _iinController,
-                keyboardType: TextInputType.number,
-                textInputAction: TextInputAction.next,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                  LengthLimitingTextInputFormatter(12),
-                ],
-                decoration: InputDecoration(
-                  hintText: l10n.iinHint,
-                  prefixIcon: const Icon(Icons.badge_outlined, size: 22),
+                const SizedBox(height: 24),
+                FieldLabel(l10n.fieldPhone),
+                CountryPhoneField(
+                  controller: _phoneController,
+                  textInputAction: TextInputAction.next,
+                  autofillHints: const [
+                    AutofillHints.username,
+                    AutofillHints.telephoneNumber,
+                  ],
                 ),
-                validator: (value) =>
-                    isValidIin((value ?? '').trim()) ? null : l10n.validatorIin,
-              ),
-              const SizedBox(height: 6),
-              Text(
-                l10n.iinExplanation,
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 12.5,
-                  height: 1.4,
+                const SizedBox(height: 18),
+                FieldLabel(l10n.fieldIin),
+                TextFormField(
+                  controller: _iinController,
+                  keyboardType: TextInputType.number,
+                  textInputAction: TextInputAction.next,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(12),
+                  ],
+                  decoration: InputDecoration(
+                    hintText: l10n.iinHint,
+                    prefixIcon: const Icon(Icons.badge_outlined, size: 22),
+                  ),
+                  validator: (value) => isValidIin((value ?? '').trim())
+                      ? null
+                      : l10n.validatorIin,
                 ),
-              ),
-              const SizedBox(height: 18),
-              FieldLabel(l10n.fieldPassword),
-              PasswordField(
-                controller: _passwordController,
-                hint: l10n.passwordMinHint,
-                textInputAction: TextInputAction.next,
-                autofillHints: const [AutofillHints.newPassword],
-                validator: (value) => isValidPassword(value ?? '')
-                    ? null
-                    : l10n.validatorPassword,
-              ),
-              const SizedBox(height: 18),
-              FieldLabel(l10n.confirmPassword),
-              PasswordField(
-                controller: _confirmController,
-                hint: l10n.repeatPassword,
-                validator: (value) => value == _passwordController.text
-                    ? null
-                    : l10n.validatorPasswordsMatch,
-                onSubmitted: (_) => _submit(),
-              ),
-              const SizedBox(height: 18),
-              _ConsentCheckbox(
-                value: _consent,
-                onChanged: (v) => setState(() => _consent = v),
-                onPolicyTap: () => context.push('/privacy'),
-              ),
-              ErrorBanner(message: registration.error),
-              const SizedBox(height: 20),
-              PrimaryButton(
-                label: l10n.getSmsCode,
-                icon: Icons.sms_outlined,
-                loading: registration.sending,
-                onPressed: _consent ? _submit : null,
-              ),
-              const SizedBox(height: 16),
-              Center(
-                child: TextButton(
-                  onPressed: () => context.pop(),
-                  child: Text(l10n.haveAccount),
+                const SizedBox(height: 6),
+                Text(
+                  l10n.iinExplanation,
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12.5,
+                    height: 1.4,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-            ],
+                const SizedBox(height: 18),
+                FieldLabel(l10n.fieldPassword),
+                PasswordField(
+                  controller: _passwordController,
+                  hint: l10n.passwordMinHint,
+                  textInputAction: TextInputAction.next,
+                  autofillHints: const [AutofillHints.newPassword],
+                  validator: (value) => isValidPassword(value ?? '')
+                      ? null
+                      : l10n.validatorPassword,
+                ),
+                const SizedBox(height: 18),
+                FieldLabel(l10n.confirmPassword),
+                PasswordField(
+                  controller: _confirmController,
+                  hint: l10n.repeatPassword,
+                  autofillHints: const [AutofillHints.newPassword],
+                  validator: (value) => value == _passwordController.text
+                      ? null
+                      : l10n.validatorPasswordsMatch,
+                  onSubmitted: (_) => _submit(),
+                ),
+                const SizedBox(height: 18),
+                _ConsentCheckbox(
+                  value: _consent,
+                  onChanged: (v) => setState(() => _consent = v),
+                  onPolicyTap: () => context.push('/privacy'),
+                ),
+                ErrorBanner(message: registration.error),
+                const SizedBox(height: 20),
+                PrimaryButton(
+                  label: l10n.getSmsCode,
+                  icon: Icons.sms_outlined,
+                  loading: registration.sending,
+                  onPressed: _consent ? _submit : null,
+                ),
+                const SizedBox(height: 16),
+                Center(
+                  child: TextButton(
+                    onPressed: () => context.pop(),
+                    child: Text(l10n.haveAccount),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+            ),
           ),
         ),
       ),

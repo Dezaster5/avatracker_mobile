@@ -27,8 +27,13 @@ class AvaTrackerApp extends ConsumerWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      builder: (context, child) =>
-          DevToolsOverlay(child: child ?? const SizedBox.shrink()),
+      builder: (context, child) => DevToolsOverlay(
+        child: Listener(
+          behavior: HitTestBehavior.translucent,
+          onPointerDown: (_) => FocusManager.instance.primaryFocus?.unfocus(),
+          child: child ?? const SizedBox.shrink(),
+        ),
+      ),
     );
   }
 }

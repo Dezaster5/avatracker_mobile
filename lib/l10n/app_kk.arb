@@ -13,7 +13,7 @@
   "errorConnection": "Байланыс қатесі. Кейінірек қайталап көріңіз",
   "privacyPolicy": "Құпиялылық саясаты",
 
-  "loginWelcome": "Қайта келуіңізбен!",
+  "loginWelcome": "Қош келдіңіз!",
   "loginSubtitle": "Телефон нөмірі мен құпия сөз арқылы кіріңіз",
   "fieldPhone": "Телефон нөмірі",
   "fieldPassword": "Құпия сөз",
@@ -27,10 +27,10 @@
 
   "registerTitle": "Тіркелу",
   "createAccount": "Қызметкер аккаунтын жасаңыз",
-  "registerSubtitle": "Деректер AvaTracker қызметкерлер базасы бойынша тексеріледі. Көрсетілген нөмірге растау коды бар SMS келеді.",
+  "registerSubtitle": "Телефонды, ЖСН-ді және құпия сөзді енгізіңіз. Растау коды SMS арқылы келеді.",
   "fieldIin": "ЖСН",
   "iinHint": "12 сан",
-  "iinExplanation": "ЖСН тек сіздің AvaTracker жүйесінде компанияның белсенді қызметкері екеніңізді растау үшін пайдаланылады.",
+  "iinExplanation": "AvaTracker жүйесіндегі қызметкерді тексеру үшін ғана қажет.",
   "passwordMinHint": "Кемінде 6 таңба",
   "confirmPassword": "Құпия сөзді растаңыз",
   "repeatPassword": "Құпия сөзді қайталаңыз",
@@ -82,6 +82,8 @@
   "versionLabel": "Нұсқа {version}",
   "consentMenu": "Деректерді өңдеуге келісім",
   "support": "Қолдау қызметіне хабарласу",
+  "supportBody": "Қосымша жұмысы және деректерді өңдеу сұрақтары бойынша:",
+  "writeEmail": "Хат жазу",
   "deleteAccountMenu": "Аккаунтты жоюды сұрау",
 
   "chooseLanguage": "Тілді таңдаңыз",
@@ -95,7 +97,7 @@
 
   "scanQrTitle": "QR-код бойынша белгі",
   "pointCameraAtQr": "Камераны QR-кодқа бағыттаңыз",
-  "within50m": "Белгі нүктесінен 50 м-ден алыс болмауыңыз керек",
+  "within50m": "Белгі нүктесінен 50 м радиуста болуыңыз керек",
   "stageCheckingPoint": "Белгі нүктесін тексеру…",
   "stageCheckingFace": "Бет тексерілуде…",
   "stageCheckingLocation": "Геолокацияны тексеру…",
@@ -132,7 +134,7 @@
   "markPresence": "Қатысуды тексеру",
 
   "latesThisMonth": "Айдағы кешігулер",
-  "redMarksLate": "Қызылмен кешігу күндері белгіленген",
+  "redMarksLate": "Қызғылт сары түспен кешігу күндері белгіленген",
   "cameAt": "Келді",
   "bySchedule": "Кесте бойынша",
   "latenessLabel": "Кешігу",
@@ -181,6 +183,7 @@
   "metricCases": "жағдай",
   "metricTotal": "барлығы",
   "metricAverage": "орташа",
+  "metricMax": "ең ұзақ кешігу",
   "maxLateness": "Ең ұзақ кешігу: {duration}",
   "latenessHistory": "Кешігулер тарихы",
   "plannedArrival": "Жоспар {planned} · келуі {actual}",
@@ -198,7 +201,7 @@
   "deleteAccountTitle": "Аккаунтты жою",
   "deleteAccountAction": "Аккаунтты жою",
   "deleteConfirmTitle": "Аккаунтты жоясыз ба?",
-  "deleteConfirmBody": "Қосымша аккаунты қалпына келтірусіз жойылады. Жұмыс уақытын есепке алу деректері компания жүйесінде сақталады. Кіру үшін қайта тіркелу қажет.",
+  "deleteConfirmBody": "Қосымша аккаунтын жоюды растаңыз. Қайта кіру үшін жаңа тіркелу қажет.",
   "actionDelete": "Жою",
   "accountDeleted": "Аккаунт жойылды. Қайта тіркеліңіз"
 }

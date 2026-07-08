@@ -7,11 +7,11 @@
 Версия задаётся в `pubspec.yaml`:
 
 ```yaml
-version: 1.0.0+8
+version: 1.0.0+9
 ```
 
 - `1.0.0` — `versionName`, отображаемая версия;
-- `8` — `versionCode`, который должен увеличиваться при каждой публикации.
+- `9` — `versionCode`, который должен увеличиваться при каждой публикации.
 
 Строка `AppConfig.appVersion` должна соответствовать `versionName`.
 
@@ -67,6 +67,7 @@ APK для внутреннего распространения:
 ```powershell
 flutter build apk --release `
   --dart-define=MOCK_API=false `
+  --dart-define=TEST_AUTH=false `
   --dart-define=API_BASE_URL=https://avatracker.online/api/v1
 ```
 
@@ -75,6 +76,7 @@ App Bundle для Google Play:
 ```powershell
 flutter build appbundle --release `
   --dart-define=MOCK_API=false `
+  --dart-define=TEST_AUTH=false `
   --dart-define=API_BASE_URL=https://avatracker.online/api/v1
 ```
 
@@ -104,6 +106,34 @@ Copy-Item `
 ```
 
 APK и AAB не коммитятся. При необходимости приложите артефакт к GitHub Release.
+
+## 5.1. Проверенная сборка 2026-07-08
+
+Последняя локально собранная Android release-сборка:
+
+- файл: `AvaTracker-v1.0.0.apk`;
+- `versionName`: `1.0.0`;
+- `versionCode`: `9`;
+- размер: ~74 MB;
+- SHA-256:
+  `450a283884ed854efd946c1ac1c7d6c63b827f405a562bbe139a2068065e6abc`;
+- команда сборки:
+
+```powershell
+flutter build apk --release `
+  --dart-define=MOCK_API=false `
+  --dart-define=TEST_AUTH=false `
+  --dart-define=API_BASE_URL=https://avatracker.online/api/v1
+```
+
+Проверки перед сборкой:
+
+- `flutter analyze` — без ошибок;
+- `flutter test` — 43 теста прошли.
+
+Ограничение: сборка подписана `CN=Android Debug`, потому что production
+keystore ещё не подключён. Для Google Play или стабильных обновлений нужен
+постоянный release/upload key из раздела 3.
 
 ## 6. iOS
 

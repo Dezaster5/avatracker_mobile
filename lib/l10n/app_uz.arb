@@ -27,10 +27,10 @@
 
   "registerTitle": "Roʻyxatdan oʻtish",
   "createAccount": "Xodim hisobini yarating",
-  "registerSubtitle": "Maʼlumotlar AvaTracker xodimlar bazasi boʻyicha tekshiriladi. Koʻrsatilgan raqamga tasdiqlash kodi bilan SMS keladi.",
+  "registerSubtitle": "Telefon, IIN va parolni kiriting. Tasdiqlash kodi SMS orqali keladi.",
   "fieldIin": "IIN",
   "iinHint": "12 raqam",
-  "iinExplanation": "IIN faqat AvaTracker tizimida kompaniyaning faol xodimi ekaningizni tasdiqlash uchun ishlatiladi.",
+  "iinExplanation": "Faqat AvaTracker tizimidagi xodimni tekshirish uchun kerak.",
   "passwordMinHint": "Kamida 6 belgi",
   "confirmPassword": "Parolni tasdiqlang",
   "repeatPassword": "Parolni takrorlang",
@@ -82,6 +82,8 @@
   "versionLabel": "Versiya {version}",
   "consentMenu": "Maʼlumotlarni qayta ishlashga rozilik",
   "support": "Qoʻllab-quvvatlashga murojaat",
+  "supportBody": "Ilova ishlashi va maʼlumotlarni qayta ishlash bo‘yicha:",
+  "writeEmail": "Xat yozish",
   "deleteAccountMenu": "Hisobni oʻchirishni soʻrash",
 
   "chooseLanguage": "Tilni tanlang",
@@ -95,7 +97,7 @@
 
   "scanQrTitle": "QR-kod boʻyicha belgi",
   "pointCameraAtQr": "Kamerani QR-kodga qarating",
-  "within50m": "Belgi nuqtasidan 50 m dan uzoqda boʻlmasligingiz kerak",
+  "within50m": "Belgi nuqtasidan 50 m radiusda boʻlishingiz kerak",
   "stageCheckingPoint": "Belgi nuqtasi tekshirilmoqda…",
   "stageCheckingFace": "Yuz tekshirilmoqda…",
   "stageCheckingLocation": "Geolokatsiya tekshirilmoqda…",
@@ -132,7 +134,7 @@
   "markPresence": "Ishtirokni tekshirish",
 
   "latesThisMonth": "Oydagi kechikishlar",
-  "redMarksLate": "Qizil rang bilan kechikish kunlari belgilangan",
+  "redMarksLate": "To'q sariq rang bilan kechikish kunlari belgilangan",
   "cameAt": "Keldi",
   "bySchedule": "Jadval boʻyicha",
   "latenessLabel": "Kechikish",
@@ -181,6 +183,7 @@
   "metricCases": "holatlar",
   "metricTotal": "jami",
   "metricAverage": "oʻrtacha",
+  "metricMax": "eng katta kechikish",
   "maxLateness": "Eng katta kechikish: {duration}",
   "latenessHistory": "Kechikishlar tarixi",
   "plannedArrival": "Reja {planned} · kelish {actual}",
@@ -198,7 +201,7 @@
   "deleteAccountTitle": "Hisobni oʻchirish",
   "deleteAccountAction": "Hisobni oʻchirish",
   "deleteConfirmTitle": "Hisobni oʻchirasizmi?",
-  "deleteConfirmBody": "Ilova hisobi tiklab boʻlmaydigan tarzda oʻchiriladi. Ish vaqtini hisobga olish maʼlumotlari kompaniya tizimida saqlanadi. Kirish uchun qayta roʻyxatdan oʻtish talab qilinadi.",
+  "deleteConfirmBody": "Ilova hisobini oʻchirishni tasdiqlang. Qayta kirish uchun yangidan roʻyxatdan oʻtish kerak.",
   "actionDelete": "Oʻchirish",
   "accountDeleted": "Hisob oʻchirildi. Qayta roʻyxatdan oʻting"
 }

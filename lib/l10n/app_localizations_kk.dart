@@ -42,7 +42,7 @@ class AppLocalizationsKk extends AppLocalizations {
   String get privacyPolicy => 'Құпиялылық саясаты';
 
   @override
-  String get loginWelcome => 'Қайта келуіңізбен!';
+  String get loginWelcome => 'Қош келдіңіз!';
 
   @override
   String get loginSubtitle => 'Телефон нөмірі мен құпия сөз арқылы кіріңіз';
@@ -82,7 +82,7 @@ class AppLocalizationsKk extends AppLocalizations {
 
   @override
   String get registerSubtitle =>
-      'Деректер AvaTracker қызметкерлер базасы бойынша тексеріледі. Көрсетілген нөмірге растау коды бар SMS келеді.';
+      'Телефонды, ЖСН-ді және құпия сөзді енгізіңіз. Растау коды SMS арқылы келеді.';
 
   @override
   String get fieldIin => 'ЖСН';
@@ -92,7 +92,7 @@ class AppLocalizationsKk extends AppLocalizations {
 
   @override
   String get iinExplanation =>
-      'ЖСН тек сіздің AvaTracker жүйесінде компанияның белсенді қызметкері екеніңізді растау үшін пайдаланылады.';
+      'AvaTracker жүйесіндегі қызметкерді тексеру үшін ғана қажет.';
 
   @override
   String get passwordMinHint => 'Кемінде 6 таңба';
@@ -240,6 +240,13 @@ class AppLocalizationsKk extends AppLocalizations {
   String get support => 'Қолдау қызметіне хабарласу';
 
   @override
+  String get supportBody =>
+      'Қосымша жұмысы және деректерді өңдеу сұрақтары бойынша:';
+
+  @override
+  String get writeEmail => 'Хат жазу';
+
+  @override
   String get deleteAccountMenu => 'Аккаунтты жоюды сұрау';
 
   @override
@@ -270,7 +277,7 @@ class AppLocalizationsKk extends AppLocalizations {
   String get pointCameraAtQr => 'Камераны QR-кодқа бағыттаңыз';
 
   @override
-  String get within50m => 'Белгі нүктесінен 50 м-ден алыс болмауыңыз керек';
+  String get within50m => 'Белгі нүктесінен 50 м радиуста болуыңыз керек';
 
   @override
   String get stageCheckingPoint => 'Белгі нүктесін тексеру…';
@@ -382,7 +389,7 @@ class AppLocalizationsKk extends AppLocalizations {
   String get latesThisMonth => 'Айдағы кешігулер';
 
   @override
-  String get redMarksLate => 'Қызылмен кешігу күндері белгіленген';
+  String get redMarksLate => 'Қызғылт сары түспен кешігу күндері белгіленген';
 
   @override
   String get cameAt => 'Келді';
@@ -552,6 +559,9 @@ class AppLocalizationsKk extends AppLocalizations {
   String get metricAverage => 'орташа';
 
   @override
+  String get metricMax => 'ең ұзақ кешігу';
+
+  @override
   String maxLateness(String duration) {
     return 'Ең ұзақ кешігу: $duration';
   }
@@ -608,7 +618,7 @@ class AppLocalizationsKk extends AppLocalizations {
 
   @override
   String get deleteConfirmBody =>
-      'Қосымша аккаунты қалпына келтірусіз жойылады. Жұмыс уақытын есепке алу деректері компания жүйесінде сақталады. Кіру үшін қайта тіркелу қажет.';
+      'Қосымша аккаунтын жоюды растаңыз. Қайта кіру үшін жаңа тіркелу қажет.';
 
   @override
   String get actionDelete => 'Жою';

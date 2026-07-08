@@ -14,7 +14,6 @@ import '../features/auth/presentation/splash_screen.dart';
 import '../features/auth/providers.dart';
 import '../features/legal/presentation/about_screen.dart';
 import '../features/legal/presentation/delete_account_screen.dart';
-import '../features/legal/presentation/intro_screen.dart';
 import '../features/legal/presentation/privacy_policy_screen.dart';
 import '../features/profile/presentation/change_password_screen.dart';
 import '../features/profile/presentation/profile_screen.dart';
@@ -28,7 +27,6 @@ const _authFlow = {
   '/forgot',
   '/sms-reset',
   '/reset-password',
-  '/intro',
 };
 
 /// Страницы, доступные без сессии: auth-флоу + Политика конфиденциальности.
@@ -59,8 +57,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           return location == '/splash' ? null : '/splash';
         case AuthStatus.unauthenticated:
           if (_isPublic(location)) return null;
-          // До входа сначала показываем экран с целью приложения (App Review).
-          return ref.read(introSeenProvider) ? '/login' : '/intro';
+          return '/login';
         case AuthStatus.authenticated:
           final onGuardPages =
               location == '/splash' || _authFlow.contains(location);
@@ -69,7 +66,6 @@ final routerProvider = Provider<GoRouter>((ref) {
     },
     routes: [
       GoRoute(path: '/splash', builder: (_, __) => const SplashScreen()),
-      GoRoute(path: '/intro', builder: (_, __) => const IntroScreen()),
       GoRoute(
           path: '/privacy', builder: (_, __) => const PrivacyPolicyScreen()),
       GoRoute(path: '/about', builder: (_, __) => const AboutScreen()),

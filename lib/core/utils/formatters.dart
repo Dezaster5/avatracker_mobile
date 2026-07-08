@@ -98,12 +98,41 @@ String phoneNational(String input, Country country) {
       digits.startsWith('8')) {
     digits = digits.substring(1);
   }
-  if (digits.length > n) digits = digits.substring(digits.length - n);
+  return digits;
+}
+
+String _limitedPhoneNational(String input, Country country) {
+  final digits = phoneNational(input, country);
+  return digits.length > country.nationalLength
+      ? digits.substring(0, country.nationalLength)
+      : digits;
+}
+
+String _phoneFieldNational(String input, Country country) {
+  final raw = input.trim();
+  var digits = raw.replaceAll(RegExp(r'\D'), '');
+  final code = country.dialCode.replaceAll(RegExp(r'\D'), '');
+  final n = country.nationalLength;
+
+  if (raw.startsWith('+') && digits.length > n && digits.startsWith(code)) {
+    digits = digits.substring(code.length);
+  } else if (country.isoCode == 'KZ' &&
+      digits.length > n &&
+      digits.startsWith('8')) {
+    digits = digits.substring(1);
+  } else if (country.isoCode != 'KZ' &&
+      digits.length > n &&
+      digits.startsWith(code)) {
+    digits = digits.substring(code.length);
+  }
   return digits;
 }
 
 /// Форматирует национальные цифры группами: KZ «700 123 45 67», UZ «90 123 45 67».
 String formatNational(String national, Country country) {
+  if (national.length > country.nationalLength) {
+    national = national.substring(0, country.nationalLength);
+  }
   final parts = <String>[];
   var i = 0;
   for (final g in country.groups) {
@@ -122,17 +151,17 @@ bool isValidPhoneFor(String input, Country country) =>
 /// `dial_code` + национальный номер для login/register.
 ({String dialCode, String number}) splitPhoneFor(
         String input, Country country) =>
-    (dialCode: country.dialCode, number: phoneNational(input, country));
+    (dialCode: country.dialCode, number: _limitedPhoneNational(input, country));
 
 /// Полный номер с кодом страны без «+»: KZ «77001234567», UZ «998901234567».
 String fullPhoneFor(String input, Country country) {
   final code = country.dialCode.replaceAll(RegExp(r'\D'), '');
-  return '$code${phoneNational(input, country)}';
+  return '$code${_limitedPhoneNational(input, country)}';
 }
 
 /// `+77001234567` / `+998901234567` — для отображения (хранения телефона сессии).
 String e164For(String input, Country country) =>
-    '${country.dialCode}${phoneNational(input, country)}';
+    '${country.dialCode}${_limitedPhoneNational(input, country)}';
 
 /// Красивое отображение E.164-номера с учётом страны:
 /// `+7 700 123 45 67` / `+998 90 123 45 67`.
@@ -168,7 +197,10 @@ class CountryPhoneInputFormatter extends TextInputFormatter {
     TextEditingValue oldValue,
     TextEditingValue newValue,
   ) {
-    final national = phoneNational(newValue.text, country);
+    final national = _phoneFieldNational(newValue.text, country);
+    if (national.length > country.nationalLength) {
+      return oldValue;
+    }
     final text = national.isEmpty ? '' : formatNational(national, country);
     return TextEditingValue(
       text: text,

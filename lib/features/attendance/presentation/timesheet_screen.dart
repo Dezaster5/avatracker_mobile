@@ -94,8 +94,6 @@ class _TimesheetScreenState extends ConsumerState<TimesheetScreen> {
                 };
                 return Column(
                   children: [
-                    _SummaryCard(data: data),
-                    const SizedBox(height: 12),
                     Card(
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(12, 14, 12, 10),
@@ -143,84 +141,6 @@ class _TimesheetScreenState extends ConsumerState<TimesheetScreen> {
                 );
               },
             ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SummaryCard extends StatelessWidget {
-  const _SummaryCard({required this.data});
-
-  final TardinessAnalytics data;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final schedule = [
-      if (data.scheduleName.isNotEmpty) l10n.scheduleName(data.scheduleName),
-      if (data.scheduleStartLabel.isNotEmpty)
-        l10n.scheduleStart(data.scheduleStartLabel),
-    ].join(' · ');
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.latesThisMonth,
-              style: const TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 14,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  '${data.count}',
-                  style: const TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.navy,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                if (data.count > 0)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 5),
-                    child: Text(
-                      '${l10n.latenessAverage(l10n.formatDuration(data.avgTardiness))} · '
-                      '${l10n.latenessMax(l10n.formatDuration(data.maxTardiness))}',
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            if (schedule.isNotEmpty) ...[
-              const SizedBox(height: 14),
-              Row(
-                children: [
-                  const Icon(Icons.schedule_rounded,
-                      size: 18, color: AppColors.textSecondary),
-                  const SizedBox(width: 8),
-                  Text(
-                    schedule,
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 13.5,
-                    ),
-                  ),
-                ],
-              ),
-            ],
           ],
         ),
       ),

@@ -19,7 +19,6 @@ class AnalyticsScreen extends ConsumerStatefulWidget {
 }
 
 class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
-  AnalyticsPeriod _period = AnalyticsPeriod.month;
   late DateTime _anchor;
 
   @override
@@ -30,17 +29,15 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
   }
 
   AnalyticsRange get _range =>
-      AnalyticsRange.forPeriod(_period, _anchor).clampEnd(AppConfig.today);
+      AnalyticsRange.forPeriod(AnalyticsPeriod.month, _anchor)
+          .clampEnd(AppConfig.today);
 
-  DateTime _shiftedAnchor(int direction) {
-    if (_period == AnalyticsPeriod.week) {
-      return _anchor.add(Duration(days: 7 * direction));
-    }
-    return DateTime(_anchor.year, _anchor.month + direction, 1);
-  }
+  DateTime _shiftedAnchor(int direction) =>
+      DateTime(_anchor.year, _anchor.month + direction, 1);
 
   bool get _canGoNext {
-    final next = AnalyticsRange.forPeriod(_period, _shiftedAnchor(1));
+    final next =
+        AnalyticsRange.forPeriod(AnalyticsPeriod.month, _shiftedAnchor(1));
     final today = AppConfig.today;
     return !next.start.isAfter(today);
   }
@@ -64,31 +61,8 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
           children: [
-            SizedBox(
-              width: double.infinity,
-              child: SegmentedButton<AnalyticsPeriod>(
-                showSelectedIcon: false,
-                segments: [
-                  ButtonSegment(
-                    value: AnalyticsPeriod.week,
-                    label: Text(l10n.analyticsWeek),
-                    icon: const Icon(Icons.date_range_rounded),
-                  ),
-                  ButtonSegment(
-                    value: AnalyticsPeriod.month,
-                    label: Text(l10n.analyticsMonth),
-                    icon: const Icon(Icons.calendar_month_rounded),
-                  ),
-                ],
-                selected: {_period},
-                onSelectionChanged: (selection) {
-                  setState(() => _period = selection.first);
-                },
-              ),
-            ),
-            const SizedBox(height: 14),
             _RangeSwitcher(
-              title: _rangeTitle(range, _period, l10n.localeName),
+              title: _rangeTitle(range, l10n.localeName),
               onPrevious: () => setState(() => _anchor = _shiftedAnchor(-1)),
               onNext: _canGoNext
                   ? () => setState(() => _anchor = _shiftedAnchor(1))
@@ -108,7 +82,6 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
               ),
               data: (data) => _AnalyticsContent(
                 analytics: data,
-                period: _period,
               ),
             ),
           ],
@@ -162,11 +135,9 @@ class _RangeSwitcher extends StatelessWidget {
 class _AnalyticsContent extends StatelessWidget {
   const _AnalyticsContent({
     required this.analytics,
-    required this.period,
   });
 
   final TardinessAnalytics analytics;
-  final AnalyticsPeriod period;
 
   @override
   Widget build(BuildContext context) {
@@ -181,75 +152,8 @@ class _AnalyticsContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(22),
-          decoration: BoxDecoration(
-            gradient: AppColors.navyGradient,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Icon(
-                    Icons.schedule_rounded,
-                    color: Colors.white60,
-                    size: 19,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    period == AnalyticsPeriod.week
-                        ? l10n.analyticsLatenessForWeek
-                        : l10n.analyticsLatenessForMonth,
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                l10n.latenessCases(analytics.count),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 32,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                analytics.count == 0
-                    ? l10n.analyticsNoLateness
-                    : l10n.analyticsSummary(
-                        l10n.formatDuration(
-                          analytics.totalTardinessMinutes,
-                        ),
-                        l10n.formatDuration(analytics.avgTardiness),
-                      ),
-                style: const TextStyle(
-                  color: Colors.white60,
-                  fontSize: 13,
-                  height: 1.4,
-                ),
-              ),
-              if (scheduleParts.isNotEmpty) ...[
-                const SizedBox(height: 6),
-                Text(
-                  scheduleParts.join(' · '),
-                  style: const TextStyle(
-                    color: Colors.white60,
-                    fontSize: 13,
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-        const SizedBox(height: 22),
+        _MetricGrid(analytics: analytics),
+        const SizedBox(height: 18),
         Text(
           l10n.latenessLabel,
           style: const TextStyle(
@@ -267,72 +171,21 @@ class _AnalyticsContent extends StatelessWidget {
             height: 1.4,
           ),
         ),
+        if (scheduleParts.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          Text(
+            scheduleParts.join(' · '),
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 12.5,
+              height: 1.4,
+            ),
+          ),
+        ],
         const SizedBox(height: 14),
         if (analytics.count == 0)
           const _NoLateArrivals()
         else ...[
-          Row(
-            children: [
-              Expanded(
-                child: _LateMetric(
-                  value: '${analytics.count}',
-                  label: l10n.metricCases,
-                  icon: Icons.event_busy_rounded,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _LateMetric(
-                  value: l10n.formatDuration(analytics.totalTardinessMinutes),
-                  label: l10n.metricTotal,
-                  icon: Icons.timer_outlined,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _LateMetric(
-                  value: l10n.formatDuration(analytics.avgTardiness),
-                  label: l10n.metricAverage,
-                  icon: Icons.functions_rounded,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-            decoration: BoxDecoration(
-              color: AppColors.warning.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: AppColors.warning.withValues(alpha: 0.25),
-              ),
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.warning_amber_rounded,
-                  color: AppColors.warning,
-                  size: 22,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    l10n.maxLateness(
-                      l10n.formatDuration(analytics.maxTardiness),
-                    ),
-                    style: const TextStyle(
-                      color: AppColors.navy,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13.5,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
           Text(
             l10n.latenessHistory,
             style: const TextStyle(
@@ -347,6 +200,60 @@ class _AnalyticsContent extends StatelessWidget {
             const SizedBox(height: 8),
           ],
         ],
+      ],
+    );
+  }
+}
+
+class _MetricGrid extends StatelessWidget {
+  const _MetricGrid({required this.analytics});
+
+  final TardinessAnalytics analytics;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _LateMetric(
+                value: '${analytics.count}',
+                label: l10n.metricCases,
+                icon: Icons.event_busy_rounded,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _LateMetric(
+                value: l10n.formatDuration(analytics.totalTardinessMinutes),
+                label: l10n.metricTotal,
+                icon: Icons.timer_outlined,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: _LateMetric(
+                value: l10n.formatDuration(analytics.avgTardiness),
+                label: l10n.metricAverage,
+                icon: Icons.functions_rounded,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _LateMetric(
+                value: l10n.formatDuration(analytics.maxTardiness),
+                label: l10n.metricMax,
+                icon: Icons.warning_amber_rounded,
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }
@@ -517,13 +424,7 @@ class _NoLateArrivals extends StatelessWidget {
 
 String _rangeTitle(
   AnalyticsRange range,
-  AnalyticsPeriod period,
   String locale,
 ) {
-  if (period == AnalyticsPeriod.month) {
-    return formatMonthTitle(range.start, locale: locale);
-  }
-  final start = DateFormat('d MMM', locale).format(range.start);
-  final end = DateFormat('d MMM yyyy', locale).format(range.end);
-  return '$start – $end';
+  return formatMonthTitle(range.start, locale: locale);
 }

@@ -169,7 +169,7 @@ abstract class AppLocalizations {
   /// No description provided for @loginWelcome.
   ///
   /// In ru, this message translates to:
-  /// **'С возвращением!'**
+  /// **'Добро пожаловать!'**
   String get loginWelcome;
 
   /// No description provided for @loginSubtitle.
@@ -247,7 +247,7 @@ abstract class AppLocalizations {
   /// No description provided for @registerSubtitle.
   ///
   /// In ru, this message translates to:
-  /// **'Данные проверяются по базе сотрудников AvaTracker. На указанный номер придет SMS с кодом подтверждения.'**
+  /// **'Введите телефон, ИИН и пароль. Код подтверждения придёт по SMS.'**
   String get registerSubtitle;
 
   /// No description provided for @fieldIin.
@@ -265,7 +265,7 @@ abstract class AppLocalizations {
   /// No description provided for @iinExplanation.
   ///
   /// In ru, this message translates to:
-  /// **'ИИН используется только для подтверждения, что вы являетесь активным сотрудником компании в системе AvaTracker.'**
+  /// **'Нужен только для проверки сотрудника в AvaTracker.'**
   String get iinExplanation;
 
   /// No description provided for @passwordMinHint.
@@ -538,6 +538,18 @@ abstract class AppLocalizations {
   /// **'Связаться с поддержкой'**
   String get support;
 
+  /// No description provided for @supportBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'По вопросам работы приложения и обработки данных:'**
+  String get supportBody;
+
+  /// No description provided for @writeEmail.
+  ///
+  /// In ru, this message translates to:
+  /// **'Написать письмо'**
+  String get writeEmail;
+
   /// No description provided for @deleteAccountMenu.
   ///
   /// In ru, this message translates to:
@@ -601,7 +613,7 @@ abstract class AppLocalizations {
   /// No description provided for @within50m.
   ///
   /// In ru, this message translates to:
-  /// **'Вы должны находиться не далее 50 м от точки отметки'**
+  /// **'Вы должны находиться в радиусе 50 м от точки отметки'**
   String get within50m;
 
   /// No description provided for @stageCheckingPoint.
@@ -805,7 +817,7 @@ abstract class AppLocalizations {
   /// No description provided for @redMarksLate.
   ///
   /// In ru, this message translates to:
-  /// **'Красным отмечены дни опозданий'**
+  /// **'Оранжевым отмечены дни опозданий'**
   String get redMarksLate;
 
   /// No description provided for @cameAt.
@@ -1078,6 +1090,12 @@ abstract class AppLocalizations {
   /// **'в среднем'**
   String get metricAverage;
 
+  /// No description provided for @metricMax.
+  ///
+  /// In ru, this message translates to:
+  /// **'макс. опоздание'**
+  String get metricMax;
+
   /// No description provided for @maxLateness.
   ///
   /// In ru, this message translates to:
@@ -1177,7 +1195,7 @@ abstract class AppLocalizations {
   /// No description provided for @deleteConfirmBody.
   ///
   /// In ru, this message translates to:
-  /// **'Аккаунт приложения будет удалён без возможности восстановления. Данные учёта рабочего времени сохраняются в системе компании. Для входа потребуется повторная регистрация.'**
+  /// **'Подтвердите удаление аккаунта приложения. Для повторного входа потребуется новая регистрация.'**
   String get deleteConfirmBody;
 
   /// No description provided for @actionDelete.

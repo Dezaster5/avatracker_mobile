@@ -22,12 +22,11 @@ identify an active employee account in the internal AvaTracker system.
 During QR check-in, the app captures a face photo and sends it to our server for
 biometric verification against the employee's stored photo, to confirm the person
 checking in is the account owner. This is explained in the in-app Privacy Policy
-and consent screen shown before registration.
+and the explicit consent checkbox shown on the registration screen.
 
-An informational screen explaining the purpose and the processed data is shown
-before login, and registration requires explicit consent to personal data
-processing. A Privacy Policy is available in the app (Profile → About →
-Privacy Policy) and before login.
+Registration requires explicit consent to personal data processing. A Privacy
+Policy is available in the app (Profile → About → Privacy Policy) and before
+login.
 
 Test credentials:
 IIN: 123456789012
@@ -103,7 +102,8 @@ AvaTracker — вход только по корпоративному ИИН к
 дополнительных вопросов от ревью. Меры уже приняты:
 1. Test-аккаунт и тестовые данные обязательно указаны в Review Notes (см. §1)
    — без них ревьюер не сможет пройти дальше экрана входа и отклонит заявку.
-2. Explicit-объяснение назначения приложения на экране `/intro` до входа.
+2. Privacy Policy доступна до входа, а регистрация требует явного согласия на
+   обработку персональных данных.
 3. Если приложение остаётся строго внутренним (не для публичного поиска в
    App Store), стоит рассмотреть распространение через **Apple Business
    Manager → Custom Apps** — приватная дистрибуция только для организации,
@@ -116,13 +116,11 @@ AvaTracker — вход только по корпоративному ИИН к
 
 | Требование | Где |
 |---|---|
-| Экран цели приложения перед вводом ИИН/телефона | `/intro` (перед входом) |
-| Кнопки «Продолжить» + «Политика конфиденциальности» | экран intro |
 | Чекбокс согласия на обработку ПДн, кнопка неактивна без него | экран регистрации |
 | Сохранение факта согласия (iin, версия, дата) | secure storage `consent_json` |
 | Пояснение назначения ИИН | экран регистрации |
-| Privacy Policy внутри приложения (9 разделов) | `/privacy` (Профиль → О приложении, intro, вход) |
-| Экран «О приложении» (версия, политика, согласие, удаление, поддержка) | `/about` |
+| Privacy Policy внутри приложения (9 разделов) | `/privacy` (Профиль → О приложении, вход) |
+| Экран «О приложении» (версия, политика, удаление, поддержка) | `/about` |
 | Удаление аккаунта | `/delete-account` → `DELETE /api/mobile/profile/delete/` (полное удаление + разлогин) |
 | iOS permission strings (камера, гео When-In-Use, микрофон) | `ios/Runner/Info.plist` |
 | Геолокация только When In Use, без Always/фона | нет запроса Always в коде |

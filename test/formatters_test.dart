@@ -102,6 +102,21 @@ void main() {
       expect(countryOfE164('+998901234567').isoCode, 'UZ');
       expect(countryOfE164('+77001234567').isoCode, 'KZ');
     });
+
+    test('форматтер не принимает цифры сверх лимита страны', () {
+      final formatter = CountryPhoneInputFormatter(kz);
+      final full = formatter.formatEditUpdate(
+        TextEditingValue.empty,
+        const TextEditingValue(text: '7001234567'),
+      );
+      expect(full.text, '700 123 45 67');
+
+      final overflow = formatter.formatEditUpdate(
+        full,
+        const TextEditingValue(text: '700 123 45 678'),
+      );
+      expect(overflow.text, full.text);
+    });
   });
 
   test('isValidKzPhone', () {

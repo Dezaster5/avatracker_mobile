@@ -42,7 +42,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get privacyPolicy => 'Политика конфиденциальности';
 
   @override
-  String get loginWelcome => 'С возвращением!';
+  String get loginWelcome => 'Добро пожаловать!';
 
   @override
   String get loginSubtitle => 'Войдите по номеру телефона и паролю';
@@ -82,7 +82,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get registerSubtitle =>
-      'Данные проверяются по базе сотрудников AvaTracker. На указанный номер придет SMS с кодом подтверждения.';
+      'Введите телефон, ИИН и пароль. Код подтверждения придёт по SMS.';
 
   @override
   String get fieldIin => 'ИИН';
@@ -92,7 +92,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get iinExplanation =>
-      'ИИН используется только для подтверждения, что вы являетесь активным сотрудником компании в системе AvaTracker.';
+      'Нужен только для проверки сотрудника в AvaTracker.';
 
   @override
   String get passwordMinHint => 'Минимум 6 символов';
@@ -239,6 +239,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get support => 'Связаться с поддержкой';
 
   @override
+  String get supportBody => 'По вопросам работы приложения и обработки данных:';
+
+  @override
+  String get writeEmail => 'Написать письмо';
+
+  @override
   String get deleteAccountMenu => 'Запросить удаление аккаунта';
 
   @override
@@ -269,7 +275,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get pointCameraAtQr => 'Наведите камеру на QR-код';
 
   @override
-  String get within50m => 'Вы должны находиться не далее 50 м от точки отметки';
+  String get within50m =>
+      'Вы должны находиться в радиусе 50 м от точки отметки';
 
   @override
   String get stageCheckingPoint => 'Проверка точки отметки…';
@@ -382,7 +389,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get latesThisMonth => 'Опозданий за месяц';
 
   @override
-  String get redMarksLate => 'Красным отмечены дни опозданий';
+  String get redMarksLate => 'Оранжевым отмечены дни опозданий';
 
   @override
   String get cameAt => 'Пришёл';
@@ -561,6 +568,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get metricAverage => 'в среднем';
 
   @override
+  String get metricMax => 'макс. опоздание';
+
+  @override
   String maxLateness(String duration) {
     return 'Максимальное опоздание: $duration';
   }
@@ -615,7 +625,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get deleteConfirmBody =>
-      'Аккаунт приложения будет удалён без возможности восстановления. Данные учёта рабочего времени сохраняются в системе компании. Для входа потребуется повторная регистрация.';
+      'Подтвердите удаление аккаунта приложения. Для повторного входа потребуется новая регистрация.';
 
   @override
   String get actionDelete => 'Удалить';
