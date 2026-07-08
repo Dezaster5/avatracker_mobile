@@ -246,7 +246,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
             key: ValueKey(_cameraEpoch),
             controller: _controller,
             onDetect: _onDetect,
-            errorBuilder: (context, error, child) => _CameraError(
+            errorBuilder: (context, error) => _CameraError(
               error: error,
               onRetry: _restartCamera,
               onOpenSettings: () => ref

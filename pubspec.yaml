@@ -24,8 +24,8 @@ dependencies:
   # Хранение токенов и данных сессии (Keychain / Keystore)
   flutter_secure_storage: ^9.2.2
 
-  # QR-сканер (ML Kit / AVFoundation)
-  mobile_scanner: ^6.0.2
+  # QR-сканер (Vision API на Apple-платформах)
+  mobile_scanner: ^7.2.0
 
   # Геолокация: координаты, точность, mock-детекция
   geolocator: ^13.0.2
