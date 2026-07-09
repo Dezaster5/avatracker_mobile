@@ -14,6 +14,8 @@
 	<string>Геолокация используется только во время отметки, чтобы подтвердить, что сотрудник находится рядом с рабочей точкой.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Микрофон приложением не используется. Строка требуется системным компонентом камеры, задействованным при съёмке для фото-верификации.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Геолокация используется для подтверждения, что сотрудник находится рядом с рабочей точкой при отметке рабочего времени.</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
