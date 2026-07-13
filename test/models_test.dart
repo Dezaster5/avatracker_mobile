@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:avatracker_mobile/features/attendance/domain/analytics.dart';
+import 'package:avatracker_mobile/features/attendance/domain/attendance_marks.dart';
 import 'package:avatracker_mobile/features/attendance/domain/scan_result.dart';
 import 'package:avatracker_mobile/features/attendance/domain/timesheet.dart';
 import 'package:avatracker_mobile/features/auth/domain/employee.dart';
@@ -195,6 +196,45 @@ void main() {
       expect(day.checkOut?.timeLabel, '18:07');
       expect(day.scheduleRangeLabel, '09:00-18:00');
       expect(day.tardinessMinutes, 12);
+    });
+  });
+
+  group('AttendanceMarksMonth', () {
+    test('первая отметка — приход, последняя — уход', () {
+      final month = AttendanceMarksMonth.fromMarks([
+        AttendanceMark.fromJson({
+          'auth_time': '2026-07-13T18:07:00',
+        }),
+        AttendanceMark.fromJson({
+          'auth_time': '2026-07-13T12:15:00',
+        }),
+        AttendanceMark.fromJson({
+          'auth_time': '2026-07-13T09:12:00',
+        }),
+      ]);
+      final day = month.days[DateTime(2026, 7, 13)];
+      expect(day?.checkIn?.timeLabel, '09:12');
+      expect(day?.checkOut?.timeLabel, '18:07');
+    });
+
+    test('одна отметка не считается уходом', () {
+      final month = AttendanceMarksMonth.fromMarks([
+        AttendanceMark.fromJson({
+          'auth_time': '2026-07-13T09:12:00',
+        }),
+      ]);
+      final day = month.days[DateTime(2026, 7, 13)];
+      expect(day?.checkIn?.timeLabel, '09:12');
+      expect(day?.checkOut, isNull);
+    });
+
+    test('UTC-время отметки переводится во время устройства', () {
+      const raw = '2026-07-13T13:16:53.839Z';
+      final expected = DateTime.parse(raw).toLocal();
+      final mark = AttendanceMark.fromJson({'auth_time': raw});
+
+      expect(mark.date, DateTime(expected.year, expected.month, expected.day));
+      expect(mark.minutes, expected.hour * 60 + expected.minute);
     });
   });
 

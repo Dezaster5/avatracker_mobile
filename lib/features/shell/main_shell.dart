@@ -6,10 +6,9 @@ import '../../l10n/l10n_ext.dart';
 
 /// Нижняя навигация: Сканер, Табель, Аналитика, Профиль.
 class MainShell extends StatelessWidget {
-  const MainShell({super.key, required this.location, required this.child});
+  const MainShell({super.key, required this.navigationShell});
 
-  final String location;
-  final Widget child;
+  final StatefulNavigationShell navigationShell;
 
   static const _tabs = [
     (
@@ -43,18 +42,20 @@ class MainShell extends StatelessWidget {
       l10n.tabAnalytics,
       l10n.tabProfile,
     ];
-    var selected = _tabs.indexWhere((t) => location.startsWith(t.path));
-    if (selected < 0) selected = 0;
+    final selected = navigationShell.currentIndex;
 
     return Scaffold(
-      body: child,
+      body: navigationShell,
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           border: Border(top: BorderSide(color: AppColors.outline)),
         ),
         child: NavigationBar(
           selectedIndex: selected,
-          onDestinationSelected: (index) => context.go(_tabs[index].path),
+          onDestinationSelected: (index) => navigationShell.goBranch(
+            index,
+            initialLocation: index == selected,
+          ),
           destinations: [
             for (var i = 0; i < _tabs.length; i++)
               NavigationDestination(

@@ -4,7 +4,7 @@ import '../../core/network/api_exception.dart';
 import '../auth/providers.dart';
 import 'data/attendance_repository.dart';
 import 'domain/analytics.dart';
-import 'domain/timesheet.dart';
+import 'domain/attendance_marks.dart';
 
 final attendanceRepositoryProvider = Provider<AttendanceRepository>(
   (ref) => AttendanceRepository(api: ref.watch(apiClientProvider)),
@@ -18,15 +18,6 @@ String _requireIin(Ref ref) {
   return iin;
 }
 
-/// Табель за месяц, ключ — `2026-06`. Инвалидируется после успешной отметки.
-final timesheetProvider =
-    FutureProvider.family<TimesheetMonth, String>((ref, month) {
-  final iin = _requireIin(ref);
-  return ref
-      .watch(attendanceRepositoryProvider)
-      .timesheet(iin: iin, month: month);
-});
-
 /// Аналитика опозданий за неделю/месяц.
 final tardinessAnalyticsProvider =
     FutureProvider.family<TardinessAnalytics, AnalyticsRange>((ref, range) {
@@ -36,3 +27,26 @@ final tardinessAnalyticsProvider =
         range: range,
       );
 });
+
+class AttendanceOverview {
+  const AttendanceOverview({required this.marks, required this.tardiness});
+
+  final AttendanceMarksMonth marks;
+  final TardinessAnalytics tardiness;
+}
+
+/// Табель на production API: все отметки из employee-identification-list,
+/// признаки опозданий из tardiness. Оба запроса запускаются параллельно.
+final attendanceOverviewProvider =
+    FutureProvider.family<AttendanceOverview, AnalyticsRange>(
+  (ref, range) async {
+    final iin = _requireIin(ref);
+    final repository = ref.watch(attendanceRepositoryProvider);
+    final marksFuture = repository.attendanceMarks(iin: iin, range: range);
+    final tardinessFuture = repository.tardiness(iin: iin, range: range);
+    return AttendanceOverview(
+      marks: await marksFuture,
+      tardiness: await tardinessFuture,
+    );
+  },
+);

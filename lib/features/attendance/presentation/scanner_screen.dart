@@ -31,9 +31,9 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
         formats: const [BarcodeFormat.qrCode],
       );
 
-  /// Камера — глобальный ресурс процесса. ShellRoute может удалить старый
-  /// ScannerScreen и создать новый почти в одном кадре, поэтому stop/dispose
-  /// старого и start нового должны выполняться строго последовательно.
+  /// Камера — глобальный ресурс процесса. Операции lifecycle и ручного
+  /// перезапуска выполняются последовательно, чтобы start не пересекался
+  /// со stop/dispose того же контроллера.
   static Future<void> _cameraQueue = Future<void>.value();
 
   static Future<void> _enqueueCamera(
@@ -313,7 +313,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
     if (success) {
       // Обновляем оба источника данных учета рабочего времени.
       ref.invalidate(tardinessAnalyticsProvider);
-      ref.invalidate(timesheetProvider);
+      ref.invalidate(attendanceOverviewProvider);
     }
     await _showResultAndResume(
       result,

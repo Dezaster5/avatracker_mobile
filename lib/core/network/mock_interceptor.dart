@@ -14,15 +14,12 @@ import '../utils/formatters.dart';
 /// - QR с подстрокой `inactive` имитирует отключенную точку;
 /// - отметки за сегодня хранятся в памяти: первая — приход, вторая — уход,
 ///   далее — проверка присутствия (ТЗ 8); табель учитывает отметки;
-/// - у демо-сотрудника индивидуальный график 08:00–17:00 с обедом 13:00–14:00.
+/// - у демо-сотрудника индивидуальный график 08:00–17:00.
 class MockInterceptor extends Interceptor {
   static const _park = 'AVATARIYA Karaganda';
   static const _code = '1234';
   static const _workStart = '08:00';
   static const _workEnd = '17:00';
-  static const _lunchStart = '13:00';
-  static const _lunchEnd = '14:00';
-  static const _workDayMinutes = 480;
 
   /// Зарегистрированные аккаунты: национальный номер -> {iin, password}.
   static final Map<String, Map<String, String>> _accounts = {
@@ -187,10 +184,18 @@ class MockInterceptor extends Interceptor {
 
     // ─── data-API (/api/v1) ───
     switch (p) {
-      case '/mobile/attendance/timesheet':
-        final month =
-            options.queryParameters['month']?.toString() ?? _currentMonth();
-        return _ok(handler, options, _timesheet(month));
+      case '/employee-identification-list/':
+        final periodFrom = _parseDate(
+          options.queryParameters['period_from']?.toString(),
+        );
+        final periodTo = _parseDate(
+          options.queryParameters['period_to']?.toString(),
+        );
+        return _ok(
+          handler,
+          options,
+          _identificationList(periodFrom, periodTo),
+        );
 
       case '/tardiness/':
         final iin =
@@ -202,6 +207,18 @@ class MockInterceptor extends Interceptor {
           options.queryParameters['period_to']?.toString(),
         );
         return _ok(handler, options, _tardiness(iin, periodFrom, periodTo));
+    }
+
+    if (p == '/employees/') {
+      final iin = options.queryParameters['search']?.toString() ??
+          _sessionIin ??
+          '990101300123';
+      return _ok(handler, options, {
+        'count': 1,
+        'next': null,
+        'previous': null,
+        'results': [_employee(iin)],
+      });
     }
 
     if (p.startsWith('/employees/')) {
@@ -316,97 +333,6 @@ class MockInterceptor extends Interceptor {
         'schedule_end_time': '$_workEnd:00',
       };
 
-  static String _currentMonth() {
-    final now = DateTime.now();
-    return '${now.year}-${now.month.toString().padLeft(2, '0')}';
-  }
-
-  /// Минуты, отработанные с 08:00 до [now] этого дня, без обеда 13:00–14:00.
-  static int _workedByNow(DateTime day, DateTime now) {
-    final start = DateTime(day.year, day.month, day.day, 8);
-    final lunchStart = DateTime(day.year, day.month, day.day, 13);
-    final lunchEnd = DateTime(day.year, day.month, day.day, 14);
-    var minutes = now.difference(start).inMinutes;
-    if (now.isAfter(lunchStart)) {
-      final lunchOverlap = (now.isBefore(lunchEnd) ? now : lunchEnd)
-          .difference(lunchStart)
-          .inMinutes;
-      minutes -= lunchOverlap;
-    }
-    return minutes.clamp(0, _workDayMinutes);
-  }
-
-  /// День прихода/ухода для прошедших дат: детерминированный паттерн —
-  /// каждый 9-й день пропуск, каждый 4-й опоздание, остальные вовремя.
-  /// Норма демо-сотрудника — 480 минут (8 ч), обед не учитывается.
-  Map<String, dynamic> _timesheet(String month) {
-    final parts = month.split('-');
-    final year = int.tryParse(parts[0]) ?? DateTime.now().year;
-    final m = parts.length > 1 ? int.tryParse(parts[1]) ?? 1 : 1;
-    final daysInMonth = DateTime(year, m + 1, 0).day;
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    const norm = _workDayMinutes;
-
-    final days = <Map<String, dynamic>>[];
-    for (var d = 1; d <= daysInMonth; d++) {
-      final date = DateTime(year, m, d);
-      final dateStr =
-          '$year-${m.toString().padLeft(2, '0')}-${d.toString().padLeft(2, '0')}';
-      final isWeekend = date.weekday >= DateTime.saturday;
-      final isFuture = date.isAfter(today);
-      final isToday = date == today;
-
-      String status;
-      var worked = 0;
-      var remaining = isWeekend ? 0 : norm;
-      var scans = <Map<String, dynamic>>[];
-
-      if (isWeekend) {
-        status = 'weekend';
-      } else if (isFuture) {
-        status = 'no_scan';
-      } else if (isToday) {
-        if (_todayMarks.isEmpty) {
-          status = 'no_scan';
-        } else {
-          status = 'on_time';
-          scans = List.of(_todayMarks);
-          worked = _workedByNow(date, now);
-          remaining = norm - worked;
-        }
-      } else if (d % 9 == 0) {
-        status = 'absent';
-      } else if (d % 4 == 0) {
-        // Пришел в 08:34 — опоздание на 34 минуты.
-        status = 'late';
-        worked = 446;
-        remaining = 0;
-        scans = _dayScans(year, m, d, inH: 8, inM: 34, outH: 17, outM: 0);
-      } else {
-        status = 'on_time';
-        worked = norm;
-        remaining = 0;
-        scans = _dayScans(year, m, d, inH: 7, inM: 56, outH: 17, outM: 2);
-      }
-
-      days.add({
-        'date': dateStr,
-        'day_type': isWeekend ? 'weekend' : 'working_day',
-        'work_start': isWeekend ? null : _workStart,
-        'work_end': isWeekend ? null : _workEnd,
-        'lunch_start': isWeekend ? null : _lunchStart,
-        'lunch_end': isWeekend ? null : _lunchEnd,
-        'worked_minutes': worked,
-        'remaining_minutes': remaining,
-        'status': status,
-        'place': _park,
-        'scans': scans,
-      });
-    }
-    return {'month': month, 'days': days};
-  }
-
   Map<String, dynamic> _tardiness(
     String iin,
     DateTime periodFrom,
@@ -458,6 +384,50 @@ class MockInterceptor extends Interceptor {
       'avg_tardiness': results.isEmpty ? 0 : (total / results.length).round(),
       'results': results,
     };
+  }
+
+  Map<String, dynamic> _identificationList(
+    DateTime periodFrom,
+    DateTime periodTo,
+  ) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final end = periodTo.isAfter(today) ? today : periodTo;
+    final results = <Map<String, dynamic>>[];
+
+    for (var date = periodFrom;
+        !date.isAfter(end);
+        date = date.add(const Duration(days: 1))) {
+      if (date.weekday >= DateTime.saturday || date.day % 9 == 0) continue;
+      if (date == today && _todayMarks.isNotEmpty) {
+        results.addAll(
+          _todayMarks.map((mark) => {
+                'id': results.length + 1,
+                'auth_time': mark['scanned_at'],
+                'park_name': _park,
+              }),
+        );
+        continue;
+      }
+      final late = date.day % 4 == 0;
+      final scans = _dayScans(
+        date.year,
+        date.month,
+        date.day,
+        inH: late ? 8 : 7,
+        inM: late ? 34 : 56,
+        outH: 17,
+        outM: late ? 0 : 2,
+      );
+      results.addAll(
+        scans.map((scan) => {
+              'id': results.length + 1,
+              'auth_time': scan['scanned_at'],
+              'park_name': _park,
+            }),
+      );
+    }
+    return {'count': results.length, 'next': null, 'results': results};
   }
 
   List<Map<String, dynamic>> _dayScans(

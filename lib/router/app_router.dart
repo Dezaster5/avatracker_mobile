@@ -95,15 +95,42 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/change-password',
         builder: (_, __) => const ChangePasswordScreen(),
       ),
-      ShellRoute(
-        builder: (context, state, child) =>
-            MainShell(location: state.matchedLocation, child: child),
-        routes: [
-          GoRoute(path: '/scanner', builder: (_, __) => const ScannerScreen()),
-          GoRoute(
-              path: '/timesheet', builder: (_, __) => const TimesheetScreen()),
-          GoRoute(path: '/stats', builder: (_, __) => const AnalyticsScreen()),
-          GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) =>
+            MainShell(navigationShell: navigationShell),
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/scanner',
+                builder: (_, __) => const ScannerScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/timesheet',
+                builder: (_, __) => const TimesheetScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/stats',
+                builder: (_, __) => const AnalyticsScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/profile',
+                builder: (_, __) => const ProfileScreen(),
+              ),
+            ],
+          ),
         ],
       ),
     ],

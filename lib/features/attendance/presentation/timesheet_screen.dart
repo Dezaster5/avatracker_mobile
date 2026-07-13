@@ -8,7 +8,9 @@ import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/app_error_view.dart';
 import '../../../core/widgets/status_chip.dart';
 import '../../../l10n/l10n_ext.dart';
-import '../domain/timesheet.dart';
+import '../../auth/providers.dart';
+import '../domain/analytics.dart';
+import '../domain/attendance_marks.dart';
 import '../providers.dart';
 
 /// Экран «Табель»: календарь месяца с приходом и уходом за каждый день.
@@ -46,18 +48,27 @@ class _TimesheetScreenState extends ConsumerState<TimesheetScreen> {
     });
   }
 
+  AnalyticsRange get _range =>
+      AnalyticsRange.forPeriod(AnalyticsPeriod.month, _month)
+          .clampEnd(AppConfig.today);
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final monthKey = monthParam(_month);
-    final timesheet = ref.watch(timesheetProvider(monthKey));
+    final range = _range;
+    final overview = ref.watch(attendanceOverviewProvider(range));
+    final scheduleLabel = ref.watch(
+      authControllerProvider.select(
+        (session) => session.employee?.scheduleRangeLabel ?? '',
+      ),
+    );
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.tabTimesheet)),
       body: RefreshIndicator(
         onRefresh: () async {
-          ref.invalidate(timesheetProvider(monthKey));
-          await ref.read(timesheetProvider(monthKey).future);
+          ref.invalidate(attendanceOverviewProvider(range));
+          await ref.read(attendanceOverviewProvider(range).future);
         },
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -69,19 +80,21 @@ class _TimesheetScreenState extends ConsumerState<TimesheetScreen> {
               onNext: _isCurrentMonth ? null : () => _changeMonth(1),
             ),
             const SizedBox(height: 12),
-            timesheet.when(
+            overview.when(
               loading: () => const Padding(
                 padding: EdgeInsets.symmetric(vertical: 80),
                 child: Center(child: CircularProgressIndicator()),
               ),
               error: (error, _) => AppErrorView(
                 message: error.toString(),
-                onRetry: () => ref.invalidate(timesheetProvider(monthKey)),
+                onRetry: () =>
+                    ref.invalidate(attendanceOverviewProvider(range)),
               ),
               data: (data) {
-                final daysByDate = {
-                  for (final day in data.days)
-                    DateTime(day.date.year, day.date.month, day.date.day): day,
+                final lateByDate = {
+                  for (final entry in data.tardiness.results)
+                    DateTime(entry.date.year, entry.date.month, entry.date.day):
+                        entry,
                 };
                 return Column(
                   children: [
@@ -93,7 +106,7 @@ class _TimesheetScreenState extends ConsumerState<TimesheetScreen> {
                             _CalendarGrid(
                               month: _month,
                               selected: _selected,
-                              daysByDate: daysByDate,
+                              lateDates: lateByDate.keys.toSet(),
                               onSelect: (date) =>
                                   setState(() => _selected = date),
                             ),
@@ -120,11 +133,17 @@ class _TimesheetScreenState extends ConsumerState<TimesheetScreen> {
                       child: _DayCard(
                         key: ValueKey(_selected),
                         date: _selected,
-                        day: daysByDate[DateTime(
+                        day: data.marks.days[DateTime(
                           _selected.year,
                           _selected.month,
                           _selected.day,
                         )],
+                        late: lateByDate[DateTime(
+                          _selected.year,
+                          _selected.month,
+                          _selected.day,
+                        )],
+                        scheduleLabel: scheduleLabel,
                       ),
                     ),
                   ],
@@ -203,13 +222,13 @@ class _CalendarGrid extends StatelessWidget {
   const _CalendarGrid({
     required this.month,
     required this.selected,
-    required this.daysByDate,
+    required this.lateDates,
     required this.onSelect,
   });
 
   final DateTime month;
   final DateTime selected;
-  final Map<DateTime, TimesheetDay> daysByDate;
+  final Set<DateTime> lateDates;
   final ValueChanged<DateTime> onSelect;
 
   @override
@@ -254,7 +273,7 @@ class _CalendarGrid extends StatelessWidget {
         date.month == selected.month &&
         date.day == selected.day;
     final isToday = date == today;
-    final isLate = daysByDate[date]?.status == DayStatus.late;
+    final isLate = lateDates.contains(date);
 
     final Color bg;
     final Color fg;
@@ -341,16 +360,25 @@ class _DayCard extends StatelessWidget {
     super.key,
     required this.date,
     required this.day,
+    required this.late,
+    required this.scheduleLabel,
   });
 
   final DateTime date;
-  final TimesheetDay? day;
+  final AttendanceDayMarks? day;
+  final TardinessEntry? late;
+  final String scheduleLabel;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final isFuture = date.isAfter(AppConfig.today);
-    final (label, color) = _status(context, day, isFuture: isFuture);
+    final (label, color) = _status(
+      context,
+      day,
+      late: late,
+      isFuture: isFuture,
+    );
 
     return Card(
       child: Padding(
@@ -381,33 +409,25 @@ class _DayCard extends StatelessWidget {
                   fontSize: 14,
                 ),
               )
-            else if (day == null)
-              Text(
-                l10n.timesheetNoDayData,
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 14,
-                ),
-              )
             else ...[
               _row(
                 l10n.markCheckIn,
-                day!.checkIn?.timeLabel.isNotEmpty == true
+                day?.checkIn?.timeLabel.isNotEmpty == true
                     ? day!.checkIn!.timeLabel
                     : l10n.notMarked,
               ),
               _row(
                 l10n.markCheckOut,
-                day!.checkOut?.timeLabel.isNotEmpty == true
+                day?.checkOut?.timeLabel.isNotEmpty == true
                     ? day!.checkOut!.timeLabel
                     : l10n.notMarked,
               ),
-              if (day!.scheduleRangeLabel.isNotEmpty)
-                _row(l10n.workSchedule, day!.scheduleRangeLabel),
-              if (day!.status == DayStatus.late && day!.tardinessMinutes > 0)
+              if (scheduleLabel.isNotEmpty)
+                _row(l10n.workSchedule, scheduleLabel),
+              if (late != null)
                 _row(
                   l10n.latenessLabel,
-                  l10n.formatDuration(day!.tardinessMinutes),
+                  l10n.formatDuration(late!.tardinessMinutes),
                 ),
             ],
           ],
@@ -418,20 +438,17 @@ class _DayCard extends StatelessWidget {
 
   (String, Color) _status(
     BuildContext context,
-    TimesheetDay? day, {
+    AttendanceDayMarks? day, {
+    required TardinessEntry? late,
     required bool isFuture,
   }) {
     final l10n = context.l10n;
     if (isFuture) return (l10n.dayNotYet, AppColors.textSecondary);
-    return switch (day?.status) {
-      DayStatus.onTime => (l10n.dayOnTime, AppColors.success),
-      DayStatus.late => (l10n.latenessLabel, AppColors.dayLate),
-      DayStatus.absent => (l10n.dayAbsent, AppColors.danger),
-      DayStatus.weekend => (l10n.dayWeekend, AppColors.textSecondary),
-      DayStatus.weekendWork => (l10n.dayWeekendWork, AppColors.primary),
-      DayStatus.noScan => (l10n.dayNoMarks, AppColors.textSecondary),
-      DayStatus.unknown || null => (l10n.dayNoData, AppColors.textSecondary),
-    };
+    if (late != null) return (l10n.latenessLabel, AppColors.dayLate);
+    if (day == null || day.marks.isEmpty) {
+      return (l10n.dayNoMarks, AppColors.textSecondary);
+    }
+    return (l10n.dayOnTime, AppColors.success);
   }
 
   Widget _row(String label, String value) {

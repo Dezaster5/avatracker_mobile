@@ -158,13 +158,43 @@ class AuthRepository {
   }
 
   Future<Map<String, dynamic>> _employeeJson(String iin) async {
+    Map<String, dynamic>? detail;
+    DioException? detailError;
     try {
       final res = await _dio.get<dynamic>('/employees/$iin/');
-      return _unwrap(res.data);
+      detail = _unwrap(res.data);
+      if (_hasSchedule(detail)) return detail;
     } on DioException catch (e) {
-      throw ApiException.fromDio(e);
+      detailError = e;
     }
+
+    // В production Swagger график также присутствует в пагинированном
+    // `/employees/`. Search по ИИН служит резервом для окружений, где detail
+    // endpoint не отдаёт schedule-поля.
+    try {
+      final res = await _dio.get<dynamic>(
+        '/employees/',
+        queryParameters: {'search': iin},
+      );
+      final data = res.data;
+      if (data is Map<String, dynamic> && data['results'] is List) {
+        final results = (data['results'] as List)
+            .whereType<Map<String, dynamic>>()
+            .toList();
+        for (final employee in results) {
+          if ('${employee['iin'] ?? ''}' == iin) return employee;
+        }
+      }
+    } on DioException catch (e) {
+      if (detail == null) throw ApiException.fromDio(detailError ?? e);
+    }
+    if (detail != null) return detail;
+    throw const ApiException(message: 'Сотрудник не найден в системе');
   }
+
+  static bool _hasSchedule(Map<String, dynamic> employee) =>
+      '${employee['schedule_start_time'] ?? ''}'.isNotEmpty &&
+      '${employee['schedule_end_time'] ?? ''}'.isNotEmpty;
 
   /// Дополняет профиль полем `photo` из кеша, если бэкенд его не прислал
   /// (`/profile/me/` фото не отдаёт, а `login`/`register` — отдают).
@@ -276,9 +306,17 @@ class AuthRepository {
       profile = const {}; // профиль не критичен — фолбэк на employee из входа
     }
     // Поля профиля имеют приоритет, но photo (только у authEmployee) сохраняется.
-    final merged = {...authEmployee, ...profile};
+    var merged = {...authEmployee, ...profile};
     if (merged.isEmpty) {
       throw const ApiException(message: 'Сервер не вернул данные сотрудника');
+    }
+    final iin = '${merged['iin'] ?? ''}';
+    if (iin.isNotEmpty) {
+      try {
+        merged = {...merged, ...await _employeeJson(iin)};
+      } catch (_) {
+        // Расширенный профиль не должен блокировать успешный вход.
+      }
     }
     final employee = Employee.fromJson(merged);
 

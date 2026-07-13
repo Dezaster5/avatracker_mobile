@@ -6,9 +6,9 @@ import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/utils/formatters.dart';
 import '../domain/analytics.dart';
+import '../domain/attendance_marks.dart';
 import '../domain/qr_point.dart';
 import '../domain/scan_result.dart';
-import '../domain/timesheet.dart';
 
 /// Отметки, табель и аналитика посещаемости.
 class AttendanceRepository {
@@ -86,30 +86,55 @@ class AttendanceRepository {
     }
   }
 
-  /// `GET /mobile/attendance/timesheet` (ТЗ 13.7).
-  Future<TimesheetMonth> timesheet({
+  /// Реальный production endpoint отметок из Swagger:
+  /// `GET /api/v1/employee-identification-list/`.
+  ///
+  /// В ответе нет типа отметки, поэтому UI считает первую отметку дня
+  /// приходом, а последнюю (если отметок минимум две) уходом.
+  Future<AttendanceMarksMonth> attendanceMarks({
     required String iin,
-    required String month,
+    required AnalyticsRange range,
   }) async {
+    final marks = <AttendanceMark>[];
+    var page = 1;
+    var hasNext = true;
+
     try {
-      final res = await _dio.get<dynamic>(
-        '/mobile/attendance/timesheet',
-        queryParameters: {'iin': iin, 'month': month},
-      );
-      final data = res.data;
-      if (data is! Map<String, dynamic>) {
-        throw const ApiException(message: 'Неверный формат ответа сервера');
-      }
-      return TimesheetMonth.fromJson(data);
-    } on DioException catch (e) {
-      // Эндпоинта табеля на бэкенде пока нет — показываем понятный текст
-      // вместо «нет соединения».
-      if (e.response?.statusCode == 404) {
-        throw const ApiException(
-          message: 'Табель пока недоступен',
-          statusCode: 404,
+      while (hasNext && page <= 20) {
+        final res = await _dio.get<dynamic>(
+          '/employee-identification-list/',
+          queryParameters: {
+            'iin': iin,
+            'period_from': range.startParam,
+            'period_to': range.endParam,
+            'ordering': 'auth_time',
+            'page_size': 100,
+            'page': page,
+          },
         );
+        final data = res.data;
+        final List<dynamic> results;
+        if (data is Map<String, dynamic>) {
+          results = data['results'] is List
+              ? data['results'] as List<dynamic>
+              : const [];
+          final rawNext = data['next']?.toString();
+          hasNext = rawNext != null && rawNext.isNotEmpty;
+        } else if (data is List) {
+          results = data;
+          hasNext = false;
+        } else {
+          throw const ApiException(message: 'Неверный формат ответа сервера');
+        }
+        marks.addAll(
+          results
+              .whereType<Map<String, dynamic>>()
+              .map(AttendanceMark.fromJson),
+        );
+        page++;
       }
+      return AttendanceMarksMonth.fromMarks(marks);
+    } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }
   }
