@@ -311,6 +311,9 @@ class MockInterceptor extends Interceptor {
         'park_id': 5000011,
         'park_name': _park,
         'city': 'Караганда',
+        'schedule_name': '5/2',
+        'schedule_start_time': '$_workStart:00',
+        'schedule_end_time': '$_workEnd:00',
       };
 
   static String _currentMonth() {

@@ -42,6 +42,19 @@ class ScanEntry {
 
   String get typeLabel => markTypeLabel(type);
 
+  String get timeLabel {
+    final minutes = wallClockMinutes;
+    if (minutes == null) return '';
+    final hour = (minutes ~/ 60).toString().padLeft(2, '0');
+    final minute = (minutes % 60).toString().padLeft(2, '0');
+    return '$hour:$minute';
+  }
+
+  bool get isCheckIn => type == 'check_in' || type == 'arrival' || type == 'in';
+
+  bool get isCheckOut =>
+      type == 'check_out' || type == 'departure' || type == 'out';
+
   factory ScanEntry.fromJson(Map<String, dynamic> json) {
     final rawTime = '${json['scanned_at'] ?? json['time'] ?? ''}';
     return ScanEntry(
@@ -101,6 +114,50 @@ class TimesheetDay {
       dayType == 'day_off' ||
       status == DayStatus.weekend;
 
+  List<ScanEntry> get chronologicalScans {
+    final ordered = List<ScanEntry>.of(scans);
+    ordered.sort((a, b) {
+      final aMinutes = a.wallClockMinutes;
+      final bMinutes = b.wallClockMinutes;
+      if (aMinutes != null && bMinutes != null) {
+        return aMinutes.compareTo(bMinutes);
+      }
+      final aTime = a.time;
+      final bTime = b.time;
+      if (aTime != null && bTime != null) return aTime.compareTo(bTime);
+      return 0;
+    });
+    return ordered;
+  }
+
+  ScanEntry? get checkIn {
+    for (final scan in chronologicalScans) {
+      if (scan.isCheckIn) return scan;
+    }
+    return null;
+  }
+
+  ScanEntry? get checkOut {
+    for (final scan in chronologicalScans.reversed) {
+      if (scan.isCheckOut) return scan;
+    }
+    return null;
+  }
+
+  String get scheduleRangeLabel {
+    final start = _clockLabel(workStart);
+    final end = _clockLabel(workEnd);
+    if (start == null || end == null) return '';
+    return '$start-$end';
+  }
+
+  int get tardinessMinutes {
+    final start = _clockMinutes(workStart);
+    final arrival = checkIn?.wallClockMinutes;
+    if (start == null || arrival == null || arrival <= start) return 0;
+    return arrival - start;
+  }
+
   static int _int(dynamic v) => v is num ? v.toInt() : int.tryParse('$v') ?? 0;
 
   factory TimesheetDay.fromJson(Map<String, dynamic> json) {
@@ -123,6 +180,23 @@ class TimesheetDay {
           .toList(),
     );
   }
+}
+
+int? _clockMinutes(String? value) {
+  final match = RegExp(r'^(\d{1,2}):(\d{2})').firstMatch((value ?? '').trim());
+  if (match == null) return null;
+  final hour = int.tryParse(match.group(1)!);
+  final minute = int.tryParse(match.group(2)!);
+  if (hour == null || minute == null || hour > 23 || minute > 59) return null;
+  return hour * 60 + minute;
+}
+
+String? _clockLabel(String? value) {
+  final minutes = _clockMinutes(value);
+  if (minutes == null) return null;
+  final hour = (minutes ~/ 60).toString().padLeft(2, '0');
+  final minute = (minutes % 60).toString().padLeft(2, '0');
+  return '$hour:$minute';
 }
 
 class TimesheetMonth {

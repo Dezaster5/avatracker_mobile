@@ -413,6 +413,30 @@ class AppLocalizationsKk extends AppLocalizations {
   String get noLatenessThisDay => 'Бұл күні кешігу тіркелмеген';
 
   @override
+  String get dayOnTime => 'Уақытында';
+
+  @override
+  String get dayAbsent => 'Қатыспау';
+
+  @override
+  String get dayWeekend => 'Демалыс күні';
+
+  @override
+  String get dayWeekendWork => 'Демалыс күнгі жұмыс';
+
+  @override
+  String get dayNoMarks => 'Белгілер жоқ';
+
+  @override
+  String get dayNoData => 'Деректер жоқ';
+
+  @override
+  String get timesheetNoDayData => 'Бұл күн бойынша деректер жоқ';
+
+  @override
+  String get notMarked => 'Белгіленбеген';
+
+  @override
   String scheduleName(String name) {
     return 'Кесте $name';
   }
@@ -542,7 +566,10 @@ class AppLocalizationsKk extends AppLocalizations {
 
   @override
   String get analyticsSourceNote =>
-      'Деректер қызметкердің ауысым басталуына қатысты алғашқы авторизациясынан алынады';
+      'Деректер ауысымның басталуына қатысты қызметкердің алғашқы белгісінің уақытынан алынады';
+
+  @override
+  String get workSchedule => 'Жұмыс кестесі';
 
   @override
   String latenessCases(int count) {

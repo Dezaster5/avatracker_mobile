@@ -157,6 +157,15 @@ class AuthRepository {
     }
   }
 
+  Future<Map<String, dynamic>> _employeeJson(String iin) async {
+    try {
+      final res = await _dio.get<dynamic>('/employees/$iin/');
+      return _unwrap(res.data);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
   /// Дополняет профиль полем `photo` из кеша, если бэкенд его не прислал
   /// (`/profile/me/` фото не отдаёт, а `login`/`register` — отдают).
   Future<Map<String, dynamic>> _withCachedPhoto(
@@ -168,24 +177,30 @@ class AuthRepository {
     return photo == null ? json : {...json, 'photo': photo};
   }
 
-  /// `GET /profile/me/` — профиль текущего сотрудника по JWT (с фото из кеша).
+  /// Профиль текущего сотрудника по JWT. Базовые данные приходят из
+  /// `/profile/me/`, а график и полные кадровые поля дополняются из
+  /// `/api/v1/employees/{iin}/`. Дополнительный запрос не блокирует вход.
   Future<Employee> fetchProfile() async {
-    final employee =
-        Employee.fromJson(await _withCachedPhoto(await _profileJson()));
+    final profile = await _profileJson();
+    var merged = profile;
+    final iin = '${profile['iin'] ?? ''}';
+    if (iin.isNotEmpty) {
+      try {
+        merged = {...profile, ...await _employeeJson(iin)};
+      } catch (_) {
+        // Mobile profile достаточен для входа; employee API — обогащение.
+      }
+    }
+    final employee = Employee.fromJson(await _withCachedPhoto(merged));
     await _storage.saveEmployeeJson(employee.toJson());
     return employee;
   }
 
   /// `GET /api/v1/employees/{iin}/` — профиль из data-API (тест-режим).
   Future<Employee> fetchEmployee(String iin) async {
-    try {
-      final res = await _dio.get<dynamic>('/employees/$iin/');
-      final employee = Employee.fromJson(_unwrap(res.data));
-      await _storage.saveEmployeeJson(employee.toJson());
-      return employee;
-    } on DioException catch (e) {
-      throw ApiException.fromDio(e);
-    }
+    final employee = Employee.fromJson(await _employeeJson(iin));
+    await _storage.saveEmployeeJson(employee.toJson());
+    return employee;
   }
 
   /// `DELETE /api/mobile/profile/delete/` — полное удаление мобильного аккаунта

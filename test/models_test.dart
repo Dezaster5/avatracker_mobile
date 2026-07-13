@@ -19,6 +19,9 @@ void main() {
         'division': {'name': 'IT отдел'},
         'employee_organization': {'name': 'ТОО Аватария'},
         'park_id': 5000011,
+        'schedule_name': '5/2',
+        'schedule_start_time': '09:00:00',
+        'schedule_end_time': '18:00:00',
       });
       expect(employee.iin, '642918307154');
       expect(employee.position, 'Инженер');
@@ -27,6 +30,8 @@ void main() {
       expect(employee.parkId, 5000011);
       expect(employee.hasPhoto, true);
       expect(employee.firstName, 'Иван');
+      expect(employee.scheduleName, '5/2');
+      expect(employee.scheduleRangeLabel, '09:00-18:00');
     });
 
     test('плоские строковые поля и active-строка', () {
@@ -91,6 +96,19 @@ void main() {
       expect(restored.position, original.position);
       expect(restored.active, original.active);
     });
+
+    test('toJson сохраняет индивидуальный график сотрудника', () {
+      final employee = Employee.fromJson({
+        'iin': '642918307154',
+        'full_name': 'Иванов Иван',
+        'schedule_name': '2/2',
+        'schedule_start_time': '10:00:00',
+        'schedule_end_time': '19:00:00',
+      });
+      final restored = Employee.fromJson(employee.toJson());
+      expect(restored.scheduleName, '2/2');
+      expect(restored.scheduleRangeLabel, '10:00-19:00');
+    });
   });
 
   group('TimesheetMonth.fromJson', () {
@@ -154,6 +172,29 @@ void main() {
       expect(day.scans.first.typeLabel, 'Приход');
       expect(day.scans.first.point, 'AVATARIYA Karaganda');
       expect(day.scans.first.wallClockMinutes, 8 * 60 + 56);
+    });
+
+    test('приход и уход определяются независимо от порядка сканов', () {
+      final day = TimesheetDay.fromJson({
+        'date': '2026-06-05',
+        'status': 'late',
+        'work_start': '09:00:00',
+        'work_end': '18:00:00',
+        'scans': [
+          {
+            'scanned_at': '2026-06-05T18:07:00+05:00',
+            'mark_type': 'check_out',
+          },
+          {
+            'scanned_at': '2026-06-05T09:12:00+05:00',
+            'mark_type': 'check_in',
+          },
+        ],
+      });
+      expect(day.checkIn?.timeLabel, '09:12');
+      expect(day.checkOut?.timeLabel, '18:07');
+      expect(day.scheduleRangeLabel, '09:00-18:00');
+      expect(day.tardinessMinutes, 12);
     });
   });
 

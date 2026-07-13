@@ -862,6 +862,54 @@ abstract class AppLocalizations {
   /// **'Опозданий за этот день не зафиксировано'**
   String get noLatenessThisDay;
 
+  /// No description provided for @dayOnTime.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вовремя'**
+  String get dayOnTime;
+
+  /// No description provided for @dayAbsent.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пропуск'**
+  String get dayAbsent;
+
+  /// No description provided for @dayWeekend.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выходной'**
+  String get dayWeekend;
+
+  /// No description provided for @dayWeekendWork.
+  ///
+  /// In ru, this message translates to:
+  /// **'Работа в выходной'**
+  String get dayWeekendWork;
+
+  /// No description provided for @dayNoMarks.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нет отметок'**
+  String get dayNoMarks;
+
+  /// No description provided for @dayNoData.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нет данных'**
+  String get dayNoData;
+
+  /// No description provided for @timesheetNoDayData.
+  ///
+  /// In ru, this message translates to:
+  /// **'Данные за этот день отсутствуют'**
+  String get timesheetNoDayData;
+
+  /// No description provided for @notMarked.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не отмечено'**
+  String get notMarked;
+
   /// No description provided for @scheduleName.
   ///
   /// In ru, this message translates to:
@@ -1063,8 +1111,14 @@ abstract class AppLocalizations {
   /// No description provided for @analyticsSourceNote.
   ///
   /// In ru, this message translates to:
-  /// **'Данные берутся из первой авторизации сотрудника относительно начала смены'**
+  /// **'Данные берутся из времени первой отметки сотрудника относительно начала смены'**
   String get analyticsSourceNote;
+
+  /// No description provided for @workSchedule.
+  ///
+  /// In ru, this message translates to:
+  /// **'График работы'**
+  String get workSchedule;
 
   /// No description provided for @latenessCases.
   ///

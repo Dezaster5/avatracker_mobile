@@ -415,6 +415,30 @@ class AppLocalizationsUz extends AppLocalizations {
   String get noLatenessThisDay => 'Bu kuni kechikish qayd etilmagan';
 
   @override
+  String get dayOnTime => 'Oʻz vaqtida';
+
+  @override
+  String get dayAbsent => 'Qoldirilgan kun';
+
+  @override
+  String get dayWeekend => 'Dam olish kuni';
+
+  @override
+  String get dayWeekendWork => 'Dam olish kunidagi ish';
+
+  @override
+  String get dayNoMarks => 'Belgilar yoʻq';
+
+  @override
+  String get dayNoData => 'Maʼlumot yoʻq';
+
+  @override
+  String get timesheetNoDayData => 'Bu kun uchun maʼlumot yoʻq';
+
+  @override
+  String get notMarked => 'Belgilanmagan';
+
+  @override
   String scheduleName(String name) {
     return 'Jadval $name';
   }
@@ -544,7 +568,10 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get analyticsSourceNote =>
-      'Maʼlumotlar xodimning smena boshlanishiga nisbatan birinchi avtorizatsiyasidan olinadi';
+      'Maʼlumotlar smena boshlanishiga nisbatan xodimning birinchi belgisi vaqtidan olinadi';
+
+  @override
+  String get workSchedule => 'Ish jadvali';
 
   @override
   String latenessCases(int count) {

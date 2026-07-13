@@ -42,8 +42,7 @@ abstract final class AppConfig {
     return 'https://avatracker.online/api';
   }
 
-  /// Код страны для поля `dial_code`. Пока Казахстан (`+7`);
-  /// позже добавим Узбекистан (`+998`) — выбор по введённому номеру.
+  /// Код страны по умолчанию; в UI доступны `+7` и `+998`.
   static const defaultDialCode = '+7';
 
   static String _stripTrailingSlash(String value) {
@@ -53,8 +52,8 @@ abstract final class AppConfig {
         : trimmed;
   }
 
-  /// Версия сборки, видимая на экране входа.
-  static const appVersion = 'v1.0.0';
+  /// Человекочитаемая версия сборки.
+  static const appVersion = 'v1.0.3';
 
   // ─── Юридическое / App Store ───────────────────────────────────────────────
   /// Версия Политики конфиденциальности (фиксируется в записи согласия).

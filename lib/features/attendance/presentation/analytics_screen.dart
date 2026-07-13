@@ -7,6 +7,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/app_error_view.dart';
 import '../../../l10n/l10n_ext.dart';
+import '../../auth/providers.dart';
 import '../domain/analytics.dart';
 import '../providers.dart';
 
@@ -52,6 +53,11 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
     final l10n = context.l10n;
     final range = _range;
     final analytics = ref.watch(tardinessAnalyticsProvider(range));
+    final scheduleLabel = ref.watch(
+      authControllerProvider.select(
+        (session) => session.employee?.scheduleRangeLabel ?? '',
+      ),
+    );
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.tabAnalytics)),
@@ -82,6 +88,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
               ),
               data: (data) => _AnalyticsContent(
                 analytics: data,
+                scheduleLabel: scheduleLabel,
               ),
             ),
           ],
@@ -135,20 +142,15 @@ class _RangeSwitcher extends StatelessWidget {
 class _AnalyticsContent extends StatelessWidget {
   const _AnalyticsContent({
     required this.analytics,
+    required this.scheduleLabel,
   });
 
   final TardinessAnalytics analytics;
+  final String scheduleLabel;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final scheduleParts = [
-      if (analytics.scheduleName.isNotEmpty)
-        l10n.scheduleName(analytics.scheduleName),
-      if (analytics.scheduleStartLabel.isNotEmpty)
-        l10n.scheduleStart(analytics.scheduleStartLabel),
-    ];
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -171,17 +173,8 @@ class _AnalyticsContent extends StatelessWidget {
             height: 1.4,
           ),
         ),
-        if (scheduleParts.isNotEmpty) ...[
-          const SizedBox(height: 6),
-          Text(
-            scheduleParts.join(' · '),
-            style: const TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 12.5,
-              height: 1.4,
-            ),
-          ),
-        ],
+        const SizedBox(height: 12),
+        _WorkScheduleSection(scheduleLabel: scheduleLabel),
         const SizedBox(height: 14),
         if (analytics.count == 0)
           const _NoLateArrivals()
@@ -201,6 +194,66 @@ class _AnalyticsContent extends StatelessWidget {
           ],
         ],
       ],
+    );
+  }
+}
+
+class _WorkScheduleSection extends StatelessWidget {
+  const _WorkScheduleSection({required this.scheduleLabel});
+
+  final String scheduleLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.outline),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(
+              Icons.work_history_outlined,
+              color: AppColors.primary,
+              size: 21,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  context.l10n.workSchedule,
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  scheduleLabel.isEmpty ? '—' : scheduleLabel,
+                  style: const TextStyle(
+                    color: AppColors.navy,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

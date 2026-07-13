@@ -7,11 +7,11 @@
 Версия задаётся в `pubspec.yaml`:
 
 ```yaml
-version: 1.0.2+11
+version: 1.0.3+12
 ```
 
-- `1.0.2` — `versionName`, отображаемая версия;
-- `11` — `versionCode`, который должен увеличиваться при каждой публикации.
+- `1.0.3` — `versionName`, отображаемая версия;
+- `12` — `versionCode`, который должен увеличиваться при каждой публикации.
 
 Строка `AppConfig.appVersion` должна соответствовать `versionName`.
 
@@ -102,12 +102,36 @@ apksigner verify --print-certs build\app\outputs\flutter-apk\app-release.apk
 ```powershell
 Copy-Item `
   build\app\outputs\flutter-apk\app-release.apk `
-  AvaTracker-v1.0.0.apk
+  AvaTracker-v1.0.3.apk
 ```
 
 APK и AAB не коммитятся. При необходимости приложите артефакт к GitHub Release.
 
-## 5.1. Проверенная сборка 2026-07-08
+## 5.1. Проверенная сборка 2026-07-13
+
+Последняя локально собранная Android release-сборка:
+
+- файл: `AvaTracker-v1.0.3.apk`;
+- `versionName`: `1.0.3`;
+- `versionCode`: `12`;
+- размер: 77 637 742 байта (~74 MB);
+- SHA-256:
+  `bb19679e7d07d1bf0a8071ef695ff84ecd10483b27b7f7baa8dea6e9b027d0b8`;
+- `application-debuggable` в manifest отсутствует;
+- `MOCK_API=false`, `TEST_AUTH=false`,
+  `API_BASE_URL=https://avatracker.online/api/v1`.
+
+Проверки перед сборкой:
+
+- `flutter analyze` — без ошибок;
+- `flutter test` — 45 тестов прошли;
+- `flutter build apk --release` с production dart-defines — успешно.
+
+Ограничение: на машине нет `android/key.properties`, поэтому сборка
+подписана `CN=Android Debug`. Она подходит для внутреннего теса, но не для
+Google Play. Перед публикацией нужен постоянный release/upload key из раздела 3.
+
+## 5.2. Предыдущая сборка 2026-07-08
 
 Последняя локально собранная Android release-сборка:
 

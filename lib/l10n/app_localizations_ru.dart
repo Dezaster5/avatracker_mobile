@@ -413,6 +413,30 @@ class AppLocalizationsRu extends AppLocalizations {
   String get noLatenessThisDay => 'Опозданий за этот день не зафиксировано';
 
   @override
+  String get dayOnTime => 'Вовремя';
+
+  @override
+  String get dayAbsent => 'Пропуск';
+
+  @override
+  String get dayWeekend => 'Выходной';
+
+  @override
+  String get dayWeekendWork => 'Работа в выходной';
+
+  @override
+  String get dayNoMarks => 'Нет отметок';
+
+  @override
+  String get dayNoData => 'Нет данных';
+
+  @override
+  String get timesheetNoDayData => 'Данные за этот день отсутствуют';
+
+  @override
+  String get notMarked => 'Не отмечено';
+
+  @override
   String scheduleName(String name) {
     return 'График $name';
   }
@@ -542,7 +566,10 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get analyticsSourceNote =>
-      'Данные берутся из первой авторизации сотрудника относительно начала смены';
+      'Данные берутся из времени первой отметки сотрудника относительно начала смены';
+
+  @override
+  String get workSchedule => 'График работы';
 
   @override
   String latenessCases(int count) {

@@ -17,6 +17,9 @@ class Employee {
     this.parkId,
     this.parkName,
     this.city,
+    this.scheduleName,
+    this.scheduleStartTime,
+    this.scheduleEndTime,
   });
 
   final int? id;
@@ -31,8 +34,18 @@ class Employee {
   final int? parkId;
   final String? parkName;
   final String? city;
+  final String? scheduleName;
+  final String? scheduleStartTime;
+  final String? scheduleEndTime;
 
   bool get hasPhoto => photoUrl != null && photoUrl!.isNotEmpty;
+
+  String get scheduleRangeLabel {
+    final start = _clockLabel(scheduleStartTime);
+    final end = _clockLabel(scheduleEndTime);
+    if (start == null || end == null) return '';
+    return '$start-$end';
+  }
 
   /// «Иванов Иван Иванович» -> «Иван».
   String get firstName {
@@ -63,6 +76,19 @@ class Employee {
   static int? _int(dynamic value) {
     if (value is num) return value.toInt();
     return int.tryParse('${value ?? ''}');
+  }
+
+  static String? _clockLabel(dynamic value) {
+    final match =
+        RegExp(r'^(\d{1,2}):(\d{2})').firstMatch('${value ?? ''}'.trim());
+    if (match == null) return null;
+    final hour = int.tryParse(match.group(1)!);
+    final minute = int.tryParse(match.group(2)!);
+    if (hour == null || minute == null || hour > 23 || minute > 59) {
+      return null;
+    }
+    return '${hour.toString().padLeft(2, '0')}:'
+        '${minute.toString().padLeft(2, '0')}';
   }
 
   /// Активность сотрудника. Явный `false` блокирует доступ; отсутствие поля
@@ -103,6 +129,13 @@ class Employee {
       parkName: _name(json['park_name']) ??
           (json['park'] is Map ? _name(json['park']) : null),
       city: json['city']?.toString(),
+      scheduleName: _name(json['schedule_name'] ?? json['schedule_title']),
+      scheduleStartTime: _clockLabel(
+        json['schedule_start_time'] ?? json['schedule_start'],
+      ),
+      scheduleEndTime: _clockLabel(
+        json['schedule_end_time'] ?? json['schedule_end'],
+      ),
     );
   }
 
@@ -120,5 +153,8 @@ class Employee {
         'park_id': parkId,
         'park_name': parkName,
         'city': city,
+        'schedule_name': scheduleName,
+        'schedule_start_time': scheduleStartTime,
+        'schedule_end_time': scheduleEndTime,
       };
 }

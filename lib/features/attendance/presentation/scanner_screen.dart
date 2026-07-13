@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -25,9 +26,37 @@ class ScannerScreen extends ConsumerStatefulWidget {
 class _ScannerScreenState extends ConsumerState<ScannerScreen>
     with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   static MobileScannerController _newController() => MobileScannerController(
+        autoStart: false,
         detectionSpeed: DetectionSpeed.noDuplicates,
         formats: const [BarcodeFormat.qrCode],
       );
+
+  /// Камера — глобальный ресурс процесса. ShellRoute может удалить старый
+  /// ScannerScreen и создать новый почти в одном кадре, поэтому stop/dispose
+  /// старого и start нового должны выполняться строго последовательно.
+  static Future<void> _cameraQueue = Future<void>.value();
+
+  static Future<void> _enqueueCamera(
+    Future<void> Function() operation,
+  ) {
+    final previous = _cameraQueue;
+    final next = () async {
+      try {
+        await previous;
+      } catch (_) {
+        // Ошибка предыдущего контроллера не должна блокировать новый запуск.
+      }
+      await operation();
+    }();
+    _cameraQueue = () async {
+      try {
+        await next;
+      } catch (_) {
+        // Очередь всегда остаётся пригодной для следующей операции.
+      }
+    }();
+    return next;
+  }
 
   MobileScannerController _controller = _newController();
 
@@ -37,6 +66,8 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
   /// Было ли приложение свёрнуто — чтобы пересоздавать камеру только после
   /// реального возврата из фона (например, из настроек с выдачей разрешения).
   bool _wasPaused = false;
+  bool _disposed = false;
+  bool _restarting = false;
 
   /// Бегущая линия сканирования внутри рамки.
   late final AnimationController _scanLine = AnimationController(
@@ -51,39 +82,94 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_startCamera());
+    });
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (_busy) return; // во время FaceID/обработки камеру не трогаем
     if (state == AppLifecycleState.paused ||
-        state == AppLifecycleState.inactive) {
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.hidden) {
       _wasPaused = true;
+      unawaited(_stopCamera());
     } else if (state == AppLifecycleState.resumed && _wasPaused) {
-      // Встроенный авто-ретрай mobile_scanner перезапускает камеру только
-      // если разрешения ещё нет; после выдачи в настройках контроллер
-      // остаётся в ошибке — пересоздаём его сами.
       _wasPaused = false;
-      _restartCamera();
+      unawaited(_startCamera());
     }
   }
 
-  /// Полный перезапуск камеры — самый надёжный способ выйти из ошибки старта.
-  void _restartCamera() {
-    if (!mounted) return;
-    final old = _controller;
-    setState(() {
-      _controller = _newController();
-      _cameraEpoch++;
+  Future<void> _startCamera() {
+    final controller = _controller;
+    return _enqueueCamera(() async {
+      if (_disposed ||
+          !mounted ||
+          _busy ||
+          !identical(controller, _controller)) {
+        return;
+      }
+      final state = controller.value;
+      if (state.isRunning || state.isStarting) return;
+      try {
+        await controller.start();
+      } on MobileScannerException catch (error) {
+        debugPrint('MobileScanner start failed: $error');
+      }
     });
-    WidgetsBinding.instance.addPostFrameCallback((_) => old.dispose());
+  }
+
+  Future<void> _stopCamera([MobileScannerController? target]) {
+    final controller = target ?? _controller;
+    return _enqueueCamera(() async {
+      try {
+        await controller.stop();
+      } on MobileScannerException catch (error) {
+        if (error.errorCode != MobileScannerErrorCode.controllerDisposed) {
+          debugPrint('MobileScanner stop failed: $error');
+        }
+      }
+    });
+  }
+
+  Future<void> _releaseCamera(MobileScannerController controller) {
+    return _enqueueCamera(() async {
+      try {
+        await controller.stop();
+      } catch (_) {
+        // Контроллер мог не успеть инициализироваться до смены вкладки.
+      }
+      await controller.dispose();
+    });
+  }
+
+  /// Полный последовательный перезапуск после ошибки разрешения/инициализации.
+  Future<void> _restartCamera() async {
+    if (_disposed || _restarting) return;
+    _restarting = true;
+    final old = _controller;
+    try {
+      if (!mounted) return;
+      setState(() {
+        _controller = _newController();
+        _cameraEpoch++;
+      });
+      await WidgetsBinding.instance.endOfFrame;
+      await _releaseCamera(old);
+      if (_disposed || !mounted) return;
+      await _startCamera();
+    } finally {
+      _restarting = false;
+    }
   }
 
   @override
   void dispose() {
+    _disposed = true;
     WidgetsBinding.instance.removeObserver(this);
     _scanLine.dispose();
-    _controller.dispose();
+    unawaited(_releaseCamera(_controller));
     super.dispose();
   }
 
@@ -126,7 +212,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
     );
     if (!mounted) return;
     setState(() => _busy = false);
-    await _controller.start();
+    await _startCamera();
   }
 
   Future<void> _processScan(String qrId) async {
@@ -135,7 +221,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
       _busy = true;
       _stage = l10n.stageCheckingPoint;
     });
-    await _controller.stop();
+    await _stopCamera();
     if (!mounted) return;
 
     // Пред-проверка QR: незарегистрированную/отключённую точку отсекаем до
@@ -173,7 +259,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
     if (!mounted) return;
     if (photo == null || photo.isEmpty) {
       setState(() => _busy = false);
-      await _controller.start();
+      await _startCamera();
       return;
     }
 
@@ -225,8 +311,9 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
 
     if (!mounted) return;
     if (success) {
-      // Табель и аналитика строятся из /tardiness/ — обновляем его.
+      // Обновляем оба источника данных учета рабочего времени.
       ref.invalidate(tardinessAnalyticsProvider);
+      ref.invalidate(timesheetProvider);
     }
     await _showResultAndResume(
       result,
@@ -248,7 +335,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
             onDetect: _onDetect,
             errorBuilder: (context, error) => _CameraError(
               error: error,
-              onRetry: _restartCamera,
+              onRetry: () => unawaited(_restartCamera()),
               onOpenSettings: () => ref
                   .read(locationServiceProvider)
                   .openSettings(LocationSettingsAction.appSettings),
@@ -319,7 +406,9 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
                             : Colors.white.withValues(alpha: 0.14),
                       ),
                       child: IconButton(
-                        onPressed: () => _controller.toggleTorch(),
+                        onPressed: state.isRunning
+                            ? () => _controller.toggleTorch()
+                            : null,
                         padding: const EdgeInsets.all(14),
                         icon: Icon(
                           torchOn
