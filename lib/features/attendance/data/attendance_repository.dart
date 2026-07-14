@@ -106,7 +106,7 @@ class AttendanceRepository {
           queryParameters: {
             'iin': iin,
             'period_from': range.startParam,
-            'period_to': range.endParam,
+            'period_to': range.endExclusiveParam,
             'ordering': 'auth_time',
             'page_size': 100,
             'page': page,

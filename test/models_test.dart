@@ -322,6 +322,15 @@ void main() {
       expect(range.endParam, '2026-07-05');
     });
 
+    test('верхняя граница табеля включает последний день периода', () {
+      final range = AnalyticsRange(
+        start: DateTime(2026, 7, 14),
+        end: DateTime(2026, 7, 14),
+      );
+
+      expect(range.endExclusiveParam, '2026-07-15');
+    });
+
     test('текущий период можно ограничить сегодняшней датой', () {
       final range = AnalyticsRange.forPeriod(
         AnalyticsPeriod.month,

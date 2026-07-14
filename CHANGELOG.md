@@ -2,7 +2,7 @@
 
 Все значимые изменения AvaTracker Mobile фиксируются в этом файле.
 
-## [Unreleased - 1.0.4+13]
+## [Unreleased - patch for 1.0.4+13]
 
 ### Changed
 
@@ -18,13 +18,16 @@
 
 - вкладки переведены на `StatefulShellRoute.indexedStack`: QR-экран и его
   `MobileScannerController` больше не пересоздаются при быстром переключении.
+- табель передаёт в `employee-identification-list` исключающую верхнюю
+  границу периода: отметки текущего дня больше не пропадают.
 
 ### Verification
 
 - `flutter analyze` — без ошибок;
-- `flutter test` — 48 тестов прошли;
-- release APK не собирался: перед релизом нужна проверка камеры
-  и production API на физическом устройстве.
+- `flutter test` — 49 тестов прошли;
+- production APK `AvaTracker-v1.0.4.apk` собран с `MOCK_API=false` и
+  `TEST_AUTH=false`; перед распространением нужна проверка на физическом
+  устройстве.
 
 ## [1.0.3+12] - 2026-07-13
 

@@ -258,7 +258,7 @@ EncryptedSharedPreferences на Android и Keychain на iOS.
 4. `GET /api/qr/{qr_id}/`;
 5. `POST /api/qr/scan/` с фото и геолокацией;
 6. `GET /api/v1/employees/{iin}/` для данных сотрудника и графика;
-7. `GET /api/v1/employee-identification-list/?iin={iin}&period_from={date}&period_to={date}`
+7. `GET /api/v1/employee-identification-list/?iin={iin}&period_from={date}&period_to={next_date}`
    для табеля, прихода и ухода;
 8. `GET /api/v1/tardiness/` для аналитики опозданий.
 
@@ -703,11 +703,15 @@ QR может содержать либо чистый идентификато�
 ```text
 GET /employee-identification-list/?iin=050402501662
     &period_from=2026-07-01
-    &period_to=2026-07-13
+    &period_to=2026-08-01
     &ordering=auth_time
     &page_size=100
     &page=1
 ```
+
+`period_to` у этого endpoint не включается в результат. Поэтому для табеля
+за 1–31 июля клиент передаёт `period_from=2026-07-01` и
+`period_to=2026-08-01`; для одного 14 июля — `2026-07-14` и `2026-07-15`.
 
 Ответ пагинирован: `{count, next, previous, results}`. Каждый элемент
 `results` содержит `auth_time`, `park_id`, `park_name`, `employeeNo` и

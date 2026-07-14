@@ -32,6 +32,10 @@ class AnalyticsRange {
   String get startParam => _dateParam(start);
   String get endParam => _dateParam(end);
 
+  /// `/employee-identification-list/` применяет верхнюю границу периода
+  /// исключительно: чтобы включить [end], передаём следующий день.
+  String get endExclusiveParam => _dateParam(end.add(const Duration(days: 1)));
+
   @override
   bool operator ==(Object other) =>
       other is AnalyticsRange && other.start == start && other.end == end;
