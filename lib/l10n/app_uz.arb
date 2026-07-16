@@ -27,10 +27,13 @@
 
   "registerTitle": "Roʻyxatdan oʻtish",
   "createAccount": "Xodim hisobini yarating",
-  "registerSubtitle": "Telefon, IIN va parolni kiriting. Tasdiqlash kodi SMS orqali keladi.",
+  "registerSubtitle": "Telefon raqami, shaxsiy identifikatsiya raqami va parolni kiriting. Tasdiqlash kodi SMS orqali keladi.",
   "fieldIin": "IIN",
   "iinHint": "12 raqam",
   "iinExplanation": "Faqat AvaTracker tizimidagi xodimni tekshirish uchun kerak.",
+  "fieldPinfl": "JShShIR (PINFL)",
+  "pinflHint": "14 raqam",
+  "pinflExplanation": "Faqat AvaTracker tizimidagi xodimni tekshirish uchun kerak.",
   "passwordMinHint": "Kamida 6 belgi",
   "confirmPassword": "Parolni tasdiqlang",
   "repeatPassword": "Parolni takrorlang",
@@ -38,6 +41,7 @@
   "haveAccount": "Menda hisob bor",
   "consentCheckbox": "Men Maxfiylik siyosati bilan tanishdim va ish vaqtini hisobga olish, xodim faolligini tekshirish hamda kelish/ketish belgilarini qayd etish uchun shaxsiy maʼlumotlarni qayta ishlashga rozilik beraman.",
   "validatorIin": "IIN 12 ta raqamdan iborat boʻlishi kerak",
+  "validatorPinfl": "JShShIR (PINFL) 14 ta raqamdan iborat boʻlishi kerak",
   "validatorPassword": "Parol: kamida 6 belgi, boʻsh joysiz",
   "validatorPasswordsMatch": "Parollar mos kelmadi",
 

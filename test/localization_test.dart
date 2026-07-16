@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:avatracker_mobile/core/i18n/locale_provider.dart';
 import 'package:avatracker_mobile/l10n/app_localizations.dart';
 import 'package:avatracker_mobile/l10n/l10n_ext.dart';
 
@@ -12,6 +13,11 @@ void main() {
     );
   });
 
+  test('страна автоматически выбирает локальный язык', () {
+    expect(localeCodeForCountry('KZ'), 'kk');
+    expect(localeCodeForCountry('UZ'), 'uz');
+  });
+
   test('основная навигация переведена для всех локалей', () {
     final kk = lookupAppLocalizations(const Locale('kk'));
     final ru = lookupAppLocalizations(const Locale('ru'));
@@ -20,6 +26,8 @@ void main() {
     expect(kk.tabScanner, 'Сканер');
     expect(ru.tabAnalytics, 'Аналитика');
     expect(uz.tabProfile, 'Profil');
+    expect(uz.fieldPinfl, 'JShShIR (PINFL)');
+    expect(uz.validatorPinfl, contains('14'));
   });
 
   test('длительность форматируется в выбранной локали', () {

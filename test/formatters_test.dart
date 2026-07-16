@@ -93,6 +93,9 @@ void main() {
     test('UZ — 9 цифр', () {
       expect(phoneNational('+998 90 123 45 67', uz), '901234567');
       expect(fullPhoneFor('998901234567', uz), '998901234567');
+      final apiPhone = splitPhoneFor('+998 90 123 45 67', uz);
+      expect(apiPhone.dialCode, '+998');
+      expect(apiPhone.number, '901234567');
       expect(isValidPhoneFor('90123456', uz), false);
       expect(isValidPhoneFor('901234567', uz), true);
       expect(prettyE164('+998901234567'), '+998 90 123 45 67');
@@ -117,6 +120,15 @@ void main() {
       );
       expect(overflow.text, full.text);
     });
+
+    test('код страны из API нормализуется с плюсом', () {
+      final country = Country.fromJson({
+        'iso_code': 'uz',
+        'dial_code': '998',
+      });
+      expect(country.isoCode, 'UZ');
+      expect(country.dialCode, '+998');
+    });
   });
 
   test('isValidKzPhone', () {
@@ -128,6 +140,18 @@ void main() {
     expect(isValidIin('642918307154'), true);
     expect(isValidIin('64291830715'), false);
     expect(isValidIin('6429183071ab'), false);
+  });
+
+  test('идентификатор зависит от выбранной страны', () {
+    final kz = Country.fallback[0];
+    final uz = Country.fallback[1];
+
+    expect(personalIdentifierLength(kz), 12);
+    expect(isValidPersonalIdentifier('642918307154', kz), true);
+    expect(isValidPersonalIdentifier('64291830715400', kz), false);
+    expect(personalIdentifierLength(uz), 14);
+    expect(isValidPersonalIdentifier('30101800123456', uz), true);
+    expect(isValidPersonalIdentifier('3010180012345', uz), false);
   });
 
   test('isValidPassword', () {

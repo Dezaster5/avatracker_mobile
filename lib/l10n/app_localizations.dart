@@ -247,7 +247,7 @@ abstract class AppLocalizations {
   /// No description provided for @registerSubtitle.
   ///
   /// In ru, this message translates to:
-  /// **'Введите телефон, ИИН и пароль. Код подтверждения придёт по SMS.'**
+  /// **'Введите телефон, идентификационный номер и пароль. Код подтверждения придёт по SMS.'**
   String get registerSubtitle;
 
   /// No description provided for @fieldIin.
@@ -267,6 +267,24 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Нужен только для проверки сотрудника в AvaTracker.'**
   String get iinExplanation;
+
+  /// No description provided for @fieldPinfl.
+  ///
+  /// In ru, this message translates to:
+  /// **'ПИНФЛ'**
+  String get fieldPinfl;
+
+  /// No description provided for @pinflHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'14 цифр'**
+  String get pinflHint;
+
+  /// No description provided for @pinflExplanation.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нужен только для проверки сотрудника в AvaTracker.'**
+  String get pinflExplanation;
 
   /// No description provided for @passwordMinHint.
   ///
@@ -309,6 +327,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'ИИН должен содержать 12 цифр'**
   String get validatorIin;
+
+  /// No description provided for @validatorPinfl.
+  ///
+  /// In ru, this message translates to:
+  /// **'ПИНФЛ должен содержать 14 цифр'**
+  String get validatorPinfl;
 
   /// No description provided for @validatorPassword.
   ///

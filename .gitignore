@@ -74,3 +74,6 @@ app.*.map.json
 # Local backend/vendor reference files
 api.by_backend
 sms-kz.pdf
+
+# Локальный редактируемый оригинал; публикуемая версия — PRIVACY_POLICY.txt.
+Политика .docx

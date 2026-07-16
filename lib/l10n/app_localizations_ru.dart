@@ -82,7 +82,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get registerSubtitle =>
-      'Введите телефон, ИИН и пароль. Код подтверждения придёт по SMS.';
+      'Введите телефон, идентификационный номер и пароль. Код подтверждения придёт по SMS.';
 
   @override
   String get fieldIin => 'ИИН';
@@ -92,6 +92,16 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get iinExplanation =>
+      'Нужен только для проверки сотрудника в AvaTracker.';
+
+  @override
+  String get fieldPinfl => 'ПИНФЛ';
+
+  @override
+  String get pinflHint => '14 цифр';
+
+  @override
+  String get pinflExplanation =>
       'Нужен только для проверки сотрудника в AvaTracker.';
 
   @override
@@ -115,6 +125,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get validatorIin => 'ИИН должен содержать 12 цифр';
+
+  @override
+  String get validatorPinfl => 'ПИНФЛ должен содержать 14 цифр';
 
   @override
   String get validatorPassword => 'Пароль: минимум 6 символов, без пробелов';

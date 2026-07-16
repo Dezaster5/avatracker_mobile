@@ -74,14 +74,13 @@ account; the user can re-register afterwards).
 Videos**, но в описании назначения (Purpose) и в Review Notes нужно явно
 написать словом **"biometric"/"биометрическая верификация"**, что фото
 используется именно для сверки личности сотрудника (face verification),
-а не хранится как медиа-контент. Это соответствует тексту Политики
-конфиденциальности (`legal_content.dart` → `privacySections[0]`, `[2]`),
-где биометрия названа явно.
+а не хранится как медиа-контент. Это соответствует тексту Политики версии 2.0
+в `PRIVACY_POLICY.txt`, где биометрия названа явно.
 
 - **Data Use → Purpose**: везде **App Functionality**. Не указывать
   Analytics/Advertising/Third-Party Advertising ни для одной категории.
 - **Data linked to identity**: **Yes** для геолокации, фото и всех
-  идентификаторов — привязаны к ИИН сотрудника.
+  идентификаторов — привязаны к ИИН или ПИНФЛ сотрудника.
 - **Tracking**: **No** (данные не используются для трекинга между
   приложениями/сайтами сторонних компаний).
 - **Third-party advertising**: **No**.
@@ -91,13 +90,13 @@ Videos**, но в описании назначения (Purpose) и в Review N
   HTTPS/TLS (`https://avatracker.online`).
 - **Data deletion**: **Yes** — реализовано через `/delete-account`
   (`DELETE /api/mobile/profile/delete/`), см. §3.
-- Privacy Policy URL: `https://avatracker.online/privacy-policy/` — уже
-  опубликована (см. §5). Сверить с черновиком `PRIVACY_POLICY.txt` в корне
-  репозитория, если текст на сайте позже поменяется.
+- Privacy Policy URL: `https://avatracker.online/privacy-policy/`. Перед новой
+  отправкой на review опубликовать по этому адресу текст версии 2.0 из
+  `PRIVACY_POLICY.txt`.
 
 ### Почему приложение может показаться ревьюеру «непонятным» для App Store
 
-AvaTracker — вход только по корпоративному ИИН конкретной компании, обычный
+AvaTracker — вход только по корпоративному идентификатору сотрудника, обычный
 пользователь App Store не сможет им воспользоваться. Это частая причина
 дополнительных вопросов от ревью. Меры уже приняты:
 1. Test-аккаунт и тестовые данные обязательно указаны в Review Notes (см. §1)
@@ -152,14 +151,14 @@ AvaTracker — вход только по корпоративному ИИН к
 ## 5. Privacy Policy URL
 
 App Store Connect требует **публичный URL** политики (в дополнение к экрану в
-приложении). Опубликована по адресу `AppConfig.privacyPolicyUrl`
+приложении). Используется адрес `AppConfig.privacyPolicyUrl`
 (`https://avatracker.online/privacy-policy/`) — этот же URL указывается в
-App Store Connect и Google Play Console.
+App Store Connect и Google Play Console. До отправки версии 1.0.5 на review
+разместить по этому адресу Политику версии 2.0.
 
-Текст на сайте должен совпадать с текстом в приложении
-(`lib/features/legal/legal_content.dart` → `privacySections`, черновик —
-`PRIVACY_POLICY.txt`) — при правке одного места не забыть синхронизировать
-второе.
+Текст на сайте должен совпадать с `PRIVACY_POLICY.txt` версии 2.0. Этот же
+файл включён в assets приложения и показывается на экране `/privacy`, поэтому
+отдельной сокращённой копии политики в Dart-коде больше нет.
 
 Также заполните контакты ответственного лица (`AppConfig.supportEmail`,
 `AppConfig.companyName`) актуальными значениями компании.
@@ -169,7 +168,8 @@ App Store Connect и Google Play Console.
 ## 6. Чего в приложении НЕТ (по требованиям Apple) — и это правильно
 
 Рекламных SDK, сторонней аналитики, скрытого трекинга, фоновой геолокации,
-запроса Location Always, сбора данных без объяснения, входа по ИИН без пояснения,
+запроса Location Always, сбора данных без объяснения, входа по идентификатору
+без пояснения,
 регистрации без Privacy Policy и без согласия.
 
 ---
@@ -194,6 +194,6 @@ Manager после прохождения App Review; bundle id: `kz.avatariya.a
 
 - [`GOOGLE_PLAY_REVIEW.md`](./GOOGLE_PLAY_REVIEW.md) — заполнение Data Safety
   для Google Play Console (аналог этого документа для Android).
-- [`PRIVACY_POLICY.txt`](./PRIVACY_POLICY.txt) — рабочий текст Политики
-  конфиденциальности; опубликована на
+- [`PRIVACY_POLICY.txt`](./PRIVACY_POLICY.txt) — единый текст Политики
+  конфиденциальности версии 2.0 для приложения и публикации на
   `https://avatracker.online/privacy-policy/`.

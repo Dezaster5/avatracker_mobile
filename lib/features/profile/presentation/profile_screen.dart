@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/config/app_config.dart';
+import '../../../core/country/country_providers.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/status_chip.dart';
@@ -44,6 +45,7 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final employee = ref.watch(authControllerProvider).employee;
+    final country = ref.watch(selectedCountryProvider);
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.myData)),
@@ -127,7 +129,9 @@ class ProfileScreen extends ConsumerWidget {
                         children: [
                           _ProfileRow(
                             icon: Icons.badge_outlined,
-                            label: l10n.labelIin,
+                            label: country.isoCode == 'UZ'
+                                ? l10n.fieldPinfl
+                                : l10n.labelIin,
                             value: employee.iin,
                           ),
                           _ProfileRow(

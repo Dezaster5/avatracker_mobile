@@ -53,11 +53,11 @@ abstract final class AppConfig {
   }
 
   /// Человекочитаемая версия сборки.
-  static const appVersion = 'v1.0.4';
+  static const appVersion = 'v1.0.5';
 
   // ─── Юридическое / App Store ───────────────────────────────────────────────
   /// Версия Политики конфиденциальности (фиксируется в записи согласия).
-  static const privacyPolicyVersion = '1.0';
+  static const privacyPolicyVersion = '2.0';
 
   /// Компания-оператор данных и контакты ответственного лица.
   static const companyName = 'ТОО "AVA TECH.IO"';

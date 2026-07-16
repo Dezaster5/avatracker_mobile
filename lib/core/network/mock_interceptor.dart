@@ -35,10 +35,16 @@ class MockInterceptor extends Interceptor {
 
   static final List<Map<String, dynamic>> _todayMarks = [];
 
-  /// Последние 10 цифр номера (национальная часть, как шлёт клиент).
+  /// Национальная часть номера: KZ — 10 цифр, UZ — 9 цифр.
   static String _nat(Object? phone) {
     final digits = '$phone'.replaceAll(RegExp(r'\D'), '');
-    return digits.length > 10 ? digits.substring(digits.length - 10) : digits;
+    if (digits.length > 9 && digits.startsWith('998')) {
+      return digits.substring(3);
+    }
+    if (digits.length > 10 && digits.startsWith('7')) {
+      return digits.substring(1);
+    }
+    return digits;
   }
 
   @override

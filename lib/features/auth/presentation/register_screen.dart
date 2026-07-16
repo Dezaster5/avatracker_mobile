@@ -67,6 +67,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final registration = ref.watch(registrationControllerProvider);
+    final country = ref.watch(selectedCountryProvider);
+    final isUzbekistan = country.isoCode == 'UZ';
+
+    ref.listen(selectedCountryProvider, (previous, next) {
+      if (previous?.isoCode != next.isoCode) _iinController.clear();
+    });
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -114,26 +120,35 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   ],
                 ),
                 const SizedBox(height: 18),
-                FieldLabel(l10n.fieldIin),
+                FieldLabel(
+                  isUzbekistan ? l10n.fieldPinfl : l10n.fieldIin,
+                ),
                 TextFormField(
                   controller: _iinController,
                   keyboardType: TextInputType.number,
                   textInputAction: TextInputAction.next,
                   inputFormatters: [
                     FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(12),
+                    LengthLimitingTextInputFormatter(
+                      personalIdentifierLength(country),
+                    ),
                   ],
                   decoration: InputDecoration(
-                    hintText: l10n.iinHint,
+                    hintText: isUzbekistan ? l10n.pinflHint : l10n.iinHint,
                     prefixIcon: const Icon(Icons.badge_outlined, size: 22),
                   ),
-                  validator: (value) => isValidIin((value ?? '').trim())
+                  validator: (value) => isValidPersonalIdentifier(
+                    (value ?? '').trim(),
+                    country,
+                  )
                       ? null
-                      : l10n.validatorIin,
+                      : isUzbekistan
+                          ? l10n.validatorPinfl
+                          : l10n.validatorIin,
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  l10n.iinExplanation,
+                  isUzbekistan ? l10n.pinflExplanation : l10n.iinExplanation,
                   style: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 12.5,

@@ -1,7 +1,7 @@
 name: avatracker_mobile
 description: "AvaTracker Mobile — учет рабочего времени сотрудников: QR-отметки, FaceID-проверка, контроль геолокации."
 publish_to: 'none'
-version: 1.0.4+13
+version: 1.0.5+14
 
 environment:
   sdk: ^3.5.0
@@ -53,6 +53,7 @@ flutter:
   assets:
     - assets/logo/
     - assets/icon/
+    - PRIVACY_POLICY.txt
 
 # Иконка приложения из актуального брендбука AvaTracker (logo/New).
 flutter_launcher_icons:

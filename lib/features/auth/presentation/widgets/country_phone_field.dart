@@ -35,17 +35,9 @@ class _CountryPhoneFieldState extends ConsumerState<CountryPhoneField> {
   Widget build(BuildContext context) {
     final country = ref.watch(selectedCountryProvider);
 
-    // При смене страны переформатируем уже введённый номер.
+    // Номер одной страны нельзя незаметно использовать с кодом другой.
     ref.listen<Country>(selectedCountryProvider, (prev, next) {
-      final national = phoneNational(widget.controller.text, next);
-      final allowed = national.length > next.nationalLength
-          ? national.substring(0, next.nationalLength)
-          : national;
-      final text = allowed.isEmpty ? '' : formatNational(allowed, next);
-      widget.controller.value = TextEditingValue(
-        text: text,
-        selection: TextSelection.collapsed(offset: text.length),
-      );
+      if (prev?.isoCode != next.isoCode) widget.controller.clear();
     });
 
     return TextFormField(

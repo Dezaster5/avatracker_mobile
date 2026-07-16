@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../core/country/country.dart';
 import '../../../../core/country/country_providers.dart';
@@ -72,8 +73,15 @@ Future<void> showCountryPicker(BuildContext context, WidgetRef ref) async {
     ),
   );
   if (selected != null) {
+    final countryChanged = selected.isoCode != current.isoCode;
     ref.read(selectedCountryProvider.notifier).state = selected;
     await ref.read(tokenStorageProvider).saveCountryIso(selected.isoCode);
+    if (countryChanged) {
+      final localeCode = localeCodeForCountry(selected.isoCode);
+      ref.read(localeProvider.notifier).state = Locale(localeCode);
+      Intl.defaultLocale = localeCode;
+      await ref.read(tokenStorageProvider).saveLocale(localeCode);
+    }
   }
 }
 
@@ -90,6 +98,7 @@ Future<void> showLanguagePicker(BuildContext context, WidgetRef ref) async {
   );
   if (selected != null && selected != current) {
     ref.read(localeProvider.notifier).state = Locale(selected);
+    Intl.defaultLocale = selected;
     await ref.read(tokenStorageProvider).saveLocale(selected);
   }
 }

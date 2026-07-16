@@ -24,13 +24,16 @@ class Country {
   List<int> get groups =>
       isoCode == 'UZ' ? const [2, 3, 2, 2] : const [3, 3, 2, 2];
 
-  factory Country.fromJson(Map<String, dynamic> json) => Country(
-        id: (json['id'] as num?)?.toInt() ?? 0,
-        name: '${json['name'] ?? ''}',
-        isoCode: '${json['iso_code'] ?? ''}',
-        dialCode: '${json['dial_code'] ?? '+7'}',
-        flagEmoji: '${json['flag_emoji'] ?? ''}',
-      );
+  factory Country.fromJson(Map<String, dynamic> json) {
+    final rawDialCode = '${json['dial_code'] ?? '+7'}'.trim();
+    return Country(
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      name: '${json['name'] ?? ''}',
+      isoCode: '${json['iso_code'] ?? ''}'.toUpperCase(),
+      dialCode: rawDialCode.startsWith('+') ? rawDialCode : '+$rawDialCode',
+      flagEmoji: '${json['flag_emoji'] ?? ''}',
+    );
+  }
 
   /// Резервный список, если `/countries/` недоступен (используется до входа).
   static const List<Country> fallback = [

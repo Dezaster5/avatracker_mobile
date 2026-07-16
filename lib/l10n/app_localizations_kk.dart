@@ -82,7 +82,7 @@ class AppLocalizationsKk extends AppLocalizations {
 
   @override
   String get registerSubtitle =>
-      'Телефонды, ЖСН-ді және құпия сөзді енгізіңіз. Растау коды SMS арқылы келеді.';
+      'Телефонды, сәйкестендіру нөмірін және құпия сөзді енгізіңіз. Растау коды SMS арқылы келеді.';
 
   @override
   String get fieldIin => 'ЖСН';
@@ -92,6 +92,16 @@ class AppLocalizationsKk extends AppLocalizations {
 
   @override
   String get iinExplanation =>
+      'AvaTracker жүйесіндегі қызметкерді тексеру үшін ғана қажет.';
+
+  @override
+  String get fieldPinfl => 'ПИНФЛ';
+
+  @override
+  String get pinflHint => '14 сан';
+
+  @override
+  String get pinflExplanation =>
       'AvaTracker жүйесіндегі қызметкерді тексеру үшін ғана қажет.';
 
   @override
@@ -115,6 +125,9 @@ class AppLocalizationsKk extends AppLocalizations {
 
   @override
   String get validatorIin => 'ЖСН 12 саннан тұруы керек';
+
+  @override
+  String get validatorPinfl => 'ПИНФЛ 14 саннан тұруы керек';
 
   @override
   String get validatorPassword => 'Құпия сөз: кемінде 6 таңба, бос орынсыз';

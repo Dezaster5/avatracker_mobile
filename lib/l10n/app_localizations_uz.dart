@@ -82,7 +82,7 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get registerSubtitle =>
-      'Telefon, IIN va parolni kiriting. Tasdiqlash kodi SMS orqali keladi.';
+      'Telefon raqami, shaxsiy identifikatsiya raqami va parolni kiriting. Tasdiqlash kodi SMS orqali keladi.';
 
   @override
   String get fieldIin => 'IIN';
@@ -92,6 +92,16 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get iinExplanation =>
+      'Faqat AvaTracker tizimidagi xodimni tekshirish uchun kerak.';
+
+  @override
+  String get fieldPinfl => 'JShShIR (PINFL)';
+
+  @override
+  String get pinflHint => '14 raqam';
+
+  @override
+  String get pinflExplanation =>
       'Faqat AvaTracker tizimidagi xodimni tekshirish uchun kerak.';
 
   @override
@@ -115,6 +125,10 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get validatorIin => 'IIN 12 ta raqamdan iborat boʻlishi kerak';
+
+  @override
+  String get validatorPinfl =>
+      'JShShIR (PINFL) 14 ta raqamdan iborat boʻlishi kerak';
 
   @override
   String get validatorPassword => 'Parol: kamida 6 belgi, boʻsh joysiz';
