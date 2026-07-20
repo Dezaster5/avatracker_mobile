@@ -1,7 +1,7 @@
 name: avatracker_mobile
 description: "AvaTracker Mobile — учет рабочего времени сотрудников: QR-отметки, FaceID-проверка, контроль геолокации."
 publish_to: 'none'
-version: 1.0.5+14
+version: 1.0.3+13
 
 environment:
   sdk: ^3.5.0

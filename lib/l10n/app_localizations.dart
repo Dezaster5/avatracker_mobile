@@ -331,7 +331,7 @@ abstract class AppLocalizations {
   /// No description provided for @validatorPinfl.
   ///
   /// In ru, this message translates to:
-  /// **'ПИНФЛ должен содержать 14 цифр'**
+  /// **'Введите ПИНФЛ'**
   String get validatorPinfl;
 
   /// No description provided for @validatorPassword.
