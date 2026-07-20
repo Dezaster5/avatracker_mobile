@@ -127,7 +127,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get validatorIin => 'ИИН должен содержать 12 цифр';
 
   @override
-  String get validatorPinfl => 'ПИНФЛ должен содержать 14 цифр';
+  String get validatorPinfl => 'Введите ПИНФЛ';
 
   @override
   String get validatorPassword => 'Пароль: минимум 6 символов, без пробелов';

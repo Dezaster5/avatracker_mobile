@@ -127,7 +127,7 @@ class AppLocalizationsKk extends AppLocalizations {
   String get validatorIin => 'ЖСН 12 саннан тұруы керек';
 
   @override
-  String get validatorPinfl => 'ПИНФЛ 14 саннан тұруы керек';
+  String get validatorPinfl => 'ПИНФЛ енгізіңіз';
 
   @override
   String get validatorPassword => 'Құпия сөз: кемінде 6 таңба, бос орынсыз';

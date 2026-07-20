@@ -211,13 +211,17 @@ class CountryPhoneInputFormatter extends TextInputFormatter {
 
 bool isValidIin(String iin) => RegExp(r'^\d{12}$').hasMatch(iin);
 
-/// Казахстан использует 12-значный ИИН, Узбекистан — 14-значный ПИНФЛ.
+/// Казахстан использует 12-значный ИИН, Узбекистан — ПИНФЛ до 14 цифр.
 int personalIdentifierLength(Country country) =>
     country.isoCode == 'UZ' ? 14 : 12;
 
-bool isValidPersonalIdentifier(String value, Country country) => RegExp(
-      '^\\d{${personalIdentifierLength(country)}}\$',
-    ).hasMatch(value);
+bool isValidPersonalIdentifier(String value, Country country) {
+  if (country.isoCode == 'UZ') {
+    return RegExp(r'^\d{1,14}$').hasMatch(value);
+  }
+
+  return isValidIin(value);
+}
 
 /// Минимальные требования к паролю: от 6 символов без пробелов.
 bool isValidPassword(String password) =>

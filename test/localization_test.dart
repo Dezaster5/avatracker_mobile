@@ -27,7 +27,7 @@ void main() {
     expect(ru.tabAnalytics, 'Аналитика');
     expect(uz.tabProfile, 'Profil');
     expect(uz.fieldPinfl, 'JShShIR (PINFL)');
-    expect(uz.validatorPinfl, contains('14'));
+    expect(uz.validatorPinfl, contains('kiriting'));
   });
 
   test('длительность форматируется в выбранной локали', () {

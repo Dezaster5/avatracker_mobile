@@ -151,7 +151,10 @@ void main() {
     expect(isValidPersonalIdentifier('64291830715400', kz), false);
     expect(personalIdentifierLength(uz), 14);
     expect(isValidPersonalIdentifier('30101800123456', uz), true);
-    expect(isValidPersonalIdentifier('3010180012345', uz), false);
+    expect(isValidPersonalIdentifier('3010180012345', uz), true);
+    expect(isValidPersonalIdentifier('3', uz), true);
+    expect(isValidPersonalIdentifier('', uz), false);
+    expect(isValidPersonalIdentifier('301018001234567', uz), false);
   });
 
   test('isValidPassword', () {

@@ -127,8 +127,7 @@ class AppLocalizationsUz extends AppLocalizations {
   String get validatorIin => 'IIN 12 ta raqamdan iborat boʻlishi kerak';
 
   @override
-  String get validatorPinfl =>
-      'JShShIR (PINFL) 14 ta raqamdan iborat boʻlishi kerak';
+  String get validatorPinfl => 'JShShIR (PINFL) ni kiriting';
 
   @override
   String get validatorPassword => 'Parol: kamida 6 belgi, boʻsh joysiz';
