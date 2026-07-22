@@ -13,11 +13,11 @@
 Версия задаётся в `pubspec.yaml`:
 
 ```yaml
-version: 1.0.5+14
+version: 1.0.6+15
 ```
 
-- `1.0.5` — `versionName`, отображаемая версия;
-- `14` — `versionCode`, который должен увеличиваться при каждой публикации.
+- `1.0.6` — `versionName`, отображаемая версия;
+- `15` — `versionCode`, который должен увеличиваться при каждой публикации.
 
 Строка `AppConfig.appVersion` должна соответствовать `versionName`.
 
@@ -108,23 +108,25 @@ apksigner verify --print-certs build\app\outputs\flutter-apk\app-release.apk
 ```powershell
 Copy-Item `
   build\app\outputs\flutter-apk\app-release.apk `
-  AvaTracker-v1.0.5.apk
+  AvaTracker-v1.0.6.apk
 ```
 
 APK и AAB не коммитятся. При необходимости приложите артефакт к GitHub Release.
 
-## 5.1. Текущая внутренняя сборка 2026-07-16
+## 5.1. Текущая внутренняя сборка 2026-07-22
 
-- файл: `AvaTracker-v1.0.5.apk`;
-- `versionName`: `1.0.5`;
-- `versionCode`: `14`;
-- размер: 77 806 872 байта (~74,2 MB);
+- файл: `AvaTracker-v1.0.6.apk`;
+- `versionName`: `1.0.6`;
+- `versionCode`: `15`;
+- размер: 77 855 868 байт (~74,2 MB);
 - SHA-256:
-  `afa245bb1deb76c469df04912692d953740a671ab2034ad8e58ff19f257ab3c1`;
+  `97575b19c9120980aec8607604a92b091f844d2bd17d6d970b159bde6e7dafa0`;
 - `MOCK_API=false`, `TEST_AUTH=false`,
   `API_BASE_URL=https://avatracker.online/api/v1`;
 - Политика конфиденциальности версии 2.0 присутствует в assets APK;
-- `flutter analyze` — без ошибок, `flutter test` — 52 теста прошли.
+- автоматический снимок лица запускается после секундной подготовки и
+  локального выбора момента по яркости и резкости;
+- `flutter analyze` — без ошибок, `flutter test` — 54 теста прошли.
 
 Сборка подписана `CN=Android Debug`, потому что production keystore на машине
 не настроен. Она предназначена для внутреннего тестирования и не должна

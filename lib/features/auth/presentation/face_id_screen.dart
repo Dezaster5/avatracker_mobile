@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +9,7 @@ import 'package:geolocator/geolocator.dart';
 
 import '../../../core/config/app_config.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/frame_quality.dart';
 import '../../../core/widgets/primary_button.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../l10n/l10n_ext.dart';
@@ -30,8 +33,15 @@ class _FaceIdScreenState extends ConsumerState<FaceIdScreen>
   bool _initializing = true;
   _CameraFailure? _cameraError;
   bool _checking = false;
+  bool _selectingFrame = false;
   String? _error;
   int _attemptsLeft = AppConfig.faceIdMaxAttempts;
+  int _cameraGeneration = 0;
+  int _goodFrameCount = 0;
+  bool _captureStarted = false;
+  DateTime? _lastFrameAnalysis;
+  Timer? _warmupTimer;
+  Timer? _selectionDeadline;
 
   /// Пульсация рамки вокруг камеры — «живой» индикатор готовности.
   late final AnimationController _pulse = AnimationController(
@@ -43,38 +53,57 @@ class _FaceIdScreenState extends ConsumerState<FaceIdScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _initCamera();
+    final hasEmployeePhoto =
+        ref.read(authControllerProvider).employee?.hasPhoto ?? false;
+    if (hasEmployeePhoto) {
+      unawaited(_initCamera());
+    } else {
+      _initializing = false;
+    }
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _cancelAutomaticCapture();
     _pulse.dispose();
-    _camera?.dispose();
+    final camera = _camera;
+    _camera = null;
+    if (camera != null) unawaited(_disposeCamera(camera));
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    final camera = _camera;
-    if (camera == null || !camera.value.isInitialized) return;
     if (state == AppLifecycleState.inactive ||
         state == AppLifecycleState.paused) {
-      camera.dispose();
+      _cancelAutomaticCapture();
+      final camera = _camera;
       _camera = null;
-    } else if (state == AppLifecycleState.resumed) {
-      _initCamera();
+      if (camera != null) unawaited(_disposeCamera(camera));
+    } else if (state == AppLifecycleState.resumed && _camera == null) {
+      unawaited(_initCamera());
     }
   }
 
   Future<void> _initCamera() async {
+    final generation = ++_cameraGeneration;
+    _cancelCaptureTimers();
+    if (!mounted) return;
     setState(() {
       _initializing = true;
       _cameraError = null;
+      _checking = false;
+      _selectingFrame = false;
+      _captureStarted = false;
     });
     try {
+      final previous = _camera;
+      _camera = null;
+      if (previous != null) await _disposeCamera(previous);
       final cameras = await availableCameras();
       if (cameras.isEmpty) {
+        if (!mounted || generation != _cameraGeneration) return;
         setState(() {
           _initializing = false;
           _cameraError = _CameraFailure.denied;
@@ -85,19 +114,26 @@ class _FaceIdScreenState extends ConsumerState<FaceIdScreen>
         (c) => c.lensDirection == CameraLensDirection.front,
         orElse: () => cameras.first,
       );
-      final controller =
-          CameraController(front, ResolutionPreset.medium, enableAudio: false);
+      final controller = CameraController(
+        front,
+        ResolutionPreset.medium,
+        enableAudio: false,
+        imageFormatGroup: Platform.isIOS
+            ? ImageFormatGroup.bgra8888
+            : ImageFormatGroup.yuv420,
+      );
       await controller.initialize();
-      if (!mounted) {
-        controller.dispose();
+      if (!mounted || generation != _cameraGeneration) {
+        await _disposeCamera(controller);
         return;
       }
       setState(() {
         _camera = controller;
         _initializing = false;
       });
+      _scheduleAutomaticCapture(controller, generation);
     } on CameraException catch (e) {
-      if (!mounted) return;
+      if (!mounted || generation != _cameraGeneration) return;
       setState(() {
         _initializing = false;
         _cameraError = e.code == 'CameraAccessDenied'
@@ -105,7 +141,7 @@ class _FaceIdScreenState extends ConsumerState<FaceIdScreen>
             : _CameraFailure.start;
       });
     } catch (_) {
-      if (!mounted) return;
+      if (!mounted || generation != _cameraGeneration) return;
       setState(() {
         _initializing = false;
         _cameraError = _CameraFailure.start;
@@ -113,14 +149,106 @@ class _FaceIdScreenState extends ConsumerState<FaceIdScreen>
     }
   }
 
-  Future<void> _verify() async {
-    final camera = _camera;
-    if (camera == null || !camera.value.isInitialized || _checking) return;
+  void _scheduleAutomaticCapture(
+    CameraController camera,
+    int generation, {
+    Duration delay = AppConfig.faceCaptureWarmup,
+  }) {
+    _cancelCaptureTimers();
+    _goodFrameCount = 0;
+    _lastFrameAnalysis = null;
+    _captureStarted = false;
+    _warmupTimer = Timer(
+      delay,
+      () => unawaited(_startFrameSelection(camera, generation)),
+    );
+  }
+
+  Future<void> _startFrameSelection(
+    CameraController camera,
+    int generation,
+  ) async {
+    if (!_isCurrent(camera, generation) || _captureStarted) return;
     setState(() {
-      _checking = true;
+      _selectingFrame = true;
       _error = null;
     });
     try {
+      await camera.startImageStream(_onCameraImage);
+      if (!_isCurrent(camera, generation)) return;
+      _selectionDeadline = Timer(
+        AppConfig.faceCaptureSelectionWindow,
+        () => unawaited(_capturePhoto(camera, generation)),
+      );
+    } on CameraException {
+      // Некоторые устройства не поддерживают стабильный image stream.
+      // В этом случае сохраняем быстрый автоматический снимок без анализа.
+      await _capturePhoto(camera, generation);
+    }
+  }
+
+  void _onCameraImage(CameraImage image) {
+    if (!_selectingFrame || _captureStarted) return;
+    final now = DateTime.now();
+    final previous = _lastFrameAnalysis;
+    if (previous != null &&
+        now.difference(previous) < AppConfig.faceFrameAnalysisInterval) {
+      return;
+    }
+    _lastFrameAnalysis = now;
+
+    final quality = _qualityScore(image);
+    if (quality >= AppConfig.faceMinimumFrameQuality) {
+      _goodFrameCount++;
+    } else {
+      _goodFrameCount = 0;
+    }
+    if (_goodFrameCount >= AppConfig.faceRequiredQualityFrames) {
+      final camera = _camera;
+      if (camera != null) {
+        unawaited(_capturePhoto(camera, _cameraGeneration));
+      }
+    }
+  }
+
+  double _qualityScore(CameraImage image) {
+    if (image.planes.isEmpty) return 0;
+    final plane = image.planes.first;
+    if (image.format.group == ImageFormatGroup.bgra8888) {
+      return FrameQuality.scoreBgraPlane(
+        plane.bytes,
+        width: image.width,
+        height: image.height,
+        bytesPerRow: plane.bytesPerRow,
+        bytesPerPixel: plane.bytesPerPixel ?? 4,
+      );
+    }
+    return FrameQuality.scoreLuminancePlane(
+      plane.bytes,
+      width: image.width,
+      height: image.height,
+      bytesPerRow: plane.bytesPerRow,
+      bytesPerPixel: plane.bytesPerPixel ?? 1,
+    );
+  }
+
+  Future<void> _capturePhoto(
+    CameraController camera,
+    int generation,
+  ) async {
+    if (!_isCurrent(camera, generation) || _captureStarted) return;
+    _captureStarted = true;
+    _selectionDeadline?.cancel();
+    setState(() {
+      _selectingFrame = false;
+      _checking = true;
+    });
+    try {
+      if (camera.value.isStreamingImages) {
+        await camera.stopImageStream();
+      }
+      await Future<void>.delayed(AppConfig.faceCaptureSettleDelay);
+      if (!_isCurrent(camera, generation)) return;
       final shot = await camera.takePicture();
       final bytes = await shot.readAsBytes();
       final imageBase64 = base64Encode(bytes);
@@ -128,26 +256,71 @@ class _FaceIdScreenState extends ConsumerState<FaceIdScreen>
       // Снимок отправится в /api/qr/scan/ — сервер сверит лицо при отметке.
       Navigator.of(context).pop(imageBase64);
     } on CameraException {
-      _fail();
+      await _failAndRetry(camera, generation);
     } catch (_) {
-      _fail();
-    } finally {
-      if (mounted) setState(() => _checking = false);
+      await _failAndRetry(camera, generation);
     }
   }
 
   /// Сырой (нелокализованный) ключ — переводится на показе через
   /// `localizedMessage`, чтобы текст не «замораживался» в языке момента
   /// ошибки при последующей смене языка.
-  void _fail() {
-    if (!mounted) return;
+  Future<void> _failAndRetry(
+    CameraController camera,
+    int generation,
+  ) async {
+    if (camera.value.isStreamingImages) {
+      try {
+        await camera.stopImageStream();
+      } on CameraException {
+        // Повторная попытка сама покажет, пригодна ли камера дальше.
+      }
+    }
+    if (!_isCurrent(camera, generation)) return;
     setState(() {
       _attemptsLeft -= 1;
       _error = 'Не удалось сделать снимок. Попробуйте ещё раз';
+      _checking = false;
+      _selectingFrame = false;
+      _captureStarted = false;
     });
+    if (_attemptsLeft > 0) {
+      _scheduleAutomaticCapture(
+        camera,
+        generation,
+        delay: AppConfig.faceCaptureRetryDelay,
+      );
+    }
   }
 
-  void _cancel() => Navigator.of(context).pop<String>();
+  bool _isCurrent(CameraController camera, int generation) =>
+      mounted && generation == _cameraGeneration && identical(_camera, camera);
+
+  void _cancelCaptureTimers() {
+    _warmupTimer?.cancel();
+    _selectionDeadline?.cancel();
+    _warmupTimer = null;
+    _selectionDeadline = null;
+  }
+
+  void _cancelAutomaticCapture() {
+    _cameraGeneration++;
+    _cancelCaptureTimers();
+  }
+
+  Future<void> _disposeCamera(CameraController camera) async {
+    try {
+      if (camera.value.isStreamingImages) await camera.stopImageStream();
+    } on CameraException {
+      // dispose всё равно должен освободить нативную камеру.
+    }
+    await camera.dispose();
+  }
+
+  void _cancel() {
+    _cancelAutomaticCapture();
+    Navigator.of(context).pop<String>();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -280,7 +453,9 @@ class _FaceIdScreenState extends ConsumerState<FaceIdScreen>
         ),
         const SizedBox(height: 24),
         Text(
-          l10n.lookAtCamera,
+          _selectingFrame || _checking
+              ? l10n.stageCheckingFace
+              : l10n.lookAtCamera,
           style: const TextStyle(
             color: Colors.white,
             fontSize: 17,
@@ -309,14 +484,24 @@ class _FaceIdScreenState extends ConsumerState<FaceIdScreen>
           ),
         ],
         const Spacer(),
-        PrimaryButton(
-          label: l10n.confirmAndContinue,
-          icon: Icons.face_retouching_natural,
-          loading: _checking,
-          onPressed: camera == null ? null : _verify,
+        SizedBox(
+          height: 28,
+          child: AnimatedOpacity(
+            opacity: _selectingFrame || _checking ? 1 : 0,
+            duration: const Duration(milliseconds: 180),
+            child: const Center(
+              child: SizedBox.square(
+                dimension: 22,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  color: AppColors.primaryLight,
+                ),
+              ),
+            ),
+          ),
         ),
         TextButton(
-          onPressed: _checking ? null : _cancel,
+          onPressed: _cancel,
           child: Text(
             l10n.actionCancel,
             style: const TextStyle(color: Colors.white54),

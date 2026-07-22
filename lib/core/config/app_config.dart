@@ -53,7 +53,7 @@ abstract final class AppConfig {
   }
 
   /// Человекочитаемая версия сборки.
-  static const appVersion = 'v1.0.5';
+  static const appVersion = 'v1.0.6';
 
   // ─── Юридическое / App Store ───────────────────────────────────────────────
   /// Версия Политики конфиденциальности (фиксируется в записи согласия).
@@ -122,6 +122,13 @@ abstract final class AppConfig {
   static const smsCodeMaxLength = 6;
   static const smsMaxAttempts = 5;
   static const faceIdMaxAttempts = 3;
+  static const faceCaptureWarmup = Duration(seconds: 1);
+  static const faceCaptureSelectionWindow = Duration(milliseconds: 900);
+  static const faceFrameAnalysisInterval = Duration(milliseconds: 120);
+  static const faceCaptureSettleDelay = Duration(milliseconds: 80);
+  static const faceCaptureRetryDelay = Duration(milliseconds: 600);
+  static const faceRequiredQualityFrames = 2;
+  static const faceMinimumFrameQuality = 0.48;
   static const passwordMinLength = 6;
 
   // Геолокация (ТЗ, разделы 7.3 и 17).

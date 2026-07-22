@@ -7,7 +7,7 @@
 > имеет `API_CONTRACT.md`.
 > Указанный ниже архивный `/api/v1/mobile/attendance/timesheet` отсутствует в
 > production. Текущий табель строится из `/api/v1/employee-identification-list/`.
-> Текущая версия исходного кода: `1.0.5+14`.
+> Текущая версия исходного кода: `1.0.6+15`.
 
 **Платформа:** Flutter
 **Проект:** AvaTracker Mobile
