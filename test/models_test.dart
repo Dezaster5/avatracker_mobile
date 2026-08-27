@@ -360,6 +360,64 @@ void main() {
       expect(day?.checkOut?.timeLabel, '02:15');
     });
 
+    test('уход в 02:59 не скрывает опоздание следующего рабочего дня', () {
+      final range = AnalyticsRange(
+        start: DateTime(2026, 7, 13),
+        end: DateTime(2026, 7, 14),
+      );
+      final serverAnalytics = TardinessAnalytics.fromJson(range, {
+        'iin': '990101300123',
+        'employee_name': 'Тестовый Сотрудник',
+        'schedule_name': '5/2',
+        'schedule_start_time': '10:00:00',
+        'count': 0,
+        'results': <Map<String, dynamic>>[],
+      });
+      final marks = AttendanceMarksMonth.fromMarks([
+        AttendanceMark.fromJson({
+          'auth_time': '2026-07-13T10:00:00',
+        }),
+        AttendanceMark.fromJson({
+          'auth_time': '2026-07-14T02:59:00',
+        }),
+        AttendanceMark.fromJson({
+          'auth_time': '2026-07-14T10:07:00',
+        }),
+      ]);
+
+      final analytics = serverAnalytics.normalizedForWorkDays(marks);
+
+      expect(analytics.count, 1);
+      expect(analytics.results.single.date, DateTime(2026, 7, 14));
+      expect(analytics.results.single.actualLabel, '10:07');
+      expect(analytics.results.single.tardinessMinutes, 7);
+      expect(analytics.totalTardinessMinutes, 7);
+    });
+
+    test('ночной график рассчитывает опоздание после полуночи', () {
+      final range = AnalyticsRange(
+        start: DateTime(2026, 7, 13),
+        end: DateTime(2026, 7, 13),
+      );
+      final serverAnalytics = TardinessAnalytics.fromJson(range, {
+        'iin': '990101300123',
+        'employee_name': 'Тестовый Сотрудник',
+        'schedule_name': 'Ночная смена',
+        'schedule_start_time': '02:00:00',
+        'results': <Map<String, dynamic>>[],
+      });
+      final marks = AttendanceMarksMonth.fromMarks([
+        AttendanceMark.fromJson({
+          'auth_time': '2026-07-14T02:12:00',
+        }),
+      ]);
+
+      final analytics = serverAnalytics.normalizedForWorkDays(marks);
+
+      expect(analytics.results.single.date, DateTime(2026, 7, 13));
+      expect(analytics.results.single.tardinessMinutes, 12);
+    });
+
     test('текущий период можно ограничить сегодняшней датой', () {
       final range = AnalyticsRange.forPeriod(
         AnalyticsPeriod.month,

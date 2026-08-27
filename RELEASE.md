@@ -13,11 +13,11 @@
 Версия задаётся в `pubspec.yaml`:
 
 ```yaml
-version: 1.0.7+16
+version: 1.0.7+17
 ```
 
 - `1.0.7` — `versionName`, отображаемая версия;
-- `16` — `versionCode`, который должен увеличиваться при каждой публикации.
+- `17` — `versionCode`, который должен увеличиваться при каждой публикации.
 
 Строка `AppConfig.appVersion` должна соответствовать `versionName`.
 
@@ -118,15 +118,17 @@ APK и AAB не коммитятся. При необходимости прил
 - файл: `AvaTracker-v1.0.7.apk`;
 - package: `kz.avatariya.avatracker_mobile`;
 - `versionName`: `1.0.7`;
-- `versionCode`: `16`;
+- `versionCode`: `17`;
 - размер: 78 462 076 байт (~74,8 MB);
 - SHA-256:
-  `1f7649fd7cfa5005c69c90396cf8e0df01b0a27709dad54f123b0fd468a3b0ee`;
+  `0aef3b44d974a2c54d4d02e2a93ca66a566e468ae9373b6eb71b345528d32645`;
 - `MOCK_API=false`, `TEST_AUTH=false`,
   `API_BASE_URL=https://avatracker.online/api/v1`;
 - рабочий день табеля: `03:00–02:59:59` следующего календарного дня;
+- опоздания пересчитываются по первой отметке рабочего дня, поэтому ночной
+  уход не влияет на статус следующего дня;
 - FaceID использует JPEG из live-потока без `takePicture()` и звука затвора;
-- `flutter analyze` — без ошибок, `flutter test` — 59 тестов прошли.
+- `flutter analyze` — без ошибок, `flutter test` — 61 тест прошёл.
 
 Сборка подписана `CN=Android Debug`, потому что production upload keystore на
 машине не настроен. APK предназначен для внутреннего тестирования. Для Google

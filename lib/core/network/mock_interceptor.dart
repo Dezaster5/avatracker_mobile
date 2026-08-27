@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 
+import '../config/app_config.dart';
 import '../utils/formatters.dart';
 
 /// Mock-режим API (`--dart-define=MOCK_API=true`): обслуживает все
@@ -292,12 +293,10 @@ class MockInterceptor extends Interceptor {
     }
 
     final now = DateTime.now();
+    final currentWorkDate = AppConfig.workDateFor(now);
     _todayMarks.removeWhere((m) {
       final t = DateTime.tryParse('${m['scanned_at']}');
-      return t == null ||
-          t.year != now.year ||
-          t.month != now.month ||
-          t.day != now.day;
+      return t == null || AppConfig.workDateFor(t.toLocal()) != currentWorkDate;
     });
 
     final markType = switch (_todayMarks.length) {
@@ -344,8 +343,7 @@ class MockInterceptor extends Interceptor {
     DateTime periodFrom,
     DateTime periodTo,
   ) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
+    final today = AppConfig.workDate;
     final end = periodTo.isAfter(today) ? today : periodTo;
     final results = <Map<String, dynamic>>[];
 
@@ -396,12 +394,13 @@ class MockInterceptor extends Interceptor {
     DateTime periodFrom,
     DateTime periodTo,
   ) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final end = periodTo.isAfter(today) ? today : periodTo;
+    final today = AppConfig.workDate;
+    final firstWorkDate = AppConfig.workDateFor(periodFrom);
+    final requestedEnd = AppConfig.workDateFor(periodTo);
+    final end = requestedEnd.isAfter(today) ? today : requestedEnd;
     final results = <Map<String, dynamic>>[];
 
-    for (var date = periodFrom;
+    for (var date = firstWorkDate;
         !date.isAfter(end);
         date = date.add(const Duration(days: 1))) {
       if (date.weekday >= DateTime.saturday || date.day % 9 == 0) continue;

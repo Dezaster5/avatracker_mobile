@@ -18,15 +18,35 @@ String _requireIin(Ref ref) {
   return iin;
 }
 
-/// Аналитика опозданий за неделю/месяц.
-final tardinessAnalyticsProvider =
-    FutureProvider.family<TardinessAnalytics, AnalyticsRange>((ref, range) {
+String? _scheduleStart(Ref ref) => ref.watch(
+      authControllerProvider.select(
+        (state) => state.employee?.scheduleStartTime,
+      ),
+    );
+
+Future<AttendanceOverview> _loadOverview(Ref ref, AnalyticsRange range) async {
   final iin = _requireIin(ref);
-  return ref.watch(attendanceRepositoryProvider).tardiness(
-        iin: iin,
-        range: range,
-      );
-});
+  final scheduleStart = _scheduleStart(ref);
+  final repository = ref.watch(attendanceRepositoryProvider);
+  final marksFuture = repository.attendanceMarks(iin: iin, range: range);
+  final tardinessFuture = repository.tardiness(iin: iin, range: range);
+  final marks = await marksFuture;
+  final serverTardiness = await tardinessFuture;
+  return AttendanceOverview(
+    marks: marks,
+    tardiness: serverTardiness.normalizedForWorkDays(
+      marks,
+      employeeScheduleStart: scheduleStart,
+    ),
+  );
+}
+
+/// Аналитика использует метаданные `/tardiness/`, но пересчитывает случаи по
+/// отметкам рабочего дня 03:00–02:59, чтобы ночной уход не скрывал опоздание.
+final tardinessAnalyticsProvider =
+    FutureProvider.family<TardinessAnalytics, AnalyticsRange>(
+  (ref, range) async => (await _loadOverview(ref, range)).tardiness,
+);
 
 class AttendanceOverview {
   const AttendanceOverview({required this.marks, required this.tardiness});
@@ -35,18 +55,8 @@ class AttendanceOverview {
   final TardinessAnalytics tardiness;
 }
 
-/// Табель на production API: все отметки из employee-identification-list,
-/// признаки опозданий из tardiness. Оба запроса запускаются параллельно.
+/// Табель на production API: отметки и нормализованные признаки опозданий.
 final attendanceOverviewProvider =
     FutureProvider.family<AttendanceOverview, AnalyticsRange>(
-  (ref, range) async {
-    final iin = _requireIin(ref);
-    final repository = ref.watch(attendanceRepositoryProvider);
-    final marksFuture = repository.attendanceMarks(iin: iin, range: range);
-    final tardinessFuture = repository.tardiness(iin: iin, range: range);
-    return AttendanceOverview(
-      marks: await marksFuture,
-      tardiness: await tardinessFuture,
-    );
-  },
+  _loadOverview,
 );

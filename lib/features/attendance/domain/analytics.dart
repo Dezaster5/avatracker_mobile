@@ -1,3 +1,6 @@
+import '../../../core/config/app_config.dart';
+import 'attendance_marks.dart';
+
 enum AnalyticsPeriod { week, month }
 
 class AnalyticsRange {
@@ -53,17 +56,20 @@ class TardinessEntry {
     required this.authTime,
     required this.scheduledMinutes,
     required this.tardinessMinutes,
+    this.actualMinutes,
   });
 
   final DateTime date;
   final String authTime;
   final int scheduledMinutes;
   final int tardinessMinutes;
+  final int? actualMinutes;
 
   String get scheduledLabel => _clockLabel(scheduledMinutes);
   String get actualLabel {
-    final match = RegExp(r'T(\d{2}):(\d{2})').firstMatch(authTime);
-    if (match != null) return '${match.group(1)}:${match.group(2)}';
+    if (actualMinutes != null) return _clockLabel(actualMinutes!);
+    final parsed = DateTime.tryParse(authTime)?.toLocal();
+    if (parsed != null) return _clockLabel(parsed.hour * 60 + parsed.minute);
     return _clockLabel(scheduledMinutes + tardinessMinutes);
   }
 
@@ -74,6 +80,7 @@ class TardinessEntry {
       scheduledMinutes:
           _parseClock('${json['schedule_start_time'] ?? ''}') ?? 0,
       tardinessMinutes: _toInt(json['tardiness_minutes']),
+      actualMinutes: _localClockMinutes('${json['auth_time'] ?? ''}'),
     );
   }
 }
@@ -149,6 +156,85 @@ class TardinessAnalytics {
       results: entries,
     );
   }
+
+  /// Пересчитывает опоздания по первой отметке рабочего дня 03:00–02:59.
+  /// Backend `/tardiness/` группирует по календарной дате и может принять
+  /// ночной уход за первое событие следующего дня.
+  TardinessAnalytics normalizedForWorkDays(
+    AttendanceMarksMonth marks, {
+    String? employeeScheduleStart,
+  }) {
+    final effectiveSchedule = _normalizedClock(employeeScheduleStart) ??
+        _normalizedClock(scheduleStartTime);
+    final scheduledMinutes = _parseClock(effectiveSchedule);
+    if (scheduledMinutes == null) return this;
+
+    final entries = <TardinessEntry>[];
+    for (final day in marks.days.values) {
+      if (day.date.isBefore(range.start) || day.date.isAfter(range.end)) {
+        continue;
+      }
+      final arrival = day.checkIn;
+      if (arrival == null) continue;
+
+      final scheduledDate = scheduledMinutes <
+              AppConfig.workDayResetHour * Duration.minutesPerHour
+          ? day.date.add(const Duration(days: 1))
+          : day.date;
+      final scheduledAt = DateTime(
+        scheduledDate.year,
+        scheduledDate.month,
+        scheduledDate.day,
+        scheduledMinutes ~/ Duration.minutesPerHour,
+        scheduledMinutes % Duration.minutesPerHour,
+      );
+      final tardiness = arrival.occurredAt.difference(scheduledAt).inMinutes;
+      if (tardiness <= 0) continue;
+
+      entries.add(
+        TardinessEntry(
+          date: day.date,
+          authTime: arrival.authTime,
+          scheduledMinutes: scheduledMinutes,
+          tardinessMinutes: tardiness,
+          actualMinutes: arrival.minutes,
+        ),
+      );
+    }
+
+    entries.sort((a, b) => b.date.compareTo(a.date));
+    final total = entries.fold(
+      0,
+      (sum, entry) => sum + entry.tardinessMinutes,
+    );
+    final maximum = entries.fold(
+      0,
+      (value, entry) =>
+          entry.tardinessMinutes > value ? entry.tardinessMinutes : value,
+    );
+
+    return TardinessAnalytics(
+      range: range,
+      iin: iin,
+      employeeName: employeeName,
+      scheduleName: scheduleName,
+      scheduleStartTime: effectiveSchedule!,
+      count: entries.length,
+      maxTardiness: maximum,
+      avgTardiness: entries.isEmpty ? 0 : (total / entries.length).round(),
+      results: entries,
+    );
+  }
+}
+
+int? _localClockMinutes(String value) {
+  final parsed = DateTime.tryParse(value)?.toLocal();
+  return parsed == null ? null : parsed.hour * 60 + parsed.minute;
+}
+
+String? _normalizedClock(String? value) {
+  final minutes = _parseClock(value);
+  return minutes == null ? null : _clockLabel(minutes);
 }
 
 int? _parseClock(String? value) {
