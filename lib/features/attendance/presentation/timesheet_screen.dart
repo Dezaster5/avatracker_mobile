@@ -73,11 +73,13 @@ class _TimesheetScreenState extends ConsumerState<TimesheetScreen>
     final l10n = context.l10n;
     final range = _range;
     final overview = ref.watch(attendanceOverviewProvider(range));
-    final scheduleLabel = ref.watch(
+    final employeeSchedule = ref.watch(
       authControllerProvider.select(
-        (session) => session.employee?.scheduleRangeLabel ?? '',
+        (session) => session.employee,
       ),
     );
+    final scheduleLabel = employeeSchedule?.scheduleRangeLabel ?? '';
+    final scheduleStartTime = employeeSchedule?.scheduleStartTime;
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.tabTimesheet)),
@@ -107,11 +109,32 @@ class _TimesheetScreenState extends ConsumerState<TimesheetScreen>
                     ref.invalidate(attendanceOverviewProvider(range)),
               ),
               data: (data) {
-                final lateByDate = {
+                final lateByDate = <DateTime, TardinessEntry>{
                   for (final entry in data.tardiness.results)
                     DateTime(entry.date.year, entry.date.month, entry.date.day):
                         entry,
                 };
+                // Табель показывает отметки напрямую, поэтому и статус дня
+                // окончательно считаем по тем же отметкам и текущему графику.
+                // Это защищает текущий день от устаревшего `/tardiness/`.
+                if (scheduleStartTime != null) {
+                  for (final day in data.marks.days.values) {
+                    final date = DateTime(
+                      day.date.year,
+                      day.date.month,
+                      day.date.day,
+                    );
+                    final calculated = tardinessForWorkDay(
+                      day,
+                      scheduleStartTime,
+                    );
+                    if (calculated == null) {
+                      lateByDate.remove(date);
+                    } else {
+                      lateByDate[date] = calculated;
+                    }
+                  }
+                }
                 return Column(
                   children: [
                     Card(

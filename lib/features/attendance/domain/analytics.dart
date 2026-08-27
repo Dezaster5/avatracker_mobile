@@ -174,32 +174,8 @@ class TardinessAnalytics {
       if (day.date.isBefore(range.start) || day.date.isAfter(range.end)) {
         continue;
       }
-      final arrival = day.checkIn;
-      if (arrival == null) continue;
-
-      final scheduledDate = scheduledMinutes <
-              AppConfig.workDayResetHour * Duration.minutesPerHour
-          ? day.date.add(const Duration(days: 1))
-          : day.date;
-      final scheduledAt = DateTime(
-        scheduledDate.year,
-        scheduledDate.month,
-        scheduledDate.day,
-        scheduledMinutes ~/ Duration.minutesPerHour,
-        scheduledMinutes % Duration.minutesPerHour,
-      );
-      final tardiness = arrival.occurredAt.difference(scheduledAt).inMinutes;
-      if (tardiness <= 0) continue;
-
-      entries.add(
-        TardinessEntry(
-          date: day.date,
-          authTime: arrival.authTime,
-          scheduledMinutes: scheduledMinutes,
-          tardinessMinutes: tardiness,
-          actualMinutes: arrival.minutes,
-        ),
-      );
+      final entry = tardinessForWorkDay(day, effectiveSchedule);
+      if (entry != null) entries.add(entry);
     }
 
     entries.sort((a, b) => b.date.compareTo(a.date));
@@ -225,6 +201,40 @@ class TardinessAnalytics {
       results: entries,
     );
   }
+}
+
+/// Рассчитывает опоздание одного рабочего дня по фактической первой отметке.
+/// Используется и провайдером аналитики, и табелем как окончательная проверка
+/// статуса дня на случай устаревшего ответа `/tardiness/`.
+TardinessEntry? tardinessForWorkDay(
+  AttendanceDayMarks day,
+  String? scheduleStartTime,
+) {
+  final scheduledMinutes = _parseClock(scheduleStartTime);
+  final arrival = day.checkIn;
+  if (scheduledMinutes == null || arrival == null) return null;
+
+  final scheduledDate =
+      scheduledMinutes < AppConfig.workDayResetHour * Duration.minutesPerHour
+          ? day.date.add(const Duration(days: 1))
+          : day.date;
+  final scheduledAt = DateTime(
+    scheduledDate.year,
+    scheduledDate.month,
+    scheduledDate.day,
+    scheduledMinutes ~/ Duration.minutesPerHour,
+    scheduledMinutes % Duration.minutesPerHour,
+  );
+  final tardiness = arrival.occurredAt.difference(scheduledAt).inMinutes;
+  if (tardiness <= 0) return null;
+
+  return TardinessEntry(
+    date: day.date,
+    authTime: arrival.authTime,
+    scheduledMinutes: scheduledMinutes,
+    tardinessMinutes: tardiness,
+    actualMinutes: arrival.minutes,
+  );
 }
 
 int? _localClockMinutes(String value) {

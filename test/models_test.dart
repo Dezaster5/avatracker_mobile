@@ -394,6 +394,25 @@ void main() {
       expect(analytics.totalTardinessMinutes, 7);
     });
 
+    test('табель считает приход 10:14 опозданием при графике с 10:00', () {
+      final marks = AttendanceMarksMonth.fromMarks([
+        AttendanceMark.fromJson({
+          'auth_time': '2026-08-27T10:14:00',
+        }),
+        AttendanceMark.fromJson({
+          'auth_time': '2026-08-27T12:32:00',
+        }),
+      ]);
+      final day = marks.days[DateTime(2026, 8, 27)];
+
+      final entry = tardinessForWorkDay(day!, '10:00');
+
+      expect(entry, isNotNull);
+      expect(entry!.date, DateTime(2026, 8, 27));
+      expect(entry.actualLabel, '10:14');
+      expect(entry.tardinessMinutes, 14);
+    });
+
     test('ночной график рассчитывает опоздание после полуночи', () {
       final range = AnalyticsRange(
         start: DateTime(2026, 7, 13),
