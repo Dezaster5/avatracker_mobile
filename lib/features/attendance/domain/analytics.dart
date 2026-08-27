@@ -32,9 +32,12 @@ class AnalyticsRange {
   String get startParam => _dateParam(start);
   String get endParam => _dateParam(end);
 
-  /// `/employee-identification-list/` применяет верхнюю границу периода
-  /// исключительно: чтобы включить [end], передаём следующий день.
-  String get endExclusiveParam => _dateParam(end.add(const Duration(days: 1)));
+  /// Табель использует рабочие дни 03:00–02:59:59 следующего дня.
+  String get attendanceStartParam => '${_dateParam(start)}T03:00:00';
+
+  /// Backend применяет `period_to` включительно (`lte`).
+  String get attendanceEndParam =>
+      '${_dateParam(end.add(const Duration(days: 1)))}T02:59:59.999999';
 
   @override
   bool operator ==(Object other) =>

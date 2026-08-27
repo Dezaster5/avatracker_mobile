@@ -1,11 +1,15 @@
+import '../../../core/config/app_config.dart';
+
 class AttendanceMark {
   const AttendanceMark({
     required this.authTime,
+    required this.occurredAt,
     required this.date,
     required this.minutes,
   });
 
   final String authTime;
+  final DateTime occurredAt;
   final DateTime date;
   final int minutes;
 
@@ -22,9 +26,11 @@ class AttendanceMark {
       throw const FormatException('Invalid auth_time');
     }
     final local = parsed.toLocal();
+    final workDate = AppConfig.workDateFor(local);
     return AttendanceMark(
       authTime: raw,
-      date: DateTime(local.year, local.month, local.day),
+      occurredAt: local,
+      date: workDate,
       minutes: local.hour * 60 + local.minute,
     );
   }
@@ -33,7 +39,7 @@ class AttendanceMark {
 class AttendanceDayMarks {
   AttendanceDayMarks({required this.date, required List<AttendanceMark> marks})
       : marks = List<AttendanceMark>.of(marks)
-          ..sort((a, b) => a.minutes.compareTo(b.minutes));
+          ..sort((a, b) => a.occurredAt.compareTo(b.occurredAt));
 
   final DateTime date;
   final List<AttendanceMark> marks;

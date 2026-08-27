@@ -322,13 +322,42 @@ void main() {
       expect(range.endParam, '2026-07-05');
     });
 
-    test('верхняя граница табеля включает последний день периода', () {
+    test('границы табеля соответствуют рабочему дню с 03:00', () {
       final range = AnalyticsRange(
         start: DateTime(2026, 7, 14),
         end: DateTime(2026, 7, 14),
       );
 
-      expect(range.endExclusiveParam, '2026-07-15');
+      expect(range.attendanceStartParam, '2026-07-14T03:00:00');
+      expect(range.attendanceEndParam, '2026-07-15T02:59:59.999999');
+    });
+
+    test('отметки до 03:00 относятся к предыдущему рабочему дню', () {
+      final beforeReset = AttendanceMark.fromJson({
+        'auth_time': '2026-07-14T02:59:00',
+      });
+      final afterReset = AttendanceMark.fromJson({
+        'auth_time': '2026-07-14T03:00:00',
+      });
+
+      expect(beforeReset.date, DateTime(2026, 7, 13));
+      expect(beforeReset.timeLabel, '02:59');
+      expect(afterReset.date, DateTime(2026, 7, 14));
+    });
+
+    test('последняя ночная отметка остаётся уходом предыдущего дня', () {
+      final month = AttendanceMarksMonth.fromMarks([
+        AttendanceMark.fromJson({
+          'auth_time': '2026-07-14T02:15:00',
+        }),
+        AttendanceMark.fromJson({
+          'auth_time': '2026-07-13T22:00:00',
+        }),
+      ]);
+
+      final day = month.days[DateTime(2026, 7, 13)];
+      expect(day?.checkIn?.timeLabel, '22:00');
+      expect(day?.checkOut?.timeLabel, '02:15');
     });
 
     test('текущий период можно ограничить сегодняшней датой', () {

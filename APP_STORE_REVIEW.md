@@ -153,7 +153,7 @@ AvaTracker — вход только по корпоративному иден�
 App Store Connect требует **публичный URL** политики (в дополнение к экрану в
 приложении). Используется адрес `AppConfig.privacyPolicyUrl`
 (`https://avatracker.online/privacy-policy/`) — этот же URL указывается в
-App Store Connect и Google Play Console. До отправки версии 1.0.6 на review
+App Store Connect и Google Play Console. До отправки версии 1.0.7 на review
 разместить по этому адресу Политику версии 2.0.
 
 Текст на сайте должен совпадать с `PRIVACY_POLICY.txt` версии 2.0. Этот же

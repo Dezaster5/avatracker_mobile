@@ -5,10 +5,12 @@ import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../../../core/config/app_config.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/camera_frame_encoder.dart';
 import '../../../core/utils/frame_quality.dart';
 import '../../../core/widgets/primary_button.dart';
 import '../../../l10n/app_localizations.dart';
@@ -38,6 +40,8 @@ class _FaceIdScreenState extends ConsumerState<FaceIdScreen>
   int _attemptsLeft = AppConfig.faceIdMaxAttempts;
   int _cameraGeneration = 0;
   int _goodFrameCount = 0;
+  double _bestFrameQuality = -1;
+  CameraFrameSnapshot? _bestFrame;
   bool _captureStarted = false;
   DateTime? _lastFrameAnalysis;
   Timer? _warmupTimer;
@@ -156,6 +160,8 @@ class _FaceIdScreenState extends ConsumerState<FaceIdScreen>
   }) {
     _cancelCaptureTimers();
     _goodFrameCount = 0;
+    _bestFrameQuality = -1;
+    _bestFrame = null;
     _lastFrameAnalysis = null;
     _captureStarted = false;
     _warmupTimer = Timer(
@@ -178,12 +184,10 @@ class _FaceIdScreenState extends ConsumerState<FaceIdScreen>
       if (!_isCurrent(camera, generation)) return;
       _selectionDeadline = Timer(
         AppConfig.faceCaptureSelectionWindow,
-        () => unawaited(_capturePhoto(camera, generation)),
+        () => unawaited(_captureFrame(camera, generation)),
       );
     } on CameraException {
-      // Некоторые устройства не поддерживают стабильный image stream.
-      // В этом случае сохраняем быстрый автоматический снимок без анализа.
-      await _capturePhoto(camera, generation);
+      await _failAndRetry(camera, generation);
     }
   }
 
@@ -198,6 +202,10 @@ class _FaceIdScreenState extends ConsumerState<FaceIdScreen>
     _lastFrameAnalysis = now;
 
     final quality = _qualityScore(image);
+    if (quality > _bestFrameQuality) {
+      _bestFrameQuality = quality;
+      _bestFrame = CameraFrameSnapshot.fromCameraImage(image);
+    }
     if (quality >= AppConfig.faceMinimumFrameQuality) {
       _goodFrameCount++;
     } else {
@@ -206,7 +214,7 @@ class _FaceIdScreenState extends ConsumerState<FaceIdScreen>
     if (_goodFrameCount >= AppConfig.faceRequiredQualityFrames) {
       final camera = _camera;
       if (camera != null) {
-        unawaited(_capturePhoto(camera, _cameraGeneration));
+        unawaited(_captureFrame(camera, _cameraGeneration));
       }
     }
   }
@@ -232,7 +240,7 @@ class _FaceIdScreenState extends ConsumerState<FaceIdScreen>
     );
   }
 
-  Future<void> _capturePhoto(
+  Future<void> _captureFrame(
     CameraController camera,
     int generation,
   ) async {
@@ -244,13 +252,18 @@ class _FaceIdScreenState extends ConsumerState<FaceIdScreen>
       _checking = true;
     });
     try {
+      final frame = _bestFrame;
+      if (frame == null) {
+        await _failAndRetry(camera, generation);
+        return;
+      }
       if (camera.value.isStreamingImages) {
         await camera.stopImageStream();
       }
-      await Future<void>.delayed(AppConfig.faceCaptureSettleDelay);
       if (!_isCurrent(camera, generation)) return;
-      final shot = await camera.takePicture();
-      final bytes = await shot.readAsBytes();
+      final bytes = frame.encodeJpeg(
+        rotationDegrees: _frameRotationDegrees(camera),
+      );
       final imageBase64 = base64Encode(bytes);
       if (!mounted) return;
       // Снимок отправится в /api/qr/scan/ — сервер сверит лицо при отметке.
@@ -296,6 +309,20 @@ class _FaceIdScreenState extends ConsumerState<FaceIdScreen>
   bool _isCurrent(CameraController camera, int generation) =>
       mounted && generation == _cameraGeneration && identical(_camera, camera);
 
+  int _frameRotationDegrees(CameraController camera) {
+    const deviceRotation = {
+      DeviceOrientation.portraitUp: 0,
+      DeviceOrientation.landscapeLeft: 90,
+      DeviceOrientation.portraitDown: 180,
+      DeviceOrientation.landscapeRight: 270,
+    };
+    final rotation = deviceRotation[camera.value.deviceOrientation] ?? 0;
+    final sensor = camera.description.sensorOrientation;
+    return camera.description.lensDirection == CameraLensDirection.front
+        ? (sensor + rotation) % 360
+        : (sensor - rotation + 360) % 360;
+  }
+
   void _cancelCaptureTimers() {
     _warmupTimer?.cancel();
     _selectionDeadline?.cancel();
@@ -306,6 +333,7 @@ class _FaceIdScreenState extends ConsumerState<FaceIdScreen>
   void _cancelAutomaticCapture() {
     _cameraGeneration++;
     _cancelCaptureTimers();
+    _bestFrame = null;
   }
 
   Future<void> _disposeCamera(CameraController camera) async {

@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/utils/work_day_rollover_mixin.dart';
 import '../../../core/widgets/app_error_view.dart';
 import '../../../core/widgets/status_chip.dart';
 import '../../../l10n/l10n_ext.dart';
@@ -21,27 +22,42 @@ class TimesheetScreen extends ConsumerStatefulWidget {
   ConsumerState<TimesheetScreen> createState() => _TimesheetScreenState();
 }
 
-class _TimesheetScreenState extends ConsumerState<TimesheetScreen> {
+class _TimesheetScreenState extends ConsumerState<TimesheetScreen>
+    with WidgetsBindingObserver, WorkDayRolloverMixin<TimesheetScreen> {
   late DateTime _month;
   late DateTime _selected;
 
   @override
   void initState() {
     super.initState();
-    final now = AppConfig.today;
+    final now = AppConfig.workDate;
     _month = DateTime(now.year, now.month);
     _selected = DateTime(now.year, now.month, now.day);
   }
 
+  @override
+  void onWorkDayChanged(DateTime previous, DateTime current) {
+    final wasShowingCurrentDay = _month.year == previous.year &&
+        _month.month == previous.month &&
+        _selected == previous;
+    setState(() {
+      if (wasShowingCurrentDay) {
+        _month = DateTime(current.year, current.month);
+        _selected = current;
+      }
+    });
+    ref.invalidate(attendanceOverviewProvider);
+  }
+
   bool get _isCurrentMonth {
-    final now = AppConfig.today;
+    final now = AppConfig.workDate;
     return _month.year == now.year && _month.month == now.month;
   }
 
   void _changeMonth(int delta) {
     setState(() {
       _month = DateTime(_month.year, _month.month + delta);
-      final now = AppConfig.today;
+      final now = AppConfig.workDate;
       _selected = (_month.year == now.year && _month.month == now.month)
           ? DateTime(now.year, now.month, now.day)
           : DateTime(_month.year, _month.month, 1);
@@ -50,7 +66,7 @@ class _TimesheetScreenState extends ConsumerState<TimesheetScreen> {
 
   AnalyticsRange get _range =>
       AnalyticsRange.forPeriod(AnalyticsPeriod.month, _month)
-          .clampEnd(AppConfig.today);
+          .clampEnd(AppConfig.workDate);
 
   @override
   Widget build(BuildContext context) {
@@ -239,7 +255,7 @@ class _CalendarGrid extends StatelessWidget {
         DateTime(2024, 1, 1 + index),
       ),
     );
-    final today = AppConfig.today;
+    final today = AppConfig.workDate;
     final daysInMonth = DateTime(month.year, month.month + 1, 0).day;
     final leadingBlanks = DateTime(month.year, month.month, 1).weekday - 1;
 
@@ -372,7 +388,7 @@ class _DayCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final isFuture = date.isAfter(AppConfig.today);
+    final isFuture = date.isAfter(AppConfig.workDate);
     final (label, color) = _status(
       context,
       day,

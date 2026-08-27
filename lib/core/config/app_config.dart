@@ -53,7 +53,7 @@ abstract final class AppConfig {
   }
 
   /// Человекочитаемая версия сборки.
-  static const appVersion = 'v1.0.6';
+  static const appVersion = 'v1.0.7';
 
   // ─── Юридическое / App Store ───────────────────────────────────────────────
   /// Версия Политики конфиденциальности (фиксируется в записи согласия).
@@ -103,6 +103,24 @@ abstract final class AppConfig {
     final parsed = DateTime.tryParse(_rawTestToday);
     final value = parsed ?? DateTime.now();
     return DateTime(value.year, value.month, value.day);
+  }
+
+  /// Рабочий день меняется в 03:00 по локальному времени устройства.
+  static const workDayResetHour = 3;
+
+  static DateTime workDateFor(DateTime value) {
+    final adjusted = value.subtract(
+      const Duration(hours: workDayResetHour),
+    );
+    return DateTime(adjusted.year, adjusted.month, adjusted.day);
+  }
+
+  static DateTime get workDate {
+    final testDate = DateTime.tryParse(_rawTestToday);
+    if (testDate != null) {
+      return DateTime(testDate.year, testDate.month, testDate.day);
+    }
+    return workDateFor(DateTime.now());
   }
 
   static String _stripBearer(String value) {

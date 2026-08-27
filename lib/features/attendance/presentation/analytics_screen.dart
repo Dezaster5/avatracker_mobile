@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/utils/work_day_rollover_mixin.dart';
 import '../../../core/widgets/app_error_view.dart';
 import '../../../l10n/l10n_ext.dart';
 import '../../auth/providers.dart';
@@ -19,19 +20,30 @@ class AnalyticsScreen extends ConsumerStatefulWidget {
   ConsumerState<AnalyticsScreen> createState() => _AnalyticsScreenState();
 }
 
-class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
+class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
+    with WidgetsBindingObserver, WorkDayRolloverMixin<AnalyticsScreen> {
   late DateTime _anchor;
 
   @override
   void initState() {
     super.initState();
-    final now = AppConfig.today;
+    final now = AppConfig.workDate;
     _anchor = DateTime(now.year, now.month, now.day);
+  }
+
+  @override
+  void onWorkDayChanged(DateTime previous, DateTime current) {
+    final wasShowingCurrentMonth =
+        _anchor.year == previous.year && _anchor.month == previous.month;
+    setState(() {
+      if (wasShowingCurrentMonth) _anchor = current;
+    });
+    ref.invalidate(tardinessAnalyticsProvider);
   }
 
   AnalyticsRange get _range =>
       AnalyticsRange.forPeriod(AnalyticsPeriod.month, _anchor)
-          .clampEnd(AppConfig.today);
+          .clampEnd(AppConfig.workDate);
 
   DateTime _shiftedAnchor(int direction) =>
       DateTime(_anchor.year, _anchor.month + direction, 1);
@@ -39,7 +51,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
   bool get _canGoNext {
     final next =
         AnalyticsRange.forPeriod(AnalyticsPeriod.month, _shiftedAnchor(1));
-    final today = AppConfig.today;
+    final today = AppConfig.workDate;
     return !next.start.isAfter(today);
   }
 
