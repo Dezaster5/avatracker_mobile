@@ -13,11 +13,11 @@
 Версия задаётся в `pubspec.yaml`:
 
 ```yaml
-version: 1.0.7+18
+version: 1.0.7+19
 ```
 
 - `1.0.7` — `versionName`, отображаемая версия;
-- `18` — `versionCode`, который должен увеличиваться при каждой публикации.
+- `19` — `versionCode`, который должен увеличиваться при каждой публикации.
 
 Строка `AppConfig.appVersion` должна соответствовать `versionName`.
 
@@ -118,10 +118,10 @@ APK и AAB не коммитятся. При необходимости прил
 - файл: `AvaTracker-v1.0.7.apk`;
 - package: `kz.avatariya.avatracker_mobile`;
 - `versionName`: `1.0.7`;
-- `versionCode`: `18`;
+- `versionCode`: `19`;
 - размер: 78 462 076 байт (~74,8 MB);
 - SHA-256:
-  `250e7596ed892bca9921ec152d1016225130550d14736042524ef9b2104475d0`;
+  `aa61888d33295b4ceccea11aaf7632f46e128dc7ad17165fd9e4ed48f79ade4f`;
 - `MOCK_API=false`, `TEST_AUTH=false`,
   `API_BASE_URL=https://avatracker.online/api/v1`;
 - рабочий день табеля: `03:00–02:59:59` следующего календарного дня;
@@ -130,7 +130,8 @@ APK и AAB не коммитятся. При необходимости прил
 - карточка табеля повторно сверяет отображаемый приход с актуальным графиком и
   не полагается на кешированный статус `/tardiness/`;
 - FaceID использует JPEG из live-потока без `takePicture()` и звука затвора;
-- `flutter analyze` — без ошибок, `flutter test` — 62 теста прошли.
+- iOS BGRA декодируется с 4 байтами на пиксель и без повторного поворота;
+- `flutter analyze` — без ошибок, `flutter test` — 64 теста прошли.
 
 Сборка подписана `CN=Android Debug`, потому что production upload keystore на
 машине не настроен. APK предназначен для внутреннего тестирования. Для Google

@@ -5,7 +5,6 @@ import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../../../core/config/app_config.dart';
@@ -262,7 +261,12 @@ class _FaceIdScreenState extends ConsumerState<FaceIdScreen>
       }
       if (!_isCurrent(camera, generation)) return;
       final bytes = frame.encodeJpeg(
-        rotationDegrees: _frameRotationDegrees(camera),
+        rotationDegrees: cameraFrameRotationDegrees(
+          isBgra: frame.isBgra,
+          deviceOrientation: camera.value.deviceOrientation,
+          sensorOrientation: camera.description.sensorOrientation,
+          lensDirection: camera.description.lensDirection,
+        ),
       );
       final imageBase64 = base64Encode(bytes);
       if (!mounted) return;
@@ -308,20 +312,6 @@ class _FaceIdScreenState extends ConsumerState<FaceIdScreen>
 
   bool _isCurrent(CameraController camera, int generation) =>
       mounted && generation == _cameraGeneration && identical(_camera, camera);
-
-  int _frameRotationDegrees(CameraController camera) {
-    const deviceRotation = {
-      DeviceOrientation.portraitUp: 0,
-      DeviceOrientation.landscapeLeft: 90,
-      DeviceOrientation.portraitDown: 180,
-      DeviceOrientation.landscapeRight: 270,
-    };
-    final rotation = deviceRotation[camera.value.deviceOrientation] ?? 0;
-    final sensor = camera.description.sensorOrientation;
-    return camera.description.lensDirection == CameraLensDirection.front
-        ? (sensor + rotation) % 360
-        : (sensor - rotation + 360) % 360;
-  }
 
   void _cancelCaptureTimers() {
     _warmupTimer?.cancel();

@@ -1,7 +1,27 @@
-import 'dart:typed_data';
-
 import 'package:camera/camera.dart';
+import 'package:flutter/services.dart';
 import 'package:image/image.dart' as img;
+
+/// iOS camera_avfoundation already applies device orientation to BGRA stream
+/// buffers. Android YUV buffers still need the sensor/device correction.
+int cameraFrameRotationDegrees({
+  required bool isBgra,
+  required DeviceOrientation deviceOrientation,
+  required int sensorOrientation,
+  required CameraLensDirection lensDirection,
+}) {
+  if (isBgra) return 0;
+  const deviceRotation = {
+    DeviceOrientation.portraitUp: 0,
+    DeviceOrientation.landscapeLeft: 90,
+    DeviceOrientation.portraitDown: 180,
+    DeviceOrientation.landscapeRight: 270,
+  };
+  final rotation = deviceRotation[deviceOrientation] ?? 0;
+  return lensDirection == CameraLensDirection.front
+      ? (sensorOrientation + rotation) % 360
+      : (sensorOrientation - rotation + 360) % 360;
+}
 
 final class CameraPlaneSnapshot {
   CameraPlaneSnapshot({
@@ -25,16 +45,19 @@ final class CameraFrameSnapshot {
   });
 
   factory CameraFrameSnapshot.fromCameraImage(CameraImage image) {
+    final isBgra = image.format.group == ImageFormatGroup.bgra8888;
     return CameraFrameSnapshot(
       width: image.width,
       height: image.height,
-      isBgra: image.format.group == ImageFormatGroup.bgra8888,
+      isBgra: isBgra,
       planes: image.planes
           .map(
             (plane) => CameraPlaneSnapshot(
               bytes: plane.bytes,
               bytesPerRow: plane.bytesPerRow,
-              bytesPerPixel: plane.bytesPerPixel ?? 1,
+              // camera_avfoundation intentionally reports null on iOS.
+              // A packed BGRA pixel always occupies four bytes.
+              bytesPerPixel: plane.bytesPerPixel ?? (isBgra ? 4 : 1),
             ),
           )
           .toList(growable: false),
