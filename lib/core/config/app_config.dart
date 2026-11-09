@@ -42,9 +42,6 @@ abstract final class AppConfig {
     return 'https://avatracker.online/api';
   }
 
-  /// Код страны по умолчанию; в UI доступны `+7` и `+998`.
-  static const defaultDialCode = '+7';
-
   static String _stripTrailingSlash(String value) {
     final trimmed = value.trim();
     return trimmed.endsWith('/')
@@ -99,29 +96,8 @@ abstract final class AppConfig {
     return refresh.isEmpty ? testBearerToken : refresh;
   }
 
-  static DateTime get today {
-    final parsed = DateTime.tryParse(_rawTestToday);
-    final value = parsed ?? DateTime.now();
-    return DateTime(value.year, value.month, value.day);
-  }
-
-  /// Рабочий день меняется в 03:00 по локальному времени устройства.
-  static const workDayResetHour = 3;
-
-  static DateTime workDateFor(DateTime value) {
-    final adjusted = value.subtract(
-      const Duration(hours: workDayResetHour),
-    );
-    return DateTime(adjusted.year, adjusted.month, adjusted.day);
-  }
-
-  static DateTime get workDate {
-    final testDate = DateTime.tryParse(_rawTestToday);
-    if (testDate != null) {
-      return DateTime(testDate.year, testDate.month, testDate.day);
-    }
-    return workDateFor(DateTime.now());
-  }
+  /// Фиксированная дата для проверок: `--dart-define=TEST_TODAY=2026-06-15`.
+  static DateTime? get testToday => DateTime.tryParse(_rawTestToday);
 
   static String _stripBearer(String value) {
     final trimmed = value.trim();
@@ -131,26 +107,16 @@ abstract final class AppConfig {
     return trimmed;
   }
 
-  // Требования ТЗ, раздел 4.3 и 22.
-  static const smsResendSeconds = 60;
-
-  /// Длина кода в SMS (сегментированный ввод).
-  static const smsCodeLength = 4;
-  static const smsCodeMinLength = 4;
-  static const smsCodeMaxLength = 6;
-  static const smsMaxAttempts = 5;
+  // Автоматический снимок лица перед отметкой (FaceID).
   static const faceIdMaxAttempts = 3;
   static const faceCaptureWarmup = Duration(seconds: 1);
   static const faceCaptureSelectionWindow = Duration(milliseconds: 900);
   static const faceFrameAnalysisInterval = Duration(milliseconds: 120);
-  static const faceCaptureSettleDelay = Duration(milliseconds: 80);
   static const faceCaptureRetryDelay = Duration(milliseconds: 600);
   static const faceRequiredQualityFrames = 2;
   static const faceMinimumFrameQuality = 0.48;
-  static const passwordMinLength = 6;
 
-  // Геолокация (ТЗ, разделы 7.3 и 17).
-  static const maxGpsAccuracyMeters = 50.0;
+  /// Ожидание координат GPS (ТЗ 7.3).
   static const locationTimeout = Duration(seconds: 15);
 
   static const connectTimeout = Duration(seconds: 10);

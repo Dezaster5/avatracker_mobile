@@ -90,7 +90,9 @@ class _HttpTile extends StatelessWidget {
     final path = Uri.tryParse(call.url)?.path ?? call.url;
     final status = call.isPending
         ? '…'
-        : (call.error != null ? (call.statusCode?.toString() ?? 'ERR') : '${call.statusCode}');
+        : (call.error != null
+            ? (call.statusCode?.toString() ?? 'ERR')
+            : '${call.statusCode}');
     return ListTile(
       leading: CircleAvatar(
         radius: 16,
@@ -129,7 +131,8 @@ class _LogTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: const Icon(Icons.terminal_rounded, color: AppColors.textSecondary),
+      leading:
+          const Icon(Icons.terminal_rounded, color: AppColors.textSecondary),
       title: Text(
         line.message,
         style: const TextStyle(fontSize: 13, fontFamily: 'monospace'),

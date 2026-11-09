@@ -1,0 +1,231 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/error_banner.dart';
+import '../../../../core/widgets/pin_code_field.dart';
+import '../../../../core/widgets/primary_button.dart';
+import '../../../../l10n/l10n_ext.dart';
+import '../../domain/policies/sms_code_policy.dart';
+import '../controllers/password_reset_controller.dart';
+import '../controllers/registration_controller.dart';
+import '../controllers/sms_flow_state.dart';
+
+/// Назначение SMS-кода: подтверждение регистрации или сброс пароля.
+enum SmsFlow { register, reset }
+
+/// Подтверждение SMS-кода (ТЗ 4): сегментированный ввод, автопроверка,
+/// повторная отправка через 60 с, не более 5 попыток.
+class SmsCodeScreen extends ConsumerStatefulWidget {
+  const SmsCodeScreen({super.key, required this.flow});
+
+  final SmsFlow flow;
+
+  @override
+  ConsumerState<SmsCodeScreen> createState() => _SmsCodeScreenState();
+}
+
+class _SmsCodeScreenState extends ConsumerState<SmsCodeScreen> {
+  final _codeController = TextEditingController();
+  Timer? _timer;
+  int _secondsLeft = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _startTimer();
+  }
+
+  SmsFlowState get _flowState => widget.flow == SmsFlow.register
+      ? ref.read(registrationControllerProvider)
+      : ref.read(passwordResetControllerProvider);
+
+  void _startTimer() {
+    _timer?.cancel();
+    _updateSecondsLeft();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      _updateSecondsLeft();
+      if (_secondsLeft <= 0) _timer?.cancel();
+    });
+  }
+
+  void _updateSecondsLeft() {
+    final sentAt = _flowState.codeSentAt;
+    final passed = sentAt == null
+        ? SmsCodePolicy.resendSeconds
+        : DateTime.now().difference(sentAt).inSeconds;
+    if (!mounted) return;
+    setState(() {
+      _secondsLeft = (SmsCodePolicy.resendSeconds - passed)
+          .clamp(0, SmsCodePolicy.resendSeconds);
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _codeController.dispose();
+    super.dispose();
+  }
+
+  void _clearError() {
+    if (widget.flow == SmsFlow.register) {
+      ref.read(registrationControllerProvider.notifier).clearError();
+    } else {
+      ref.read(passwordResetControllerProvider.notifier).clearError();
+    }
+  }
+
+  Future<void> _verify(String code) async {
+    if (code.length < SmsCodePolicy.codeLength) return;
+    if (widget.flow == SmsFlow.register) {
+      // При успехе роутер сам откроет сканер (статус сессии изменится).
+      final ok =
+          await ref.read(registrationControllerProvider.notifier).verify(code);
+      if (!ok) _codeController.clear();
+    } else {
+      final ok =
+          await ref.read(passwordResetControllerProvider.notifier).verify(code);
+      if (!mounted) return;
+      if (ok) {
+        context.pushReplacement('/reset-password');
+      } else {
+        _codeController.clear();
+      }
+    }
+  }
+
+  Future<void> _resend() async {
+    final ok = widget.flow == SmsFlow.register
+        ? await ref.read(registrationControllerProvider.notifier).resend()
+        : await ref.read(passwordResetControllerProvider.notifier).resend();
+    if (ok) {
+      _codeController.clear();
+      _startTimer();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final SmsFlowState flow = widget.flow == SmsFlow.register
+        ? ref.watch(registrationControllerProvider)
+        : ref.watch(passwordResetControllerProvider);
+
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        title: Text(l10n.confirmation),
+        leading: BackButton(onPressed: () => context.pop()),
+      ),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          children: [
+            const SizedBox(height: 12),
+            Center(
+              child: Container(
+                width: 84,
+                height: 84,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.08),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.sms_outlined,
+                  size: 40,
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Center(
+              child: Text(
+                l10n.enterSmsCode,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.navy,
+                  letterSpacing: 0,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Center(
+              child: Text(
+                '${l10n.sentToNumber}\n${flow.phone?.formatted ?? ''}',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 14,
+                  height: 1.5,
+                ),
+              ),
+            ),
+            const SizedBox(height: 28),
+            PinCodeField(
+              length: SmsCodePolicy.codeLength,
+              controller: _codeController,
+              hasError: flow.failure != null,
+              enabled: !flow.verifying && !flow.attemptsExhausted,
+              onChanged: (_) {
+                if (flow.failure != null) _clearError();
+              },
+              onCompleted: _verify,
+            ),
+            ErrorBanner(failure: flow.failure),
+            if (flow.attemptsLeft < SmsCodePolicy.maxAttempts &&
+                !flow.attemptsExhausted) ...[
+              const SizedBox(height: 12),
+              Text(
+                l10n.attemptsLeft(flow.attemptsLeft),
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+            const SizedBox(height: 28),
+            if (flow.verifying)
+              const Center(
+                child: SizedBox(
+                  width: 28,
+                  height: 28,
+                  child: CircularProgressIndicator(strokeWidth: 3),
+                ),
+              )
+            else
+              Center(
+                child: _secondsLeft > 0
+                    ? Text(
+                        l10n.resendIn(_secondsLeft),
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 14,
+                        ),
+                      )
+                    : TextButton.icon(
+                        onPressed: flow.sending ? null : _resend,
+                        icon: const Icon(Icons.refresh_rounded, size: 20),
+                        label: Text(l10n.resendCode),
+                      ),
+              ),
+            if (flow.attemptsExhausted) ...[
+              const SizedBox(height: 16),
+              PrimaryButton(
+                label: l10n.requestNewCode,
+                loading: flow.sending,
+                onPressed: _resend,
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}

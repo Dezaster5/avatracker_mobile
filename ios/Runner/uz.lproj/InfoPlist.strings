@@ -1,0 +1,4 @@
+"NSCameraUsageDescription" = "Kamera kelish/ketish belgisini qo'yishda QR-kodni skanerlash uchun va xodimning shaxsini foto orqali tasdiqlash uchun ishlatiladi.";
+"NSLocationWhenInUseUsageDescription" = "Geolokatsiya faqat belgi qo'yish vaqtida xodimning ish nuqtasi yaqinida ekanini tasdiqlash uchun ishlatiladi.";
+"NSMicrophoneUsageDescription" = "Mikrofon ilova tomonidan ishlatilmaydi. Ushbu qator foto-verifikatsiya uchun suratga olishda foydalaniladigan kameraning tizim komponenti talab qiladigan qator hisoblanadi.";
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "Geolokatsiya ish vaqtini belgilashda xodimning ish nuqtasi yaqinida ekanini tasdiqlash uchun ishlatiladi.";

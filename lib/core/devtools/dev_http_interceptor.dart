@@ -14,9 +14,10 @@ class DevHttpInterceptor extends Interceptor {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) {
-    final call = DevHttpCall(method: options.method, url: options.uri.toString())
-      ..requestHeaders = _sanitizeHeaders(options.headers)
-      ..requestBody = _stringify(options.data);
+    final call =
+        DevHttpCall(method: options.method, url: options.uri.toString())
+          ..requestHeaders = _sanitizeHeaders(options.headers)
+          ..requestBody = _stringify(options.data);
     options.extra[_devCallKey] = call;
     devLogStore.addHttpCall(call);
     handler.next(options);

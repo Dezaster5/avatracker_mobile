@@ -316,9 +316,6 @@ class AppLocalizationsKk extends AppLocalizations {
   }
 
   @override
-  String get noServerConnection => 'Сервермен байланыс жоқ';
-
-  @override
   String get cameraStartFailed => 'Камераны іске қосу мүмкін болмады';
 
   @override
@@ -648,6 +645,21 @@ class AppLocalizationsKk extends AppLocalizations {
   String get errorConfirmSmsFirst => 'Алдымен SMS кодын растаңыз';
 
   @override
+  String get errorForbidden => 'Қолжетімділікке тыйым салынған';
+
+  @override
+  String get errorNotFound => 'Деректер табылмады';
+
+  @override
+  String get errorValidation => 'Енгізілген деректерді тексеріңіз';
+
+  @override
+  String get errorServer => 'Сервер қатесі. Кейінірек қайталап көріңіз';
+
+  @override
+  String get errorUnexpected => 'Күтпеген қате орын алды. Қайталап көріңіз';
+
+  @override
   String get deleteAccountTitle => 'Аккаунтты жою';
 
   @override
@@ -665,4 +677,8 @@ class AppLocalizationsKk extends AppLocalizations {
 
   @override
   String get accountDeleted => 'Аккаунт жойылды. Қайта тіркеліңіз';
+
+  @override
+  String get privacyPolicyLoadFailed =>
+      'Құпиялылық саясатын жүктеу мүмкін болмады';
 }

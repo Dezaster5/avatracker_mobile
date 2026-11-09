@@ -109,7 +109,6 @@
   "pointDisabled": "Бұл белгі нүктесі өшірілген",
   "qrNotRegistered": "QR-код жүйеде тіркелмеген",
   "qrCodeValue": "QR коды: «{code}»",
-  "noServerConnection": "Сервермен байланыс жоқ",
   "cameraStartFailed": "Камераны іске қосу мүмкін болмады",
   "cameraNoAccess": "Камераға рұқсат жоқ",
   "cameraCloseOthers": "Камераны пайдаланатын басқа қосымшаларды жабыңыз да, «Қайталау» басыңыз",
@@ -210,11 +209,17 @@
   "errorLoginFailed": "Кіру мүмкін болмады",
   "errorAttemptsExceeded": "Әрекеттер саны асып кетті. Жаңа код сұраңыз",
   "errorConfirmSmsFirst": "Алдымен SMS кодын растаңыз",
+  "errorForbidden": "Қолжетімділікке тыйым салынған",
+  "errorNotFound": "Деректер табылмады",
+  "errorValidation": "Енгізілген деректерді тексеріңіз",
+  "errorServer": "Сервер қатесі. Кейінірек қайталап көріңіз",
+  "errorUnexpected": "Күтпеген қате орын алды. Қайталап көріңіз",
 
   "deleteAccountTitle": "Аккаунтты жою",
   "deleteAccountAction": "Аккаунтты жою",
   "deleteConfirmTitle": "Аккаунтты жоясыз ба?",
   "deleteConfirmBody": "Қосымша аккаунтын жоюды растаңыз. Қайта кіру үшін жаңа тіркелу қажет.",
   "actionDelete": "Жою",
-  "accountDeleted": "Аккаунт жойылды. Қайта тіркеліңіз"
+  "accountDeleted": "Аккаунт жойылды. Қайта тіркеліңіз",
+  "privacyPolicyLoadFailed": "Құпиялылық саясатын жүктеу мүмкін болмады"
 }

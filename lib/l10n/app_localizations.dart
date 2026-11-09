@@ -682,12 +682,6 @@ abstract class AppLocalizations {
   /// **'Код из QR: «{code}»'**
   String qrCodeValue(String code);
 
-  /// No description provided for @noServerConnection.
-  ///
-  /// In ru, this message translates to:
-  /// **'Нет соединения с сервером'**
-  String get noServerConnection;
-
   /// No description provided for @cameraStartFailed.
   ///
   /// In ru, this message translates to:
@@ -1252,6 +1246,36 @@ abstract class AppLocalizations {
   /// **'Сначала подтвердите SMS-код'**
   String get errorConfirmSmsFirst;
 
+  /// No description provided for @errorForbidden.
+  ///
+  /// In ru, this message translates to:
+  /// **'Доступ запрещён'**
+  String get errorForbidden;
+
+  /// No description provided for @errorNotFound.
+  ///
+  /// In ru, this message translates to:
+  /// **'Данные не найдены'**
+  String get errorNotFound;
+
+  /// No description provided for @errorValidation.
+  ///
+  /// In ru, this message translates to:
+  /// **'Проверьте введённые данные'**
+  String get errorValidation;
+
+  /// No description provided for @errorServer.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ошибка сервера. Попробуйте позже'**
+  String get errorServer;
+
+  /// No description provided for @errorUnexpected.
+  ///
+  /// In ru, this message translates to:
+  /// **'Непредвиденная ошибка. Попробуйте ещё раз'**
+  String get errorUnexpected;
+
   /// No description provided for @deleteAccountTitle.
   ///
   /// In ru, this message translates to:
@@ -1287,6 +1311,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Аккаунт удалён. Зарегистрируйтесь заново'**
   String get accountDeleted;
+
+  /// Ошибка загрузки текста Политики конфиденциальности
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось загрузить Политику конфиденциальности'**
+  String get privacyPolicyLoadFailed;
 }
 
 class _AppLocalizationsDelegate

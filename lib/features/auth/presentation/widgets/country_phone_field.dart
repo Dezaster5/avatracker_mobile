@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/country/country.dart';
-import '../../../../core/country/country_providers.dart';
+import '../../../../core/country/phone_number.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/utils/formatters.dart';
+import '../../../../core/widgets/country_phone_input_formatter.dart';
 import '../../../../l10n/l10n_ext.dart';
-import 'lang_country_bar.dart';
+import '../../../preferences/presentation/controllers/preferences_controller.dart';
+import '../../../preferences/presentation/widgets/lang_country_bar.dart';
 
 /// Поле ввода телефона с выбором страны (флаг + код). Формат номера и
 /// валидация зависят от выбранной страны (KZ 10 цифр, UZ 9 цифр).
@@ -48,7 +49,7 @@ class _CountryPhoneFieldState extends ConsumerState<CountryPhoneField> {
       autofillHints: widget.autofillHints,
       inputFormatters: [CountryPhoneInputFormatter(country)],
       decoration: InputDecoration(
-        hintText: country.isoCode == 'UZ' ? '90 123 45 67' : '700 123 45 67',
+        hintText: country.phoneHint,
         prefixIcon: InkWell(
           onTap: () => showCountryPicker(context, ref),
           borderRadius: BorderRadius.circular(12),
@@ -82,7 +83,7 @@ class _CountryPhoneFieldState extends ConsumerState<CountryPhoneField> {
         prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
       ),
       onFieldSubmitted: widget.onSubmitted,
-      validator: (value) => isValidPhoneFor(value ?? '', country)
+      validator: (value) => PhoneNumber.parse(value ?? '', country).isValid
           ? null
           : context.l10n.validatorPhone,
     );

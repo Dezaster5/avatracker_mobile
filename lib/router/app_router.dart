@@ -2,22 +2,23 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../features/attendance/presentation/scanner_screen.dart';
-import '../features/attendance/presentation/analytics_screen.dart';
-import '../features/attendance/presentation/timesheet_screen.dart';
-import '../features/auth/presentation/forgot_password_screen.dart';
-import '../features/auth/presentation/login_screen.dart';
-import '../features/auth/presentation/register_screen.dart';
-import '../features/auth/presentation/reset_password_screen.dart';
-import '../features/auth/presentation/sms_code_screen.dart';
-import '../features/auth/presentation/splash_screen.dart';
-import '../features/auth/providers.dart';
-import '../features/legal/presentation/about_screen.dart';
-import '../features/legal/presentation/delete_account_screen.dart';
-import '../features/legal/presentation/privacy_policy_screen.dart';
-import '../features/profile/presentation/change_password_screen.dart';
-import '../features/profile/presentation/profile_screen.dart';
-import '../features/shell/main_shell.dart';
+import '../core/navigation/root_navigator_key.dart';
+import '../features/attendance/presentation/screens/analytics_screen.dart';
+import '../features/attendance/presentation/screens/scanner_screen.dart';
+import '../features/attendance/presentation/screens/timesheet_screen.dart';
+import '../features/auth/presentation/controllers/auth_controller.dart';
+import '../features/auth/presentation/screens/forgot_password_screen.dart';
+import '../features/auth/presentation/screens/login_screen.dart';
+import '../features/auth/presentation/screens/register_screen.dart';
+import '../features/auth/presentation/screens/reset_password_screen.dart';
+import '../features/auth/presentation/screens/sms_code_screen.dart';
+import '../features/auth/presentation/screens/splash_screen.dart';
+import '../features/legal/presentation/screens/about_screen.dart';
+import '../features/legal/presentation/screens/delete_account_screen.dart';
+import '../features/legal/presentation/screens/privacy_policy_screen.dart';
+import '../features/profile/presentation/screens/change_password_screen.dart';
+import '../features/profile/presentation/screens/profile_screen.dart';
+import '../features/shell/presentation/main_shell.dart';
 
 /// Страницы auth-флоу (авторизованного пользователя выкидываем отсюда).
 const _authFlow = {
@@ -32,11 +33,6 @@ const _authFlow = {
 /// Страницы, доступные без сессии: auth-флоу + Политика конфиденциальности.
 bool _isPublic(String location) =>
     _authFlow.contains(location) || location == '/privacy';
-
-/// Ключ корневого `Navigator`, созданного go_router. `MaterialApp.builder`
-/// (см. `DevToolsOverlay`) рисуется НАД этим навигатором, а не под ним, поэтому
-/// `Navigator.of(context)` из builder'а его не находит — берём напрямую по ключу.
-final rootNavigatorKey = GlobalKey<NavigatorState>();
 
 final routerProvider = Provider<GoRouter>((ref) {
   final refresh = ValueNotifier(0);

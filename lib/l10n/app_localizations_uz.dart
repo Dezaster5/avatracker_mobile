@@ -316,9 +316,6 @@ class AppLocalizationsUz extends AppLocalizations {
   }
 
   @override
-  String get noServerConnection => 'Server bilan aloqa yoʻq';
-
-  @override
   String get cameraStartFailed => 'Kamerani ishga tushirib boʻlmadi';
 
   @override
@@ -648,6 +645,22 @@ class AppLocalizationsUz extends AppLocalizations {
   String get errorConfirmSmsFirst => 'Avval SMS kodini tasdiqlang';
 
   @override
+  String get errorForbidden => 'Kirish taqiqlangan';
+
+  @override
+  String get errorNotFound => 'Maʼlumotlar topilmadi';
+
+  @override
+  String get errorValidation => 'Kiritilgan maʼlumotlarni tekshiring';
+
+  @override
+  String get errorServer => 'Server xatosi. Keyinroq qayta urinib koʻring';
+
+  @override
+  String get errorUnexpected =>
+      'Kutilmagan xatolik yuz berdi. Qayta urinib koʻring';
+
+  @override
   String get deleteAccountTitle => 'Hisobni oʻchirish';
 
   @override
@@ -665,4 +678,7 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get accountDeleted => 'Hisob oʻchirildi. Qayta roʻyxatdan oʻting';
+
+  @override
+  String get privacyPolicyLoadFailed => 'Maxfiylik siyosatini yuklab boʻlmadi';
 }

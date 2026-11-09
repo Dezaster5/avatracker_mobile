@@ -315,9 +315,6 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get noServerConnection => 'Нет соединения с сервером';
-
-  @override
   String get cameraStartFailed => 'Не удалось запустить камеру';
 
   @override
@@ -655,6 +652,21 @@ class AppLocalizationsRu extends AppLocalizations {
   String get errorConfirmSmsFirst => 'Сначала подтвердите SMS-код';
 
   @override
+  String get errorForbidden => 'Доступ запрещён';
+
+  @override
+  String get errorNotFound => 'Данные не найдены';
+
+  @override
+  String get errorValidation => 'Проверьте введённые данные';
+
+  @override
+  String get errorServer => 'Ошибка сервера. Попробуйте позже';
+
+  @override
+  String get errorUnexpected => 'Непредвиденная ошибка. Попробуйте ещё раз';
+
+  @override
   String get deleteAccountTitle => 'Удаление аккаунта';
 
   @override
@@ -672,4 +684,8 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get accountDeleted => 'Аккаунт удалён. Зарегистрируйтесь заново';
+
+  @override
+  String get privacyPolicyLoadFailed =>
+      'Не удалось загрузить Политику конфиденциальности';
 }

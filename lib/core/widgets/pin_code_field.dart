@@ -41,9 +41,15 @@ class _PinCodeFieldState extends State<PinCodeField>
     duration: const Duration(milliseconds: 420),
   );
 
+  /// Последний обработанный текст. Контроллер уведомляет и о смене
+  /// выделения — такое уведомление не новый ввод, и [PinCodeField.onCompleted]
+  /// не должен повторно отправить тот же код.
+  String _text = '';
+
   @override
   void initState() {
     super.initState();
+    _text = _controller.text;
     _controller.addListener(_handleChanged);
   }
 
@@ -66,8 +72,10 @@ class _PinCodeFieldState extends State<PinCodeField>
   }
 
   void _handleChanged() {
-    setState(() {});
     final text = _controller.text;
+    if (text == _text) return;
+    _text = text;
+    setState(() {});
     widget.onChanged?.call(text);
     if (text.length == widget.length) {
       widget.onCompleted?.call(text);
@@ -105,6 +113,8 @@ class _PinCodeFieldState extends State<PinCodeField>
                   enabled: widget.enabled,
                   autofocus: widget.autofocus,
                   keyboardType: TextInputType.number,
+                  // iOS предлагает над клавиатурой код из пришедшего SMS.
+                  autofillHints: const [AutofillHints.oneTimeCode],
                   inputFormatters: [
                     FilteringTextInputFormatter.digitsOnly,
                     LengthLimitingTextInputFormatter(widget.length),

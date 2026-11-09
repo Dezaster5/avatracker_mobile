@@ -1,4 +1,5 @@
 import 'package:camera/camera.dart';
+import 'package:flutter/foundation.dart' show compute;
 import 'package:flutter/services.dart';
 import 'package:image/image.dart' as img;
 
@@ -82,6 +83,16 @@ final class CameraFrameSnapshot {
     return Uint8List.fromList(img.encodeJpg(rotated, quality: 88));
   }
 
+  /// [encodeJpeg] в фоновом изоляте: попиксельная конвертация и JPEG на
+  /// чистом Dart в UI-потоке заметно подвешивают интерфейс на слабых
+  /// устройствах. Снимок состоит только из данных и копируется в изолят.
+  Future<Uint8List> encodeJpegInBackground({required int rotationDegrees}) =>
+      compute(
+        _encodeJpegJob,
+        (frame: this, rotationDegrees: rotationDegrees),
+        debugLabel: 'encodeCameraFrameJpeg',
+      );
+
   img.Image _decodeBgra() {
     final plane = planes.first;
     final image = img.Image(width: width, height: height);
@@ -133,3 +144,10 @@ final class CameraFrameSnapshot {
     return plane.bytes[index];
   }
 }
+
+/// Точка входа изолята — функция верхнего уровня, чтобы в изолят не попало
+/// ничего, кроме самого кадра.
+Uint8List _encodeJpegJob(
+  ({CameraFrameSnapshot frame, int rotationDegrees}) job,
+) =>
+    job.frame.encodeJpeg(rotationDegrees: job.rotationDegrees);
