@@ -5,7 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../../../core/storage/token_storage.dart';
 import '../../../../core/utils/date_formatters.dart';
 
-/// Локальная сессия (ТЗ 18.2): JWT-пара, ИИН, телефон и кеш профиля.
+/// Локальная сессия: токен, его тип, ИИН, телефон и кеш профиля.
 /// SMS-коды, пароли и фото не сохраняются.
 class AuthLocalDataSource {
   const AuthLocalDataSource({
@@ -25,20 +25,32 @@ class AuthLocalDataSource {
   static const _kConsent = 'consent_json';
 
   Future<String?> get accessToken => _tokens.accessToken;
+  Future<TokenSession> get tokenSession => _tokens.readSession();
 
   Future<String?> get iin => _storage.read(key: _kIin);
 
   /// Токен нужен раньше профиля: запрос `/profile/me/` должен его нести.
-  Future<void> saveTokens({required String access, required String refresh}) =>
-      _tokens.saveTokens(access: access, refresh: refresh);
+  Future<void> saveTokens({
+    required String access,
+    String? refresh,
+    AuthScheme scheme = AuthScheme.jwt,
+  }) =>
+      _tokens.saveTokens(access: access, refresh: refresh, scheme: scheme);
 
   Future<void> saveSession({
     required String accessToken,
-    required String refreshToken,
+    String? refreshToken,
+    AuthScheme scheme = AuthScheme.jwt,
     required String iin,
     required String phone,
   }) async {
-    await _tokens.saveTokens(access: accessToken, refresh: refreshToken);
+    await saveTokens(
+        access: accessToken, refresh: refreshToken, scheme: scheme);
+    await saveIdentity(iin: iin, phone: phone);
+  }
+
+  Future<void> saveIdentity(
+      {required String iin, required String phone}) async {
     await _storage.write(key: _kIin, value: iin);
     await _storage.write(key: _kPhone, value: phone);
   }

@@ -41,6 +41,8 @@ class AuthSession {
 }
 
 class AuthController extends Notifier<AuthSession> {
+  Future<Failure?>? _signingOut;
+
   @override
   AuthSession build() {
     final expiry = ref.read(sessionExpiryProvider).events.listen(
@@ -87,10 +89,20 @@ class AuthController extends Notifier<AuthSession> {
     }
   }
 
-  /// Выход пользователем или по причине [reason].
-  Future<void> logout({LogoutReason? reason}) async {
-    await ref.read(signOutProvider).call();
-    state = AuthSession.signedOut(reason);
+  /// Пользовательский выход. При ошибке отзыва ключа остаёмся в аккаунте.
+  Future<Failure?> logout() =>
+      _signingOut ??= _logout().whenComplete(() => _signingOut = null);
+
+  Future<Failure?> _logout() async {
+    switch (await ref.read(signOutProvider).call()) {
+      case Success():
+        if (await ref.read(tokenStorageProvider).accessToken == null) {
+          state = const AuthSession.signedOut();
+        }
+        return null;
+      case Failed(:final failure):
+        return failure;
+    }
   }
 
   /// Сессия уже очищена (например, аккаунт удалён) — уводим на вход.
@@ -101,10 +113,12 @@ class AuthController extends Notifier<AuthSession> {
     if (state.logoutReason != null) state = const AuthSession.signedOut();
   }
 
-  /// HTTP-клиент сообщил, что refresh-токен отклонён сервером.
-  void _onSessionExpired() {
-    if (state.status == AuthStatus.authenticated) {
-      logout(reason: LogoutReason.sessionExpired);
+  /// Ключ уже отвергнут сервером: только локальная очистка, без logout API.
+  Future<void> _onSessionExpired() async {
+    if (state.status == AuthStatus.authenticated &&
+        await ref.read(tokenStorageProvider).accessToken == null) {
+      await ref.read(authRepositoryProvider).clearSession();
+      state = const AuthSession.signedOut(LogoutReason.sessionExpired);
     }
   }
 }

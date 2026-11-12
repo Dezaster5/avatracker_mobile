@@ -6,7 +6,7 @@ import '../models/auth_requests.dart';
 import '../models/auth_response_dto.dart';
 import '../models/employee_dto.dart';
 
-/// HTTP-вызовы мобильного auth-API (SimpleJWT) и карточки сотрудника из
+/// HTTP-вызовы мобильного auth-API и карточки сотрудника из
 /// data-API `/api/v1`. Ошибки не обрабатывает — это делает репозиторий.
 class AuthRemoteDataSource {
   const AuthRemoteDataSource(this._dio);
@@ -52,6 +52,18 @@ class AuthRemoteDataSource {
 
   Future<void> changePassword(ChangePasswordRequest request) async {
     await _post(ApiEndpoints.changePassword, request.toJson());
+  }
+
+  Future<void> logout(String token) async {
+    try {
+      await _dio.post<dynamic>(
+        ApiEndpoints.logout,
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+    } on DioException catch (error) {
+      // Уже отозванный ключ также позволяет завершить локальную сессию.
+      if (error.response?.statusCode != 401) rethrow;
+    }
   }
 
   /// `GET /profile/me/` — бэкенд не присылает здесь `photo`.

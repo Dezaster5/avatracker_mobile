@@ -60,4 +60,7 @@ abstract interface class AuthRepository {
   });
 
   Future<void> clearSession();
+
+  /// Пользовательский выход; постоянный ключ сначала отзывается на сервере.
+  Future<Result<void>> logout();
 }

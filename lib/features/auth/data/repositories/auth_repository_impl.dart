@@ -3,6 +3,7 @@ import '../../../../core/country/phone_number.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/error/result.dart';
 import '../../../../core/network/network_guard.dart';
+import '../../../../core/storage/token_storage.dart';
 import '../../domain/entities/employee.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_local_data_source.dart';
@@ -157,27 +158,42 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<void> clearSession() => _local.clearSession();
 
-  /// Сохраняет JWT и собирает сотрудника из ответа входа и `/profile/me/`.
+  @override
+  Future<Result<void>> logout() => guardRequest(() async {
+        final session = await _local.tokenSession;
+        if (session.scheme == AuthScheme.opaque && session.access != null) {
+          await _remote.logout(session.access!);
+        }
+        // Поздний ответ выхода не должен очищать уже открытый новый аккаунт.
+        if (await _local.accessToken == session.access) {
+          await _local.clearSession();
+        }
+      });
+
+  /// Сохраняет ключ до запросов профиля, не подменяя refresh постоянным ключом.
   Future<Employee> _openSession(
     AuthResponseDto response,
     PhoneNumber phone,
   ) async {
     final access = response.accessToken;
     if (access == null || access.isEmpty) throw const LoginFailedFailure();
-    final refresh = response.refreshToken ?? access;
-    await _local.saveTokens(access: access, refresh: refresh);
+    await _local.saveTokens(
+      access: access,
+      refresh: response.refreshToken,
+      scheme: response.scheme,
+    );
 
     // Поля профиля приоритетнее, но `photo` есть только в ответе входа.
     final merged = {...response.employeeJson, ...await _profileOrEmpty()};
     if (merged.isEmpty) throw const EmployeeDataMissingFailure();
     final employee = EmployeeDto.fromJson(await _withEnrichment(merged));
 
-    await _local.saveSession(
-      accessToken: access,
-      refreshToken: refresh,
-      iin: employee.iin,
-      phone: phone.e164,
-    );
+    if (response.scheme == AuthScheme.opaque &&
+        await _local.accessToken != access) {
+      throw const UnauthorizedFailure();
+    }
+    // Не записываем токен повторно: HTTP-клиент мог уже обновить/отозвать его.
+    await _local.saveIdentity(iin: employee.iin, phone: phone.e164);
     await _local.saveEmployeeJson(employee.toJson());
     return employee.toEntity();
   }

@@ -37,8 +37,19 @@ class ProfileScreen extends ConsumerWidget {
         ],
       ),
     );
-    if (confirmed ?? false) {
-      await ref.read(authControllerProvider.notifier).logout();
+    if ((confirmed ?? false) && context.mounted) {
+      final failure = await ref.read(authControllerProvider.notifier).logout();
+      if (failure != null && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(context.l10n.failureMessage(failure)),
+            action: SnackBarAction(
+              label: context.l10n.actionRetry,
+              onPressed: () => _confirmLogout(context, ref),
+            ),
+          ),
+        );
+      }
     }
   }
 

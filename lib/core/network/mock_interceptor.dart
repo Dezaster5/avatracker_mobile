@@ -73,7 +73,7 @@ class MockInterceptor extends Interceptor {
       }
       _sessionPhone = phone;
       _sessionIin = account['iin'];
-      return _ok(handler, options, _session());
+      return _ok(handler, options, _session(opaque: p.contains('/v2/auth/')));
     }
 
     if (p.endsWith('/auth/register/resend/')) {
@@ -102,7 +102,13 @@ class MockInterceptor extends Interceptor {
       }
       _sessionPhone = phone;
       _sessionIin = account['iin'];
-      return _ok(handler, options, _session());
+      return _ok(handler, options, _session(opaque: p.contains('/v2/auth/')));
+    }
+
+    if (p.endsWith('/auth/logout/')) {
+      _sessionPhone = null;
+      _sessionIin = null;
+      return _ok(handler, options, {'success': true});
     }
 
     if (p.endsWith('/auth/token/refresh/')) {
@@ -253,9 +259,15 @@ class MockInterceptor extends Interceptor {
         handler, options, 404, {'message': 'Mock: эндпоинт $p не реализован'});
   }
 
-  /// Ответ авторизации в стиле SimpleJWT: только токены
+  /// Ответ авторизации v2 либо SimpleJWT: только токены
   /// (профиль клиент берёт следом из `/profile/me/`).
-  Map<String, dynamic> _session() {
+  Map<String, dynamic> _session({required bool opaque}) {
+    if (opaque) {
+      return {
+        'token':
+            'mob_${DateTime.now().microsecondsSinceEpoch.toString().padLeft(43, '0')}',
+      };
+    }
     return {
       'access': 'mock_access_${DateTime.now().millisecondsSinceEpoch}',
       'refresh': 'mock_refresh',
