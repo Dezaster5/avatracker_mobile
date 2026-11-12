@@ -1,115 +1,88 @@
-import 'dart:convert';
-
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-import '../utils/formatters.dart';
+import 'secure_storage.dart';
 
-/// Безопасное хранилище сессии (Keychain / Android Keystore).
-///
-/// По ТЗ 18.2 локально храним: access/refresh token, ИИН, телефон,
-/// базовый профиль. SMS-коды и фото не сохраняются.
+enum AuthScheme { jwt, opaque }
+
+typedef TokenSession = ({String? access, String? refresh, AuthScheme scheme});
+
+/// Ключи текущей сессии в прежнем Keychain / Keystore.
 class TokenStorage {
   TokenStorage([FlutterSecureStorage? storage])
-      : _storage = storage ??
-            const FlutterSecureStorage(
-              aOptions: AndroidOptions(encryptedSharedPreferences: true),
-            );
+      : _storage = storage ?? appSecureStorage;
 
   final FlutterSecureStorage _storage;
 
   static const _kAccess = 'access_token';
   static const _kRefresh = 'refresh_token';
-  static const _kIin = 'iin';
-  static const _kPhone = 'phone';
-  static const _kEmployee = 'employee_json';
+  static const _kScheme = 'auth_scheme';
 
-  // Устройство-уровневые ключи — переживают выход из аккаунта.
-  static const _kConsent = 'consent_json';
-  static const _kIntroSeen = 'intro_seen';
-  static const _kLocale = 'app_locale';
-  static const _kCountryIso = 'country_iso';
+  Future<void> _pending = Future.value();
 
-  Future<String?> get accessToken => _storage.read(key: _kAccess);
-  Future<String?> get refreshToken => _storage.read(key: _kRefresh);
-  Future<String?> get iin => _storage.read(key: _kIin);
-  Future<String?> get phone => _storage.read(key: _kPhone);
-
-  Future<void> saveTokens(
-      {required String access, required String refresh}) async {
-    await _storage.write(key: _kAccess, value: access);
-    await _storage.write(key: _kRefresh, value: refresh);
+  // Записи нескольких ключей и чтения не должны перемешиваться с refresh.
+  Future<T> _serial<T>(Future<T> Function() operation) {
+    final result = _pending.then((_) => operation());
+    _pending = result.then<void>((_) {}, onError: (Object _, StackTrace __) {});
+    return result;
   }
 
-  Future<void> saveSession({
-    required String accessToken,
-    required String refreshToken,
-    required String iin,
-    required String phone,
+  Future<TokenSession> _read() async => (
+        access: await _storage.read(key: _kAccess),
+        refresh: await _storage.read(key: _kRefresh),
+        // Сессии, сохранённые предыдущей версией, остаются JWT.
+        scheme: await _storage.read(key: _kScheme) == AuthScheme.opaque.name
+            ? AuthScheme.opaque
+            : AuthScheme.jwt,
+      );
+
+  Future<TokenSession> readSession() => _serial(_read);
+  Future<String?> get accessToken async => (await readSession()).access;
+  Future<String?> get refreshToken async => (await readSession()).refresh;
+
+  Future<void> saveTokens({
+    required String access,
+    String? refresh,
+    AuthScheme scheme = AuthScheme.jwt,
+  }) =>
+      _serial(() => _write(access: access, refresh: refresh, scheme: scheme));
+
+  Future<void> _write({
+    required String access,
+    String? refresh,
+    required AuthScheme scheme,
   }) async {
-    await saveTokens(access: accessToken, refresh: refreshToken);
-    await _storage.write(key: _kIin, value: iin);
-    await _storage.write(key: _kPhone, value: phone);
-  }
-
-  Future<void> saveEmployeeJson(Map<String, dynamic> json) =>
-      _storage.write(key: _kEmployee, value: jsonEncode(json));
-
-  /// Факт согласия на обработку персональных данных (App Store §5.1.1).
-  Future<void> saveConsent({
-    required String iin,
-    required String version,
-  }) {
-    return _storage.write(
-      key: _kConsent,
-      value: jsonEncode({
-        'employee_iin': iin,
-        'consent_given': true,
-        'consent_version': version,
-        'consent_given_at': isoWithOffset(DateTime.now()),
-      }),
-    );
-  }
-
-  Future<Map<String, dynamic>?> readConsent() async {
-    final raw = await _storage.read(key: _kConsent);
-    if (raw == null || raw.isEmpty) return null;
-    try {
-      return jsonDecode(raw) as Map<String, dynamic>;
-    } catch (_) {
-      return null;
+    await _storage.write(key: _kScheme, value: scheme.name);
+    if (scheme == AuthScheme.jwt && refresh != null && refresh.isNotEmpty) {
+      await _storage.write(key: _kRefresh, value: refresh);
+    } else {
+      await _storage.delete(key: _kRefresh);
     }
+    await _storage.write(key: _kAccess, value: access);
   }
 
-  /// Информационный экран цели приложения уже показан пользователю.
-  Future<bool> get introSeen async =>
-      (await _storage.read(key: _kIntroSeen)) == '1';
+  /// Поздний ответ JWT refresh не должен затереть новый вход через v2.
+  Future<void> replaceJwtTokens({
+    required TokenSession previous,
+    required String access,
+    required String refresh,
+  }) =>
+      _serial(() async {
+        final current = await _read();
+        if (current != previous || current.scheme != AuthScheme.jwt) return;
+        await _write(access: access, refresh: refresh, scheme: AuthScheme.jwt);
+      });
 
-  Future<void> setIntroSeen() => _storage.write(key: _kIntroSeen, value: '1');
+  Future<bool> clearIfCurrent(String access) => _serial(() async {
+        if (await _storage.read(key: _kAccess) != access) return false;
+        await _clear();
+        return true;
+      });
 
-  /// Выбранный язык интерфейса (`ru` / `kk` / `uz`).
-  Future<String?> get localeCode => _storage.read(key: _kLocale);
-  Future<void> saveLocale(String code) =>
-      _storage.write(key: _kLocale, value: code);
+  Future<void> clear() => _serial(_clear);
 
-  /// ISO-код выбранной страны для телефона (`KZ` / `UZ`).
-  Future<String?> get countryIso => _storage.read(key: _kCountryIso);
-  Future<void> saveCountryIso(String iso) =>
-      _storage.write(key: _kCountryIso, value: iso);
-
-  Future<Map<String, dynamic>?> readEmployeeJson() async {
-    final raw = await _storage.read(key: _kEmployee);
-    if (raw == null || raw.isEmpty) return null;
-    try {
-      return jsonDecode(raw) as Map<String, dynamic>;
-    } catch (_) {
-      return null;
-    }
-  }
-
-  /// Очистка сессии при выходе.
-  Future<void> clearSession() async {
-    for (final key in const [_kAccess, _kRefresh, _kIin, _kPhone, _kEmployee]) {
-      await _storage.delete(key: key);
-    }
+  Future<void> _clear() async {
+    await _storage.delete(key: _kAccess);
+    await _storage.delete(key: _kRefresh);
+    await _storage.delete(key: _kScheme);
   }
 }

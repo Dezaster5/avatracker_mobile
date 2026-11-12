@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 
-import '../config/app_config.dart';
-import '../utils/formatters.dart';
+import '../time/work_day.dart';
+import '../utils/date_formatters.dart';
 
 /// Mock-режим API (`--dart-define=MOCK_API=true`): обслуживает все
 /// эндпоинты из ТЗ локально, чтобы демонстрировать приложение без бэкенда.
@@ -73,7 +73,7 @@ class MockInterceptor extends Interceptor {
       }
       _sessionPhone = phone;
       _sessionIin = account['iin'];
-      return _ok(handler, options, _session());
+      return _ok(handler, options, _session(opaque: p.contains('/v2/auth/')));
     }
 
     if (p.endsWith('/auth/register/resend/')) {
@@ -102,7 +102,13 @@ class MockInterceptor extends Interceptor {
       }
       _sessionPhone = phone;
       _sessionIin = account['iin'];
-      return _ok(handler, options, _session());
+      return _ok(handler, options, _session(opaque: p.contains('/v2/auth/')));
+    }
+
+    if (p.endsWith('/auth/logout/')) {
+      _sessionPhone = null;
+      _sessionIin = null;
+      return _ok(handler, options, {'success': true});
     }
 
     if (p.endsWith('/auth/token/refresh/')) {
@@ -253,9 +259,15 @@ class MockInterceptor extends Interceptor {
         handler, options, 404, {'message': 'Mock: эндпоинт $p не реализован'});
   }
 
-  /// Ответ авторизации в стиле SimpleJWT: только токены
+  /// Ответ авторизации v2 либо SimpleJWT: только токены
   /// (профиль клиент берёт следом из `/profile/me/`).
-  Map<String, dynamic> _session() {
+  Map<String, dynamic> _session({required bool opaque}) {
+    if (opaque) {
+      return {
+        'token':
+            'mob_${DateTime.now().microsecondsSinceEpoch.toString().padLeft(43, '0')}',
+      };
+    }
     return {
       'access': 'mock_access_${DateTime.now().millisecondsSinceEpoch}',
       'refresh': 'mock_refresh',
@@ -293,10 +305,10 @@ class MockInterceptor extends Interceptor {
     }
 
     final now = DateTime.now();
-    final currentWorkDate = AppConfig.workDateFor(now);
+    final currentWorkDate = WorkDay.dateOf(now);
     _todayMarks.removeWhere((m) {
       final t = DateTime.tryParse('${m['scanned_at']}');
-      return t == null || AppConfig.workDateFor(t.toLocal()) != currentWorkDate;
+      return t == null || WorkDay.dateOf(t.toLocal()) != currentWorkDate;
     });
 
     final markType = switch (_todayMarks.length) {
@@ -343,7 +355,7 @@ class MockInterceptor extends Interceptor {
     DateTime periodFrom,
     DateTime periodTo,
   ) {
-    final today = AppConfig.workDate;
+    final today = WorkDay.today;
     final end = periodTo.isAfter(today) ? today : periodTo;
     final results = <Map<String, dynamic>>[];
 
@@ -394,9 +406,9 @@ class MockInterceptor extends Interceptor {
     DateTime periodFrom,
     DateTime periodTo,
   ) {
-    final today = AppConfig.workDate;
-    final firstWorkDate = AppConfig.workDateFor(periodFrom);
-    final requestedEnd = AppConfig.workDateFor(periodTo);
+    final today = WorkDay.today;
+    final firstWorkDate = WorkDay.dateOf(periodFrom);
+    final requestedEnd = WorkDay.dateOf(periodTo);
     final end = requestedEnd.isAfter(today) ? today : requestedEnd;
     final results = <Map<String, dynamic>>[];
 

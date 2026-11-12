@@ -105,9 +105,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'Нужен только для проверки сотрудника в AvaTracker.';
 
   @override
-  String get passwordMinHint => 'Минимум 6 символов';
-
-  @override
   String get confirmPassword => 'Подтвердите пароль';
 
   @override
@@ -134,6 +131,25 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get validatorPasswordsMatch => 'Пароли не совпадают';
+
+  @override
+  String passwordRuleMinLength(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Минимум $count символа',
+      many: 'Минимум $count символов',
+      few: 'Минимум $count символа',
+      one: 'Минимум $count символ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get passwordRuleNoSpaces => 'Без пробелов';
+
+  @override
+  String get passwordsMatch => 'Пароли совпадают';
 
   @override
   String get confirmation => 'Подтверждение';
@@ -205,6 +221,12 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get passwordChanged => 'Пароль изменён';
+
+  @override
+  String get showPassword => 'Показать пароль';
+
+  @override
+  String get hidePassword => 'Скрыть пароль';
 
   @override
   String get tabScanner => 'Сканер';
@@ -292,6 +314,12 @@ class AppLocalizationsRu extends AppLocalizations {
       'Вы должны находиться в радиусе 50 м от точки отметки';
 
   @override
+  String get torchOn => 'Включить фонарик';
+
+  @override
+  String get torchOff => 'Выключить фонарик';
+
+  @override
   String get stageCheckingPoint => 'Проверка точки отметки…';
 
   @override
@@ -313,9 +341,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String qrCodeValue(String code) {
     return 'Код из QR: «$code»';
   }
-
-  @override
-  String get noServerConnection => 'Нет соединения с сервером';
 
   @override
   String get cameraStartFailed => 'Не удалось запустить камеру';
@@ -655,10 +680,29 @@ class AppLocalizationsRu extends AppLocalizations {
   String get errorConfirmSmsFirst => 'Сначала подтвердите SMS-код';
 
   @override
+  String get errorForbidden => 'Доступ запрещён';
+
+  @override
+  String get errorNotFound => 'Данные не найдены';
+
+  @override
+  String get errorValidation => 'Проверьте введённые данные';
+
+  @override
+  String get errorServer => 'Ошибка сервера. Попробуйте позже';
+
+  @override
+  String get errorUnexpected => 'Непредвиденная ошибка. Попробуйте ещё раз';
+
+  @override
   String get deleteAccountTitle => 'Удаление аккаунта';
 
   @override
   String get deleteAccountAction => 'Удалить аккаунт';
+
+  @override
+  String get deleteAccountBody =>
+      'Вы можете удалить учётную запись приложения AvaTracker.\n\nАккаунт будет удалён без возможности восстановления. Данные учёта рабочего времени сохраняются в системе компании согласно политике конфиденциальности.\n\nЧтобы снова пользоваться приложением, потребуется повторная регистрация.';
 
   @override
   String get deleteConfirmTitle => 'Удалить аккаунт?';
@@ -672,4 +716,8 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get accountDeleted => 'Аккаунт удалён. Зарегистрируйтесь заново';
+
+  @override
+  String get privacyPolicyLoadFailed =>
+      'Не удалось загрузить Политику конфиденциальности';
 }

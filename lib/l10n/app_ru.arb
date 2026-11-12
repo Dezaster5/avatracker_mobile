@@ -34,7 +34,6 @@
   "fieldPinfl": "ПИНФЛ",
   "pinflHint": "14 цифр",
   "pinflExplanation": "Нужен только для проверки сотрудника в AvaTracker.",
-  "passwordMinHint": "Минимум 6 символов",
   "confirmPassword": "Подтвердите пароль",
   "repeatPassword": "Повторите пароль",
   "getSmsCode": "Получить SMS-код",
@@ -44,6 +43,10 @@
   "validatorPinfl": "Введите ПИНФЛ",
   "validatorPassword": "Пароль: минимум 6 символов, без пробелов",
   "validatorPasswordsMatch": "Пароли не совпадают",
+  "passwordRuleMinLength": "{count, plural, one{Минимум {count} символ} few{Минимум {count} символа} many{Минимум {count} символов} other{Минимум {count} символа}}",
+  "@passwordRuleMinLength": { "placeholders": { "count": { "type": "int" } } },
+  "passwordRuleNoSpaces": "Без пробелов",
+  "passwordsMatch": "Пароли совпадают",
 
   "confirmation": "Подтверждение",
   "enterSmsCode": "Введите код из SMS",
@@ -71,6 +74,8 @@
   "enterCurrentPassword": "Введите текущий пароль",
   "confirmNewPassword": "Подтвердите новый пароль",
   "passwordChanged": "Пароль изменён",
+  "showPassword": "Показать пароль",
+  "hidePassword": "Скрыть пароль",
 
   "tabScanner": "Сканер",
   "tabTimesheet": "Табель",
@@ -105,6 +110,8 @@
   "scanQrTitle": "Отметка по QR-коду",
   "pointCameraAtQr": "Наведите камеру на QR-код",
   "within50m": "Вы должны находиться в радиусе 50 м от точки отметки",
+  "torchOn": "Включить фонарик",
+  "torchOff": "Выключить фонарик",
   "stageCheckingPoint": "Проверка точки отметки…",
   "stageCheckingFace": "Проверка лица…",
   "stageCheckingLocation": "Проверка геолокации…",
@@ -113,7 +120,6 @@
   "qrNotRegistered": "QR-код не зарегистрирован в системе",
   "qrCodeValue": "Код из QR: «{code}»",
   "@qrCodeValue": { "placeholders": { "code": { "type": "String" } } },
-  "noServerConnection": "Нет соединения с сервером",
   "cameraStartFailed": "Не удалось запустить камеру",
   "cameraNoAccess": "Нет доступа к камере",
   "cameraCloseOthers": "Закройте другие приложения, использующие камеру, и нажмите «Повторить»",
@@ -252,11 +258,21 @@
   "errorLoginFailed": "Не удалось войти",
   "errorAttemptsExceeded": "Превышено количество попыток. Запросите новый код",
   "errorConfirmSmsFirst": "Сначала подтвердите SMS-код",
+  "errorForbidden": "Доступ запрещён",
+  "errorNotFound": "Данные не найдены",
+  "errorValidation": "Проверьте введённые данные",
+  "errorServer": "Ошибка сервера. Попробуйте позже",
+  "errorUnexpected": "Непредвиденная ошибка. Попробуйте ещё раз",
 
   "deleteAccountTitle": "Удаление аккаунта",
   "deleteAccountAction": "Удалить аккаунт",
+  "deleteAccountBody": "Вы можете удалить учётную запись приложения AvaTracker.\n\nАккаунт будет удалён без возможности восстановления. Данные учёта рабочего времени сохраняются в системе компании согласно политике конфиденциальности.\n\nЧтобы снова пользоваться приложением, потребуется повторная регистрация.",
   "deleteConfirmTitle": "Удалить аккаунт?",
   "deleteConfirmBody": "Подтвердите удаление аккаунта приложения. Для повторного входа потребуется новая регистрация.",
   "actionDelete": "Удалить",
-  "accountDeleted": "Аккаунт удалён. Зарегистрируйтесь заново"
+  "accountDeleted": "Аккаунт удалён. Зарегистрируйтесь заново",
+  "privacyPolicyLoadFailed": "Не удалось загрузить Политику конфиденциальности",
+  "@privacyPolicyLoadFailed": {
+    "description": "Ошибка загрузки текста Политики конфиденциальности"
+  }
 }

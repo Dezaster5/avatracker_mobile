@@ -1,22 +1,25 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/failure_l10n.dart';
 import '../../l10n/l10n_ext.dart';
+import '../error/failure.dart';
 import '../theme/app_theme.dart';
 
 /// Плашка ошибки под формой: появляется и исчезает плавно.
 class ErrorBanner extends StatelessWidget {
-  const ErrorBanner({super.key, required this.message});
+  const ErrorBanner({super.key, required this.failure});
 
   /// `null` — баннер скрыт (AnimatedSize схлопывает место).
-  final String? message;
+  final Failure? failure;
 
   @override
   Widget build(BuildContext context) {
+    final failure = this.failure;
     return AnimatedSize(
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeOut,
       alignment: Alignment.topCenter,
-      child: message == null
+      child: failure == null
           ? const SizedBox(width: double.infinity)
           : Container(
               width: double.infinity,
@@ -36,7 +39,7 @@ class ErrorBanner extends StatelessWidget {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      context.localizedMessage(message),
+                      context.l10n.failureMessage(failure),
                       style: const TextStyle(
                         color: AppColors.danger,
                         fontSize: 13.5,

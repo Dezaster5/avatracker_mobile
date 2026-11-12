@@ -7,16 +7,17 @@ import 'dev_log_store.dart';
 const _devCallKey = '__devCall';
 
 /// Пишет каждый HTTP-вызов в [DevLogStore] для панели разработчика.
-/// Маскируются только пароли — остальное (токены, фото и т. п.) видно как есть.
+/// Пароли и ключи сессии маскируются и в заголовках, и в JSON-телах.
 class DevHttpInterceptor extends Interceptor {
   @override
   void onRequest(
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) {
-    final call = DevHttpCall(method: options.method, url: options.uri.toString())
-      ..requestHeaders = _sanitizeHeaders(options.headers)
-      ..requestBody = _stringify(options.data);
+    final call =
+        DevHttpCall(method: options.method, url: options.uri.toString())
+          ..requestHeaders = _sanitizeHeaders(options.headers)
+          ..requestBody = _stringify(options.data);
     options.extra[_devCallKey] = call;
     devLogStore.addHttpCall(call);
     handler.next(options);
@@ -31,8 +32,7 @@ class DevHttpInterceptor extends Interceptor {
     if (call != null) {
       call
         ..statusCode = response.statusCode
-        ..responseHeaders = response.headers.map
-            .map((key, value) => MapEntry(key, value.join('; ')))
+        ..responseHeaders = _sanitizeHeaders(response.headers.map)
         ..responseBody = _stringify(response.data)
         ..duration = DateTime.now().difference(call.startedAt);
       devLogStore.touch();
@@ -55,14 +55,24 @@ class DevHttpInterceptor extends Interceptor {
   }
 
   Map<String, String> _sanitizeHeaders(Map<String, dynamic> headers) {
-    return headers.map((key, value) => MapEntry(key, value.toString()));
+    return headers.map((key, value) => MapEntry(
+          key,
+          _isSecret(key) || key.toLowerCase() == 'set-cookie'
+              ? '***'
+              : value.toString(),
+        ));
   }
+
+  bool _isSecret(String key) =>
+      RegExp(r'password|token|authorization|cookie', caseSensitive: false)
+          .hasMatch(key) ||
+      const {'access', 'refresh'}.contains(key.toLowerCase());
 
   dynamic _sanitize(dynamic data) {
     if (data is Map) {
       return data.map((key, value) {
         final k = key.toString();
-        if (RegExp(r'password', caseSensitive: false).hasMatch(k)) {
+        if (_isSecret(k)) {
           return MapEntry(k, '***');
         }
         return MapEntry(k, _sanitize(value));

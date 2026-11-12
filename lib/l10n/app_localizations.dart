@@ -286,12 +286,6 @@ abstract class AppLocalizations {
   /// **'Нужен только для проверки сотрудника в AvaTracker.'**
   String get pinflExplanation;
 
-  /// No description provided for @passwordMinHint.
-  ///
-  /// In ru, this message translates to:
-  /// **'Минимум 6 символов'**
-  String get passwordMinHint;
-
   /// No description provided for @confirmPassword.
   ///
   /// In ru, this message translates to:
@@ -345,6 +339,24 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Пароли не совпадают'**
   String get validatorPasswordsMatch;
+
+  /// No description provided for @passwordRuleMinLength.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{Минимум {count} символ} few{Минимум {count} символа} many{Минимум {count} символов} other{Минимум {count} символа}}'**
+  String passwordRuleMinLength(int count);
+
+  /// No description provided for @passwordRuleNoSpaces.
+  ///
+  /// In ru, this message translates to:
+  /// **'Без пробелов'**
+  String get passwordRuleNoSpaces;
+
+  /// No description provided for @passwordsMatch.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пароли совпадают'**
+  String get passwordsMatch;
 
   /// No description provided for @confirmation.
   ///
@@ -477,6 +489,18 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Пароль изменён'**
   String get passwordChanged;
+
+  /// No description provided for @showPassword.
+  ///
+  /// In ru, this message translates to:
+  /// **'Показать пароль'**
+  String get showPassword;
+
+  /// No description provided for @hidePassword.
+  ///
+  /// In ru, this message translates to:
+  /// **'Скрыть пароль'**
+  String get hidePassword;
 
   /// No description provided for @tabScanner.
   ///
@@ -640,6 +664,18 @@ abstract class AppLocalizations {
   /// **'Вы должны находиться в радиусе 50 м от точки отметки'**
   String get within50m;
 
+  /// No description provided for @torchOn.
+  ///
+  /// In ru, this message translates to:
+  /// **'Включить фонарик'**
+  String get torchOn;
+
+  /// No description provided for @torchOff.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выключить фонарик'**
+  String get torchOff;
+
   /// No description provided for @stageCheckingPoint.
   ///
   /// In ru, this message translates to:
@@ -681,12 +717,6 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Код из QR: «{code}»'**
   String qrCodeValue(String code);
-
-  /// No description provided for @noServerConnection.
-  ///
-  /// In ru, this message translates to:
-  /// **'Нет соединения с сервером'**
-  String get noServerConnection;
 
   /// No description provided for @cameraStartFailed.
   ///
@@ -1252,6 +1282,36 @@ abstract class AppLocalizations {
   /// **'Сначала подтвердите SMS-код'**
   String get errorConfirmSmsFirst;
 
+  /// No description provided for @errorForbidden.
+  ///
+  /// In ru, this message translates to:
+  /// **'Доступ запрещён'**
+  String get errorForbidden;
+
+  /// No description provided for @errorNotFound.
+  ///
+  /// In ru, this message translates to:
+  /// **'Данные не найдены'**
+  String get errorNotFound;
+
+  /// No description provided for @errorValidation.
+  ///
+  /// In ru, this message translates to:
+  /// **'Проверьте введённые данные'**
+  String get errorValidation;
+
+  /// No description provided for @errorServer.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ошибка сервера. Попробуйте позже'**
+  String get errorServer;
+
+  /// No description provided for @errorUnexpected.
+  ///
+  /// In ru, this message translates to:
+  /// **'Непредвиденная ошибка. Попробуйте ещё раз'**
+  String get errorUnexpected;
+
   /// No description provided for @deleteAccountTitle.
   ///
   /// In ru, this message translates to:
@@ -1263,6 +1323,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Удалить аккаунт'**
   String get deleteAccountAction;
+
+  /// No description provided for @deleteAccountBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вы можете удалить учётную запись приложения AvaTracker.\n\nАккаунт будет удалён без возможности восстановления. Данные учёта рабочего времени сохраняются в системе компании согласно политике конфиденциальности.\n\nЧтобы снова пользоваться приложением, потребуется повторная регистрация.'**
+  String get deleteAccountBody;
 
   /// No description provided for @deleteConfirmTitle.
   ///
@@ -1287,6 +1353,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Аккаунт удалён. Зарегистрируйтесь заново'**
   String get accountDeleted;
+
+  /// Ошибка загрузки текста Политики конфиденциальности
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось загрузить Политику конфиденциальности'**
+  String get privacyPolicyLoadFailed;
 }
 
 class _AppLocalizationsDelegate

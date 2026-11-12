@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:intl/intl.dart';
 
 import 'app.dart';
 import 'core/config/app_config.dart';
-import 'core/country/country.dart';
-import 'core/country/country_providers.dart';
 import 'core/devtools/dev_log_store.dart';
-import 'core/i18n/locale_provider.dart';
-import 'core/storage/token_storage.dart';
+import 'features/preferences/presentation/controllers/preferences_controller.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,25 +21,18 @@ Future<void> main() async {
     };
   }
 
+  final container = ProviderContainer();
   // Язык и страна берутся из хранилища до первого кадра (без мигания).
-  final storage = TokenStorage();
-  final localeCode = await storage.localeCode ?? defaultLocaleCode;
-  final countryIso = await storage.countryIso;
-
+  await container.read(preferencesControllerProvider.notifier).restore();
   await Future.wait([
     initializeDateFormatting('kk'),
     initializeDateFormatting('ru'),
     initializeDateFormatting('uz'),
   ]);
-  Intl.defaultLocale = localeCode;
 
   runApp(
-    ProviderScope(
-      overrides: [
-        localeProvider.overrideWith((ref) => Locale(localeCode)),
-        selectedCountryProvider
-            .overrideWith((ref) => Country.byIso(countryIso)),
-      ],
+    UncontrolledProviderScope(
+      container: container,
       child: const AvaTrackerApp(),
     ),
   );

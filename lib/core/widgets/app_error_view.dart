@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/failure_l10n.dart';
 import '../../l10n/l10n_ext.dart';
 import '../theme/app_theme.dart';
 
+/// Ошибка загрузки экрана с кнопкой повтора.
 class AppErrorView extends StatelessWidget {
   const AppErrorView({
     super.key,
-    required this.message,
+    required this.error,
     this.onRetry,
     this.icon = Icons.error_outline,
   });
 
-  final String message;
+  /// Ошибка из `AsyncValue.error` — обычно `Failure`.
+  final Object error;
   final VoidCallback? onRetry;
   final IconData icon;
 
@@ -26,7 +29,7 @@ class AppErrorView extends StatelessWidget {
             Icon(icon, size: 48, color: AppColors.textSecondary),
             const SizedBox(height: 12),
             Text(
-              context.localizedMessage(message),
+              context.l10n.errorMessage(error),
               textAlign: TextAlign.center,
               style:
                   const TextStyle(color: AppColors.textSecondary, fontSize: 15),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../router/app_router.dart' show rootNavigatorKey;
 import '../config/app_config.dart';
+import '../navigation/root_navigator_key.dart';
 import 'dev_tools_screen.dart';
 
 /// Плавающая шестерёнка поверх всех экранов приложения (auth-флоу, табы,
@@ -28,7 +28,8 @@ class _DevToolsOverlayState extends State<DevToolsOverlay> {
     if (!AppConfig.devToolsEnabled) return widget.child;
 
     final screen = MediaQuery.sizeOf(context);
-    final position = _position ?? Offset(screen.width - _size - 12, screen.height * 0.6);
+    final position =
+        _position ?? Offset(screen.width - _size - 12, screen.height * 0.6);
 
     return Stack(
       children: [
@@ -69,7 +70,8 @@ class _DevToolsOverlayState extends State<DevToolsOverlay> {
                   BoxShadow(color: Colors.black26, blurRadius: 6),
                 ],
               ),
-              child: const Icon(Icons.settings_rounded, color: Colors.white, size: 22),
+              child: const Icon(Icons.settings_rounded,
+                  color: Colors.white, size: 22),
             ),
           ),
         ),

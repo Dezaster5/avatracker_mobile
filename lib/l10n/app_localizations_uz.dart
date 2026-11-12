@@ -105,9 +105,6 @@ class AppLocalizationsUz extends AppLocalizations {
       'Faqat AvaTracker tizimidagi xodimni tekshirish uchun kerak.';
 
   @override
-  String get passwordMinHint => 'Kamida 6 belgi';
-
-  @override
   String get confirmPassword => 'Parolni tasdiqlang';
 
   @override
@@ -134,6 +131,17 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get validatorPasswordsMatch => 'Parollar mos kelmadi';
+
+  @override
+  String passwordRuleMinLength(int count) {
+    return 'Kamida $count belgi';
+  }
+
+  @override
+  String get passwordRuleNoSpaces => 'Boʻsh joysiz';
+
+  @override
+  String get passwordsMatch => 'Parollar mos keladi';
 
   @override
   String get confirmation => 'Tasdiqlash';
@@ -206,6 +214,12 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get passwordChanged => 'Parol oʻzgartirildi';
+
+  @override
+  String get showPassword => 'Parolni koʻrsatish';
+
+  @override
+  String get hidePassword => 'Parolni yashirish';
 
   @override
   String get tabScanner => 'Skaner';
@@ -293,6 +307,12 @@ class AppLocalizationsUz extends AppLocalizations {
   String get within50m => 'Belgi nuqtasidan 50 m radiusda boʻlishingiz kerak';
 
   @override
+  String get torchOn => 'Chiroqni yoqish';
+
+  @override
+  String get torchOff => 'Chiroqni oʻchirish';
+
+  @override
   String get stageCheckingPoint => 'Belgi nuqtasi tekshirilmoqda…';
 
   @override
@@ -314,9 +334,6 @@ class AppLocalizationsUz extends AppLocalizations {
   String qrCodeValue(String code) {
     return 'QR kodi: «$code»';
   }
-
-  @override
-  String get noServerConnection => 'Server bilan aloqa yoʻq';
 
   @override
   String get cameraStartFailed => 'Kamerani ishga tushirib boʻlmadi';
@@ -648,10 +665,30 @@ class AppLocalizationsUz extends AppLocalizations {
   String get errorConfirmSmsFirst => 'Avval SMS kodini tasdiqlang';
 
   @override
+  String get errorForbidden => 'Kirish taqiqlangan';
+
+  @override
+  String get errorNotFound => 'Maʼlumotlar topilmadi';
+
+  @override
+  String get errorValidation => 'Kiritilgan maʼlumotlarni tekshiring';
+
+  @override
+  String get errorServer => 'Server xatosi. Keyinroq qayta urinib koʻring';
+
+  @override
+  String get errorUnexpected =>
+      'Kutilmagan xatolik yuz berdi. Qayta urinib koʻring';
+
+  @override
   String get deleteAccountTitle => 'Hisobni oʻchirish';
 
   @override
   String get deleteAccountAction => 'Hisobni oʻchirish';
+
+  @override
+  String get deleteAccountBody =>
+      'AvaTracker ilovasi hisobini oʻchirishingiz mumkin.\n\nHisob qayta tiklab boʻlmaydigan tarzda oʻchiriladi. Ish vaqtini hisobga olish maʼlumotlari maxfiylik siyosatiga muvofiq kompaniya tizimida saqlanadi.\n\nIlovadan yana foydalanish uchun yangidan roʻyxatdan oʻtish kerak.';
 
   @override
   String get deleteConfirmTitle => 'Hisobni oʻchirasizmi?';
@@ -665,4 +702,7 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get accountDeleted => 'Hisob oʻchirildi. Qayta roʻyxatdan oʻting';
+
+  @override
+  String get privacyPolicyLoadFailed => 'Maxfiylik siyosatini yuklab boʻlmadi';
 }

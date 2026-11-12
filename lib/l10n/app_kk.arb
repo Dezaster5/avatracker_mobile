@@ -34,7 +34,6 @@
   "fieldPinfl": "ПИНФЛ",
   "pinflHint": "14 сан",
   "pinflExplanation": "AvaTracker жүйесіндегі қызметкерді тексеру үшін ғана қажет.",
-  "passwordMinHint": "Кемінде 6 таңба",
   "confirmPassword": "Құпия сөзді растаңыз",
   "repeatPassword": "Құпия сөзді қайталаңыз",
   "getSmsCode": "SMS кодын алу",
@@ -44,6 +43,9 @@
   "validatorPinfl": "ПИНФЛ енгізіңіз",
   "validatorPassword": "Құпия сөз: кемінде 6 таңба, бос орынсыз",
   "validatorPasswordsMatch": "Құпия сөздер сәйкес келмейді",
+  "passwordRuleMinLength": "Кемінде {count} таңба",
+  "passwordRuleNoSpaces": "Бос орынсыз",
+  "passwordsMatch": "Құпия сөздер сәйкес келеді",
 
   "confirmation": "Растау",
   "enterSmsCode": "SMS-тен келген кодты енгізіңіз",
@@ -69,6 +71,8 @@
   "enterCurrentPassword": "Ағымдағы құпия сөзді енгізіңіз",
   "confirmNewPassword": "Жаңа құпия сөзді растаңыз",
   "passwordChanged": "Құпия сөз өзгертілді",
+  "showPassword": "Құпия сөзді көрсету",
+  "hidePassword": "Құпия сөзді жасыру",
 
   "tabScanner": "Сканер",
   "tabTimesheet": "Табель",
@@ -102,6 +106,8 @@
   "scanQrTitle": "QR-код бойынша белгі",
   "pointCameraAtQr": "Камераны QR-кодқа бағыттаңыз",
   "within50m": "Белгі нүктесінен 50 м радиуста болуыңыз керек",
+  "torchOn": "Қалта шамын қосу",
+  "torchOff": "Қалта шамын өшіру",
   "stageCheckingPoint": "Белгі нүктесін тексеру…",
   "stageCheckingFace": "Бет тексерілуде…",
   "stageCheckingLocation": "Геолокацияны тексеру…",
@@ -109,7 +115,6 @@
   "pointDisabled": "Бұл белгі нүктесі өшірілген",
   "qrNotRegistered": "QR-код жүйеде тіркелмеген",
   "qrCodeValue": "QR коды: «{code}»",
-  "noServerConnection": "Сервермен байланыс жоқ",
   "cameraStartFailed": "Камераны іске қосу мүмкін болмады",
   "cameraNoAccess": "Камераға рұқсат жоқ",
   "cameraCloseOthers": "Камераны пайдаланатын басқа қосымшаларды жабыңыз да, «Қайталау» басыңыз",
@@ -210,11 +215,18 @@
   "errorLoginFailed": "Кіру мүмкін болмады",
   "errorAttemptsExceeded": "Әрекеттер саны асып кетті. Жаңа код сұраңыз",
   "errorConfirmSmsFirst": "Алдымен SMS кодын растаңыз",
+  "errorForbidden": "Қолжетімділікке тыйым салынған",
+  "errorNotFound": "Деректер табылмады",
+  "errorValidation": "Енгізілген деректерді тексеріңіз",
+  "errorServer": "Сервер қатесі. Кейінірек қайталап көріңіз",
+  "errorUnexpected": "Күтпеген қате орын алды. Қайталап көріңіз",
 
   "deleteAccountTitle": "Аккаунтты жою",
   "deleteAccountAction": "Аккаунтты жою",
+  "deleteAccountBody": "AvaTracker қосымшасының аккаунтын жоюға болады.\n\nАккаунт қалпына келтіру мүмкіндігінсіз жойылады. Жұмыс уақытын есепке алу деректері құпиялылық саясатына сәйкес компания жүйесінде сақталады.\n\nҚосымшаны қайта пайдалану үшін жаңа тіркелу қажет.",
   "deleteConfirmTitle": "Аккаунтты жоясыз ба?",
   "deleteConfirmBody": "Қосымша аккаунтын жоюды растаңыз. Қайта кіру үшін жаңа тіркелу қажет.",
   "actionDelete": "Жою",
-  "accountDeleted": "Аккаунт жойылды. Қайта тіркеліңіз"
+  "accountDeleted": "Аккаунт жойылды. Қайта тіркеліңіз",
+  "privacyPolicyLoadFailed": "Құпиялылық саясатын жүктеу мүмкін болмады"
 }
