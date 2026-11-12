@@ -31,7 +31,7 @@ final class EmployeeDto {
     return EmployeeDto(
       id: jsonInt(json['id']),
       iin: '${json['iin'] ?? ''}',
-      fullName: '${json['full_name'] ?? json['fullName'] ?? ''}',
+      fullName: _fullName(json['full_name'] ?? json['fullName']),
       active: _activeFrom(json['active'] ?? json['is_active']),
       photoUrl: photo?.toString(),
       phone: json['phone']?.toString(),
@@ -122,6 +122,13 @@ final class EmployeeDto {
   static bool hasSchedule(Map<String, dynamic> json) =>
       '${json['schedule_start_time'] ?? ''}'.isNotEmpty &&
       '${json['schedule_end_time'] ?? ''}'.isNotEmpty;
+
+  /// В базе ФИО встречается с лишними пробелами («Иванова  Анна»): на экране
+  /// это заметно, поэтому пробелы схлопываются при разборе ответа.
+  static String _fullName(dynamic value) =>
+      '${value ?? ''}'.trim().replaceAll(_spaces, ' ');
+
+  static final _spaces = RegExp(r'\s+');
 
   static String? _name(dynamic value) {
     if (value == null) return null;

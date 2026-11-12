@@ -171,7 +171,11 @@ class _MonthSwitcher extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        _ArrowButton(icon: Icons.chevron_left_rounded, onTap: onPrev),
+        _ArrowButton(
+          icon: Icons.chevron_left_rounded,
+          tooltip: context.l10n.previousPeriod,
+          onTap: onPrev,
+        ),
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 180),
           child: Text(
@@ -185,34 +189,51 @@ class _MonthSwitcher extends StatelessWidget {
             ),
           ),
         ),
-        _ArrowButton(icon: Icons.chevron_right_rounded, onTap: onNext),
+        _ArrowButton(
+          icon: Icons.chevron_right_rounded,
+          tooltip: context.l10n.nextPeriod,
+          onTap: onNext,
+        ),
       ],
     );
   }
 }
 
 class _ArrowButton extends StatelessWidget {
-  const _ArrowButton({required this.icon, this.onTap});
+  const _ArrowButton({required this.icon, required this.tooltip, this.onTap});
 
   final IconData icon;
+
+  /// Название кнопки для экранного диктора, как у стрелок «Аналитики».
+  final String tooltip;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: onTap == null ? AppColors.surface : Colors.white,
-      shape: const CircleBorder(side: BorderSide(color: AppColors.outline)),
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(6),
-          child: Icon(
-            icon,
-            size: 24,
-            color: onTap == null
-                ? AppColors.textSecondary.withValues(alpha: 0.4)
-                : AppColors.navy,
+    // Собственный узел, как у IconButton: диктор называет стрелку отдельной
+    // кнопкой и не склеивает её с заголовком месяца.
+    return Semantics(
+      container: true,
+      button: true,
+      enabled: onTap != null,
+      child: Tooltip(
+        message: tooltip,
+        child: Material(
+          color: onTap == null ? AppColors.surface : Colors.white,
+          shape: const CircleBorder(side: BorderSide(color: AppColors.outline)),
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.all(6),
+              child: Icon(
+                icon,
+                size: 24,
+                color: onTap == null
+                    ? AppColors.textSecondary.withValues(alpha: 0.4)
+                    : AppColors.navy,
+              ),
+            ),
           ),
         ),
       ),

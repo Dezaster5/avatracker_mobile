@@ -10,6 +10,11 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 
 /// Камера без нативного плагина: считает запуски и остановки.
 class _FakeScannerPlatform extends MobileScannerPlatform {
+  _FakeScannerPlatform({this.torchMode = TorchState.off});
+
+  /// [TorchState.unavailable] — у камеры нет вспышки.
+  final TorchState torchMode;
+
   int startCalls = 0;
   int stopCalls = 0;
 
@@ -32,10 +37,10 @@ class _FakeScannerPlatform extends MobileScannerPlatform {
   @override
   Future<MobileScannerViewAttributes> start(StartOptions startOptions) async {
     startCalls++;
-    return const MobileScannerViewAttributes(
+    return MobileScannerViewAttributes(
       cameraDirection: CameraFacing.back,
-      currentTorchMode: TorchState.off,
-      size: Size(640, 480),
+      currentTorchMode: torchMode,
+      size: const Size(640, 480),
     );
   }
 
@@ -115,5 +120,42 @@ void main() {
     shell.goBranch(0);
     await _pumpFrames(tester);
     expect(platform.startCalls, 2, reason: 'вернулись — камера снова идёт');
+  });
+
+  group('кнопка фонарика', () {
+    final l10n = lookupAppLocalizations(const Locale('ru'));
+
+    /// Видна ли кнопка после запуска камеры с заданной вспышкой.
+    Future<bool> torchVisible(WidgetTester tester, TorchState mode) async {
+      final previousPlatform = MobileScannerPlatform.instance;
+      MobileScannerPlatform.instance = _FakeScannerPlatform(torchMode: mode);
+      addTearDown(() => MobileScannerPlatform.instance = previousPlatform);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            locale: const Locale('ru'),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const ScannerScreen(),
+          ),
+        ),
+      );
+      await _pumpFrames(tester);
+      final torch = find.ancestor(
+        of: find.byTooltip(l10n.torchOn, skipOffstage: false),
+        matching: find.byType(Visibility),
+      );
+      return tester.widget<Visibility>(torch.first).visible;
+    }
+
+    testWidgets('есть у камеры со вспышкой', (tester) async {
+      expect(await torchVisible(tester, TorchState.off), isTrue);
+    });
+
+    testWidgets('скрыта без вспышки, где она ничего бы не делала',
+        (tester) async {
+      expect(await torchVisible(tester, TorchState.unavailable), isFalse);
+    });
   });
 }

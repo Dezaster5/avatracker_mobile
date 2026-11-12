@@ -20,6 +20,7 @@ class FakeAuthRepository implements AuthRepository {
     this.verifyRegistrationResult = const Success(activeEmployee),
     this.passwordResetRequestResult = const Success(null),
     this.resetCodeResult = const Success('reset-token'),
+    this.changePasswordResult = const Success(null),
   });
 
   Result<bool> storedSession;
@@ -31,6 +32,7 @@ class FakeAuthRepository implements AuthRepository {
   Result<Employee> verifyRegistrationResult;
   Result<void> passwordResetRequestResult;
   Result<String> resetCodeResult;
+  Result<void> changePasswordResult;
 
   int clearSessionCalls = 0;
   int verifyRegistrationCalls = 0;
@@ -39,6 +41,13 @@ class FakeAuthRepository implements AuthRepository {
 
   @override
   Future<Result<bool>> hasStoredSession() async => storedSession;
+
+  @override
+  Future<Result<void>> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async =>
+      changePasswordResult;
 
   @override
   Future<Result<Employee>> fetchCurrentEmployee() async => currentEmployee;

@@ -50,6 +50,14 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     if (ok && mounted) context.push('/sms-reset');
   }
 
+  /// Ошибка сервера относится к прошлой отправке: правка полей её убирает,
+  /// как и на экране SMS-кода.
+  void _clearError() {
+    if (ref.read(passwordResetControllerProvider).failure != null) {
+      ref.read(passwordResetControllerProvider.notifier).clearError();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -65,6 +73,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       body: SafeArea(
         child: Form(
           key: _formKey,
+          onChanged: _clearError,
           child: ListView(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             children: [

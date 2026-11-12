@@ -105,9 +105,6 @@ class AppLocalizationsKk extends AppLocalizations {
       'AvaTracker жүйесіндегі қызметкерді тексеру үшін ғана қажет.';
 
   @override
-  String get passwordMinHint => 'Кемінде 6 таңба';
-
-  @override
   String get confirmPassword => 'Құпия сөзді растаңыз';
 
   @override
@@ -134,6 +131,17 @@ class AppLocalizationsKk extends AppLocalizations {
 
   @override
   String get validatorPasswordsMatch => 'Құпия сөздер сәйкес келмейді';
+
+  @override
+  String passwordRuleMinLength(int count) {
+    return 'Кемінде $count таңба';
+  }
+
+  @override
+  String get passwordRuleNoSpaces => 'Бос орынсыз';
+
+  @override
+  String get passwordsMatch => 'Құпия сөздер сәйкес келеді';
 
   @override
   String get confirmation => 'Растау';
@@ -206,6 +214,12 @@ class AppLocalizationsKk extends AppLocalizations {
 
   @override
   String get passwordChanged => 'Құпия сөз өзгертілді';
+
+  @override
+  String get showPassword => 'Құпия сөзді көрсету';
+
+  @override
+  String get hidePassword => 'Құпия сөзді жасыру';
 
   @override
   String get tabScanner => 'Сканер';
@@ -291,6 +305,12 @@ class AppLocalizationsKk extends AppLocalizations {
 
   @override
   String get within50m => 'Белгі нүктесінен 50 м радиуста болуыңыз керек';
+
+  @override
+  String get torchOn => 'Қалта шамын қосу';
+
+  @override
+  String get torchOff => 'Қалта шамын өшіру';
 
   @override
   String get stageCheckingPoint => 'Белгі нүктесін тексеру…';
@@ -664,6 +684,10 @@ class AppLocalizationsKk extends AppLocalizations {
 
   @override
   String get deleteAccountAction => 'Аккаунтты жою';
+
+  @override
+  String get deleteAccountBody =>
+      'AvaTracker қосымшасының аккаунтын жоюға болады.\n\nАккаунт қалпына келтіру мүмкіндігінсіз жойылады. Жұмыс уақытын есепке алу деректері құпиялылық саясатына сәйкес компания жүйесінде сақталады.\n\nҚосымшаны қайта пайдалану үшін жаңа тіркелу қажет.';
 
   @override
   String get deleteConfirmTitle => 'Аккаунтты жоясыз ба?';

@@ -105,9 +105,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'Нужен только для проверки сотрудника в AvaTracker.';
 
   @override
-  String get passwordMinHint => 'Минимум 6 символов';
-
-  @override
   String get confirmPassword => 'Подтвердите пароль';
 
   @override
@@ -134,6 +131,25 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get validatorPasswordsMatch => 'Пароли не совпадают';
+
+  @override
+  String passwordRuleMinLength(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Минимум $count символа',
+      many: 'Минимум $count символов',
+      few: 'Минимум $count символа',
+      one: 'Минимум $count символ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get passwordRuleNoSpaces => 'Без пробелов';
+
+  @override
+  String get passwordsMatch => 'Пароли совпадают';
 
   @override
   String get confirmation => 'Подтверждение';
@@ -205,6 +221,12 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get passwordChanged => 'Пароль изменён';
+
+  @override
+  String get showPassword => 'Показать пароль';
+
+  @override
+  String get hidePassword => 'Скрыть пароль';
 
   @override
   String get tabScanner => 'Сканер';
@@ -290,6 +312,12 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get within50m =>
       'Вы должны находиться в радиусе 50 м от точки отметки';
+
+  @override
+  String get torchOn => 'Включить фонарик';
+
+  @override
+  String get torchOff => 'Выключить фонарик';
 
   @override
   String get stageCheckingPoint => 'Проверка точки отметки…';
@@ -671,6 +699,10 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get deleteAccountAction => 'Удалить аккаунт';
+
+  @override
+  String get deleteAccountBody =>
+      'Вы можете удалить учётную запись приложения AvaTracker.\n\nАккаунт будет удалён без возможности восстановления. Данные учёта рабочего времени сохраняются в системе компании согласно политике конфиденциальности.\n\nЧтобы снова пользоваться приложением, потребуется повторная регистрация.';
 
   @override
   String get deleteConfirmTitle => 'Удалить аккаунт?';

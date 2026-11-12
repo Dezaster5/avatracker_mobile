@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/country/phone_number.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/app_text_form_field.dart';
 import '../../../../core/widgets/error_banner.dart';
 import '../../../../core/widgets/password_field.dart';
 import '../../../../core/widgets/primary_button.dart';
@@ -14,6 +15,7 @@ import '../../../preferences/presentation/widgets/lang_country_bar.dart';
 import '../../domain/policies/password_policy.dart';
 import '../controllers/registration_controller.dart';
 import '../widgets/country_phone_field.dart';
+import '../widgets/password_requirements.dart';
 
 /// Регистрация: телефон + ИИН + пароль, подтверждение SMS-кодом.
 class RegisterScreen extends ConsumerStatefulWidget {
@@ -64,6 +66,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     if (ok && mounted) context.push('/sms-register');
   }
 
+  /// Ошибка сервера относится к прошлой отправке: правка полей её убирает,
+  /// как и на экране SMS-кода.
+  void _clearError() {
+    if (ref.read(registrationControllerProvider).failure != null) {
+      ref.read(registrationControllerProvider.notifier).clearError();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -86,6 +96,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         child: AutofillGroup(
           child: Form(
             key: _formKey,
+            onChanged: _clearError,
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
               children: [
@@ -124,7 +135,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 FieldLabel(
                   isUzbekistan ? l10n.fieldPinfl : l10n.fieldIin,
                 ),
-                TextFormField(
+                AppTextFormField(
                   controller: _iinController,
                   keyboardType: TextInputType.number,
                   textInputAction: TextInputAction.next,
@@ -156,12 +167,17 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 FieldLabel(l10n.fieldPassword),
                 PasswordField(
                   controller: _passwordController,
-                  hint: l10n.passwordMinHint,
+                  hint: l10n.passwordHint,
                   textInputAction: TextInputAction.next,
                   autofillHints: const [AutofillHints.newPassword],
                   validator: (value) => PasswordPolicy.isValid(value ?? '')
                       ? null
                       : l10n.validatorPassword,
+                ),
+                const SizedBox(height: 4),
+                PasswordRequirements(
+                  password: _passwordController,
+                  confirmation: _confirmController,
                 ),
                 const SizedBox(height: 18),
                 FieldLabel(l10n.confirmPassword),

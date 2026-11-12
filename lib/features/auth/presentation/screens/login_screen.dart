@@ -74,6 +74,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (ok) TextInput.finishAutofillContext(shouldSave: true);
   }
 
+  /// Ошибка сервера относится к прошлой отправке: правка полей её убирает,
+  /// как и на экране SMS-кода.
+  void _clearError() {
+    if (ref.read(loginControllerProvider).failure != null) {
+      ref.read(loginControllerProvider.notifier).clearError();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -92,6 +100,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         child: AutofillGroup(
           child: Form(
             key: _formKey,
+            onChanged: _clearError,
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               children: [

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/country/country.dart';
 import '../../../../core/country/phone_number.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/app_text_form_field.dart';
 import '../../../../core/widgets/country_phone_input_formatter.dart';
 import '../../../../l10n/l10n_ext.dart';
 import '../../../preferences/presentation/controllers/preferences_controller.dart';
@@ -41,7 +42,7 @@ class _CountryPhoneFieldState extends ConsumerState<CountryPhoneField> {
       if (prev?.isoCode != next.isoCode) widget.controller.clear();
     });
 
-    return TextFormField(
+    return AppTextFormField(
       controller: widget.controller,
       autofocus: widget.autofocus,
       keyboardType: TextInputType.phone,

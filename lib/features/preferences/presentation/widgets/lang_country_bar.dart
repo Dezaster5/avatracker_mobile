@@ -200,6 +200,7 @@ class _LanguageSheetState extends State<_LanguageSheet> {
                   ),
                 ),
                 IconButton(
+                  tooltip: context.l10n.actionClose,
                   onPressed: () => Navigator.of(context).pop(),
                   icon: const Icon(Icons.close_rounded,
                       color: AppColors.textSecondary),

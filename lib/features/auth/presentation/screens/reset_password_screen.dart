@@ -9,6 +9,7 @@ import '../../../../core/widgets/primary_button.dart';
 import '../../../../l10n/l10n_ext.dart';
 import '../../domain/policies/password_policy.dart';
 import '../controllers/password_reset_controller.dart';
+import '../widgets/password_requirements.dart';
 
 /// Сброс пароля, шаг 3 (после SMS-кода): новый пароль + подтверждение.
 class ResetPasswordScreen extends ConsumerStatefulWidget {
@@ -46,6 +47,14 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
     }
   }
 
+  /// Ошибка сервера относится к прошлой отправке: правка полей её убирает,
+  /// как и на экране SMS-кода.
+  void _clearError() {
+    if (ref.read(passwordResetControllerProvider).failure != null) {
+      ref.read(passwordResetControllerProvider.notifier).clearError();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -61,6 +70,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
       body: SafeArea(
         child: Form(
           key: _formKey,
+          onChanged: _clearError,
           child: ListView(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             children: [
@@ -108,12 +118,17 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
               FieldLabel(l10n.newPasswordLabel),
               PasswordField(
                 controller: _passwordController,
-                hint: l10n.passwordMinHint,
+                hint: l10n.passwordHint,
                 textInputAction: TextInputAction.next,
                 autofillHints: const [AutofillHints.newPassword],
                 validator: (value) => PasswordPolicy.isValid(value ?? '')
                     ? null
                     : l10n.validatorPassword,
+              ),
+              const SizedBox(height: 4),
+              PasswordRequirements(
+                password: _passwordController,
+                confirmation: _confirmController,
               ),
               const SizedBox(height: 18),
               FieldLabel(l10n.confirmPassword),

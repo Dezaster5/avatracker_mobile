@@ -102,5 +102,14 @@ void main() {
       expect(restored.scheduleName, '2/2');
       expect(restored.scheduleRangeLabel, '10:00-19:00');
     });
+
+    test('лишние пробелы в ФИО из базы не попадают на экран', () {
+      final employee = _parse({
+        'iin': '642918307154',
+        'full_name': ' Иванова  Анна\tСергеевна ',
+      });
+      expect(employee.fullName, 'Иванова Анна Сергеевна');
+      expect(employee.firstName, 'Анна');
+    });
   });
 }

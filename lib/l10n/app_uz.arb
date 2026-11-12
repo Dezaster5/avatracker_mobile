@@ -34,7 +34,6 @@
   "fieldPinfl": "JShShIR (PINFL)",
   "pinflHint": "14 raqam",
   "pinflExplanation": "Faqat AvaTracker tizimidagi xodimni tekshirish uchun kerak.",
-  "passwordMinHint": "Kamida 6 belgi",
   "confirmPassword": "Parolni tasdiqlang",
   "repeatPassword": "Parolni takrorlang",
   "getSmsCode": "SMS kodini olish",
@@ -44,6 +43,9 @@
   "validatorPinfl": "JShShIR (PINFL) ni kiriting",
   "validatorPassword": "Parol: kamida 6 belgi, boʻsh joysiz",
   "validatorPasswordsMatch": "Parollar mos kelmadi",
+  "passwordRuleMinLength": "Kamida {count} belgi",
+  "passwordRuleNoSpaces": "Boʻsh joysiz",
+  "passwordsMatch": "Parollar mos keladi",
 
   "confirmation": "Tasdiqlash",
   "enterSmsCode": "SMS dan kelgan kodni kiriting",
@@ -69,6 +71,8 @@
   "enterCurrentPassword": "Joriy parolni kiriting",
   "confirmNewPassword": "Yangi parolni tasdiqlang",
   "passwordChanged": "Parol oʻzgartirildi",
+  "showPassword": "Parolni koʻrsatish",
+  "hidePassword": "Parolni yashirish",
 
   "tabScanner": "Skaner",
   "tabTimesheet": "Tabel",
@@ -102,6 +106,8 @@
   "scanQrTitle": "QR-kod boʻyicha belgi",
   "pointCameraAtQr": "Kamerani QR-kodga qarating",
   "within50m": "Belgi nuqtasidan 50 m radiusda boʻlishingiz kerak",
+  "torchOn": "Chiroqni yoqish",
+  "torchOff": "Chiroqni oʻchirish",
   "stageCheckingPoint": "Belgi nuqtasi tekshirilmoqda…",
   "stageCheckingFace": "Yuz tekshirilmoqda…",
   "stageCheckingLocation": "Geolokatsiya tekshirilmoqda…",
@@ -217,6 +223,7 @@
 
   "deleteAccountTitle": "Hisobni oʻchirish",
   "deleteAccountAction": "Hisobni oʻchirish",
+  "deleteAccountBody": "AvaTracker ilovasi hisobini oʻchirishingiz mumkin.\n\nHisob qayta tiklab boʻlmaydigan tarzda oʻchiriladi. Ish vaqtini hisobga olish maʼlumotlari maxfiylik siyosatiga muvofiq kompaniya tizimida saqlanadi.\n\nIlovadan yana foydalanish uchun yangidan roʻyxatdan oʻtish kerak.",
   "deleteConfirmTitle": "Hisobni oʻchirasizmi?",
   "deleteConfirmBody": "Ilova hisobini oʻchirishni tasdiqlang. Qayta kirish uchun yangidan roʻyxatdan oʻtish kerak.",
   "actionDelete": "Oʻchirish",

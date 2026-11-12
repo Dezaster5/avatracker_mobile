@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/l10n_ext.dart';
+import 'app_text_form_field.dart';
+
 /// Поле пароля с переключателем видимости.
 class PasswordField extends StatefulWidget {
   const PasswordField({
@@ -28,7 +31,7 @@ class _PasswordFieldState extends State<PasswordField> {
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
+    return AppTextFormField(
       controller: widget.controller,
       obscureText: _obscured,
       autofillHints: widget.autofillHints,
@@ -39,8 +42,9 @@ class _PasswordFieldState extends State<PasswordField> {
       validator: widget.validator,
       decoration: InputDecoration(
         hintText: widget.hint,
-        prefixIcon: const Icon(Icons.lock_outline_rounded, size: 22),
         suffixIcon: IconButton(
+          tooltip:
+              _obscured ? context.l10n.showPassword : context.l10n.hidePassword,
           onPressed: () => setState(() => _obscured = !_obscured),
           icon: Icon(
             _obscured

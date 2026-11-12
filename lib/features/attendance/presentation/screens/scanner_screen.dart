@@ -11,6 +11,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../l10n/l10n_ext.dart';
 import '../../domain/entities/qr_point.dart';
+import '../controllers/camera_queue.dart';
 import '../controllers/scanner_controller.dart';
 import '../widgets/scan_result_sheet.dart';
 import 'face_id_screen.dart';
@@ -37,32 +38,9 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
         formats: const [BarcodeFormat.qrCode],
       );
 
-  /// Камера — глобальный ресурс процесса. Операции lifecycle и ручного
-  /// перезапуска выполняются последовательно, чтобы start не пересекался
-  /// со stop/dispose того же контроллера.
-  static Future<void> _cameraQueue = Future<void>.value();
-
-  static Future<void> _enqueueCamera(
-    Future<void> Function() operation,
-  ) {
-    final previous = _cameraQueue;
-    final next = () async {
-      try {
-        await previous;
-      } catch (_) {
-        // Ошибка предыдущего контроллера не должна блокировать новый запуск.
-      }
-      await operation();
-    }();
-    _cameraQueue = () async {
-      try {
-        await next;
-      } catch (_) {
-        // Очередь всегда остаётся пригодной для следующей операции.
-      }
-    }();
-    return next;
-  }
+  /// Общая очередь операций с камерой: lifecycle, смена вкладки и ручной
+  /// перезапуск не пересекаются со stop/dispose предыдущего контроллера.
+  late final CameraQueue _cameraQueue;
 
   MobileScannerController _controller = _newController();
 
@@ -87,6 +65,8 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
   @override
   void initState() {
     super.initState();
+    // Читаем сразу: в dispose ref уже использовать нельзя.
+    _cameraQueue = ref.read(cameraQueueProvider);
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // Отметка могла оборваться вместе с прошлой сессией.
@@ -119,7 +99,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
 
   Future<void> _startCamera() {
     final controller = _controller;
-    return _enqueueCamera(() async {
+    return _cameraQueue.run(() async {
       if (_disposed ||
           !mounted ||
           _busy ||
@@ -139,7 +119,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
 
   Future<void> _stopCamera([MobileScannerController? target]) {
     final controller = target ?? _controller;
-    return _enqueueCamera(() async {
+    return _cameraQueue.run(() async {
       try {
         await controller.stop();
       } on MobileScannerException catch (error) {
@@ -151,7 +131,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
   }
 
   Future<void> _releaseCamera(MobileScannerController controller) {
-    return _enqueueCamera(() async {
+    return _cameraQueue.run(() async {
       try {
         await controller.stop();
       } catch (_) {
@@ -331,24 +311,35 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
                   valueListenable: _controller,
                   builder: (context, state, _) {
                     final torchOn = state.torchState == TorchState.on;
-                    return DecoratedBox(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: torchOn
-                            ? AppColors.primary
-                            : Colors.white.withValues(alpha: 0.14),
-                      ),
-                      child: IconButton(
-                        onPressed: state.isRunning
-                            ? () => _controller.toggleTorch()
-                            : null,
-                        padding: const EdgeInsets.all(14),
-                        icon: Icon(
-                          torchOn
-                              ? Icons.flashlight_off_outlined
-                              : Icons.flashlight_on_outlined,
-                          color: Colors.white,
-                          size: 26,
+                    // Без вспышки (эмулятор, часть планшетов) переключатель
+                    // ничего не делает: прячем его, сохраняя место в раскладке.
+                    return Visibility(
+                      visible: state.torchState != TorchState.unavailable,
+                      maintainSize: true,
+                      maintainAnimation: true,
+                      maintainState: true,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: torchOn
+                              ? AppColors.primary
+                              : Colors.white.withValues(alpha: 0.14),
+                        ),
+                        child: IconButton(
+                          tooltip: torchOn
+                              ? context.l10n.torchOff
+                              : context.l10n.torchOn,
+                          onPressed: state.isRunning
+                              ? () => _controller.toggleTorch()
+                              : null,
+                          padding: const EdgeInsets.all(14),
+                          icon: Icon(
+                            torchOn
+                                ? Icons.flashlight_off_outlined
+                                : Icons.flashlight_on_outlined,
+                            color: Colors.white,
+                            size: 26,
+                          ),
                         ),
                       ),
                     );

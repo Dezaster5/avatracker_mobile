@@ -6,7 +6,6 @@ import '../../../../core/widgets/error_banner.dart';
 import '../../../../core/widgets/primary_button.dart';
 import '../../../../l10n/l10n_ext.dart';
 import '../../../auth/presentation/controllers/delete_account_controller.dart';
-import '../legal_content.dart';
 
 /// Удаление учётной записи приложения (App Store §5.1.1(v)).
 /// `DELETE /api/mobile/profile/delete/` — полное удаление; данные сотрудника
@@ -64,9 +63,9 @@ class DeleteAccountScreen extends ConsumerWidget {
                   color: AppColors.danger, size: 36),
             ),
             const SizedBox(height: 20),
-            const Text(
-              LegalContent.deleteAccountBody,
-              style: TextStyle(
+            Text(
+              l10n.deleteAccountBody,
+              style: const TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 14.5,
                 height: 1.5,

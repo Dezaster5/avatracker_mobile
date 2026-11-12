@@ -9,6 +9,7 @@ import '../../../../core/widgets/primary_button.dart';
 import '../../../../l10n/l10n_ext.dart';
 import '../../../auth/domain/policies/password_policy.dart';
 import '../../../auth/presentation/controllers/change_password_controller.dart';
+import '../../../auth/presentation/widgets/password_requirements.dart';
 
 /// Смена пароля из профиля: текущий пароль + новый + подтверждение.
 class ChangePasswordScreen extends ConsumerStatefulWidget {
@@ -58,6 +59,14 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
     }
   }
 
+  /// Ошибка сервера относится к прошлой отправке: правка полей её убирает,
+  /// как и на экране SMS-кода.
+  void _clearError() {
+    if (ref.read(changePasswordControllerProvider).failure != null) {
+      ref.read(changePasswordControllerProvider.notifier).clearError();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -71,6 +80,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
       body: SafeArea(
         child: Form(
           key: _formKey,
+          onChanged: _clearError,
           child: ListView(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             children: [
@@ -95,13 +105,18 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                       FieldLabel(l10n.newPasswordLabel),
                       PasswordField(
                         controller: _passwordController,
-                        hint: l10n.passwordMinHint,
+                        hint: l10n.passwordHint,
                         textInputAction: TextInputAction.next,
                         autofillHints: const [AutofillHints.newPassword],
                         validator: (value) =>
                             PasswordPolicy.isValid(value ?? '')
                                 ? null
                                 : l10n.validatorPassword,
+                      ),
+                      const SizedBox(height: 4),
+                      PasswordRequirements(
+                        password: _passwordController,
+                        confirmation: _confirmController,
                       ),
                       const SizedBox(height: 18),
                       FieldLabel(l10n.confirmNewPassword),
