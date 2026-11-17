@@ -1,5 +1,14 @@
 {
   "@@locale": "uz",
+  "updateAvailableTitle": "AvaTracker yangilanishi mavjud",
+  "updateAvailableBody": "Do‘konda yangi versiya chiqdi. Hozir yangilashingiz yoki ishlashda davom etishingiz mumkin.",
+  "updateLater": "Keyinroq",
+  "updateRequiredTitle": "AvaTracker ilovasini yangilang",
+  "updateRequiredBody": "Ilovadan foydalanishni davom ettirish uchun uni do‘kondagi mavjud versiyaga yangilang.",
+  "updateInAppStore": "App Store orqali yangilash",
+  "updateInGooglePlay": "Google Play orqali yangilash",
+  "updateCheckAgain": "Qayta tekshirish",
+  "updateStoreOpenFailed": "Do‘konni ochib bo‘lmadi. Qayta urinib ko‘ring.",
   "appName": "AvaTracker",
   "appTagline": "Ish vaqtini hisobga olish",
 

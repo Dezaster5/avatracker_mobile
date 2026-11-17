@@ -1,7 +1,7 @@
 name: avatracker_mobile
 description: "AvaTracker Mobile — учет рабочего времени сотрудников: QR-отметки, FaceID-проверка, контроль геолокации."
 publish_to: 'none'
-version: 1.0.8+21
+version: 1.0.9+22
 
 environment:
   sdk: ^3.5.0
@@ -38,6 +38,11 @@ dependencies:
 
   # Открытие mailto-ссылок для поддержки
   url_launcher: ^6.3.1
+
+  # Версия установленного приложения и доступность обновления в Google Play.
+  package_info_plus: ^8.3.1
+  in_app_update: ^4.2.5
+  device_info_plus: ^10.1.2
 
   # Форматирование дат (версию пинит flutter_localizations)
   intl: any

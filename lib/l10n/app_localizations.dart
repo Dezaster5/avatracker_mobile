@@ -100,6 +100,60 @@ abstract class AppLocalizations {
     Locale('uz')
   ];
 
+  /// No description provided for @updateAvailableTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Доступно обновление AvaTracker'**
+  String get updateAvailableTitle;
+
+  /// No description provided for @updateAvailableBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'В магазине появилась новая версия. Можно обновить сейчас или продолжить работу.'**
+  String get updateAvailableBody;
+
+  /// No description provided for @updateLater.
+  ///
+  /// In ru, this message translates to:
+  /// **'Позже'**
+  String get updateLater;
+
+  /// No description provided for @updateRequiredTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обновите AvaTracker'**
+  String get updateRequiredTitle;
+
+  /// No description provided for @updateRequiredBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Чтобы продолжить пользоваться приложением, обновите его до доступной версии в магазине.'**
+  String get updateRequiredBody;
+
+  /// No description provided for @updateInAppStore.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обновить в App Store'**
+  String get updateInAppStore;
+
+  /// No description provided for @updateInGooglePlay.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обновить в Google Play'**
+  String get updateInGooglePlay;
+
+  /// No description provided for @updateCheckAgain.
+  ///
+  /// In ru, this message translates to:
+  /// **'Проверить снова'**
+  String get updateCheckAgain;
+
+  /// No description provided for @updateStoreOpenFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось открыть магазин. Попробуйте ещё раз.'**
+  String get updateStoreOpenFailed;
+
   /// No description provided for @appName.
   ///
   /// In ru, this message translates to:

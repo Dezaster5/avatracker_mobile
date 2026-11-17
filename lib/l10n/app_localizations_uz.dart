@@ -9,6 +9,36 @@ class AppLocalizationsUz extends AppLocalizations {
   AppLocalizationsUz([String locale = 'uz']) : super(locale);
 
   @override
+  String get updateAvailableTitle => 'AvaTracker yangilanishi mavjud';
+
+  @override
+  String get updateAvailableBody =>
+      'Do‘konda yangi versiya chiqdi. Hozir yangilashingiz yoki ishlashda davom etishingiz mumkin.';
+
+  @override
+  String get updateLater => 'Keyinroq';
+
+  @override
+  String get updateRequiredTitle => 'AvaTracker ilovasini yangilang';
+
+  @override
+  String get updateRequiredBody =>
+      'Ilovadan foydalanishni davom ettirish uchun uni do‘kondagi mavjud versiyaga yangilang.';
+
+  @override
+  String get updateInAppStore => 'App Store orqali yangilash';
+
+  @override
+  String get updateInGooglePlay => 'Google Play orqali yangilash';
+
+  @override
+  String get updateCheckAgain => 'Qayta tekshirish';
+
+  @override
+  String get updateStoreOpenFailed =>
+      'Do‘konni ochib bo‘lmadi. Qayta urinib ko‘ring.';
+
+  @override
   String get appName => 'AvaTracker';
 
   @override

@@ -1,5 +1,14 @@
 {
   "@@locale": "kk",
+  "updateAvailableTitle": "AvaTracker жаңартуы қолжетімді",
+  "updateAvailableBody": "Дүкенде жаңа нұсқа шықты. Қазір жаңартуға немесе жұмысты жалғастыруға болады.",
+  "updateLater": "Кейінірек",
+  "updateRequiredTitle": "AvaTracker қолданбасын жаңартыңыз",
+  "updateRequiredBody": "Қолданбаны пайдалануды жалғастыру үшін оны дүкендегі қолжетімді нұсқаға жаңартыңыз.",
+  "updateInAppStore": "App Store арқылы жаңарту",
+  "updateInGooglePlay": "Google Play арқылы жаңарту",
+  "updateCheckAgain": "Қайта тексеру",
+  "updateStoreOpenFailed": "Дүкен ашылмады. Қайталап көріңіз.",
   "appName": "AvaTracker",
   "appTagline": "Жұмыс уақытын есепке алу",
 

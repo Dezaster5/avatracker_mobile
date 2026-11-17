@@ -9,6 +9,35 @@ class AppLocalizationsKk extends AppLocalizations {
   AppLocalizationsKk([String locale = 'kk']) : super(locale);
 
   @override
+  String get updateAvailableTitle => 'AvaTracker жаңартуы қолжетімді';
+
+  @override
+  String get updateAvailableBody =>
+      'Дүкенде жаңа нұсқа шықты. Қазір жаңартуға немесе жұмысты жалғастыруға болады.';
+
+  @override
+  String get updateLater => 'Кейінірек';
+
+  @override
+  String get updateRequiredTitle => 'AvaTracker қолданбасын жаңартыңыз';
+
+  @override
+  String get updateRequiredBody =>
+      'Қолданбаны пайдалануды жалғастыру үшін оны дүкендегі қолжетімді нұсқаға жаңартыңыз.';
+
+  @override
+  String get updateInAppStore => 'App Store арқылы жаңарту';
+
+  @override
+  String get updateInGooglePlay => 'Google Play арқылы жаңарту';
+
+  @override
+  String get updateCheckAgain => 'Қайта тексеру';
+
+  @override
+  String get updateStoreOpenFailed => 'Дүкен ашылмады. Қайталап көріңіз.';
+
+  @override
   String get appName => 'AvaTracker';
 
   @override

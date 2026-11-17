@@ -9,6 +9,36 @@ class AppLocalizationsRu extends AppLocalizations {
   AppLocalizationsRu([String locale = 'ru']) : super(locale);
 
   @override
+  String get updateAvailableTitle => 'Доступно обновление AvaTracker';
+
+  @override
+  String get updateAvailableBody =>
+      'В магазине появилась новая версия. Можно обновить сейчас или продолжить работу.';
+
+  @override
+  String get updateLater => 'Позже';
+
+  @override
+  String get updateRequiredTitle => 'Обновите AvaTracker';
+
+  @override
+  String get updateRequiredBody =>
+      'Чтобы продолжить пользоваться приложением, обновите его до доступной версии в магазине.';
+
+  @override
+  String get updateInAppStore => 'Обновить в App Store';
+
+  @override
+  String get updateInGooglePlay => 'Обновить в Google Play';
+
+  @override
+  String get updateCheckAgain => 'Проверить снова';
+
+  @override
+  String get updateStoreOpenFailed =>
+      'Не удалось открыть магазин. Попробуйте ещё раз.';
+
+  @override
   String get appName => 'AvaTracker';
 
   @override

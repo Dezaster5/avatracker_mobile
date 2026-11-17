@@ -1,5 +1,14 @@
 {
   "@@locale": "ru",
+  "updateAvailableTitle": "Доступно обновление AvaTracker",
+  "updateAvailableBody": "В магазине появилась новая версия. Можно обновить сейчас или продолжить работу.",
+  "updateLater": "Позже",
+  "updateRequiredTitle": "Обновите AvaTracker",
+  "updateRequiredBody": "Чтобы продолжить пользоваться приложением, обновите его до доступной версии в магазине.",
+  "updateInAppStore": "Обновить в App Store",
+  "updateInGooglePlay": "Обновить в Google Play",
+  "updateCheckAgain": "Проверить снова",
+  "updateStoreOpenFailed": "Не удалось открыть магазин. Попробуйте ещё раз.",
   "appName": "AvaTracker",
   "appTagline": "Учет рабочего времени",
 
