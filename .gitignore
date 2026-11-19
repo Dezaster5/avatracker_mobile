@@ -72,6 +72,7 @@ app.*.map.json
 *.keystore
 **/google-services.json
 **/GoogleService-Info.plist
+/google-play-api-key.json
 
 # Local backend/vendor reference files
 api.by_backend

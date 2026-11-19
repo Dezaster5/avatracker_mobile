@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/devtools/dev_tools_overlay.dart';
 import 'core/theme/app_theme.dart';
+import 'features/app_update/app_update_gate.dart';
 import 'features/preferences/presentation/controllers/preferences_controller.dart';
 import 'l10n/app_localizations.dart';
 import 'router/app_router.dart';
@@ -27,11 +28,13 @@ class AvaTrackerApp extends ConsumerWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      builder: (context, child) => DevToolsOverlay(
-        child: Listener(
-          behavior: HitTestBehavior.translucent,
-          onPointerDown: (_) => FocusManager.instance.primaryFocus?.unfocus(),
-          child: child ?? const SizedBox.shrink(),
+      builder: (context, child) => AppUpdateGate(
+        child: DevToolsOverlay(
+          child: Listener(
+            behavior: HitTestBehavior.translucent,
+            onPointerDown: (_) => FocusManager.instance.primaryFocus?.unfocus(),
+            child: child ?? const SizedBox.shrink(),
+          ),
         ),
       ),
     );

@@ -9,6 +9,36 @@ class AppLocalizationsRu extends AppLocalizations {
   AppLocalizationsRu([String locale = 'ru']) : super(locale);
 
   @override
+  String get updateAvailableTitle => 'Доступно обновление AvaTracker';
+
+  @override
+  String get updateAvailableBody =>
+      'В магазине появилась новая версия. Можно обновить сейчас или продолжить работу.';
+
+  @override
+  String get updateLater => 'Позже';
+
+  @override
+  String get updateRequiredTitle => 'Обновите AvaTracker';
+
+  @override
+  String get updateRequiredBody =>
+      'Чтобы продолжить пользоваться приложением, обновите его до доступной версии в магазине.';
+
+  @override
+  String get updateInAppStore => 'Обновить в App Store';
+
+  @override
+  String get updateInGooglePlay => 'Обновить в Google Play';
+
+  @override
+  String get updateCheckAgain => 'Проверить снова';
+
+  @override
+  String get updateStoreOpenFailed =>
+      'Не удалось открыть магазин. Попробуйте ещё раз.';
+
+  @override
   String get appName => 'AvaTracker';
 
   @override
@@ -45,9 +75,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get loginWelcome => 'Добро пожаловать!';
 
   @override
-  String get loginSubtitle => 'Войдите по номеру телефона и паролю';
-
-  @override
   String get fieldPhone => 'Номер телефона';
 
   @override
@@ -81,18 +108,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get createAccount => 'Создайте аккаунт сотрудника';
 
   @override
-  String get registerSubtitle =>
-      'Введите телефон, идентификационный номер и пароль. Код подтверждения придёт по SMS.';
-
-  @override
   String get fieldIin => 'ИИН';
 
   @override
   String get iinHint => '12 цифр';
-
-  @override
-  String get iinExplanation =>
-      'Нужен только для проверки сотрудника в AvaTracker.';
 
   @override
   String get fieldPinfl => 'ПИНФЛ';
@@ -101,24 +120,31 @@ class AppLocalizationsRu extends AppLocalizations {
   String get pinflHint => '14 цифр';
 
   @override
-  String get pinflExplanation =>
-      'Нужен только для проверки сотрудника в AvaTracker.';
-
-  @override
   String get confirmPassword => 'Подтвердите пароль';
 
   @override
   String get repeatPassword => 'Повторите пароль';
 
   @override
-  String get getSmsCode => 'Получить SMS-код';
+  String get continueRegistration => 'Продолжить';
+
+  @override
+  String get phoneAlreadyRegistered => 'Этот номер уже зарегистрирован.';
+
+  @override
+  String get personalIdAlreadyRegistered =>
+      'С этим ИИН или ПИНФЛ уже есть аккаунт.';
 
   @override
   String get haveAccount => 'У меня уже есть аккаунт';
 
   @override
-  String get consentCheckbox =>
-      'Я ознакомлен(а) с Политикой конфиденциальности и даю согласие на обработку персональных данных для учёта рабочего времени, проверки активности сотрудника и фиксации отметок прихода/ухода.';
+  String consentCheckbox(String policy) {
+    return 'Я принимаю $policy и соглашаюсь на обработку персональных данных.';
+  }
+
+  @override
+  String get consentPolicy => 'Политику конфиденциальности';
 
   @override
   String get validatorIin => 'ИИН должен содержать 12 цифр';

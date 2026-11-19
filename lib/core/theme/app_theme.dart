@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
 
 /// Палитра AvaTracker (logo/New: слэш #0843FD, фон #121926, текст #FBFBFB).
@@ -54,7 +55,7 @@ abstract final class AppTheme {
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
           TargetPlatform.android: _NoPageTransitionsBuilder(),
-          TargetPlatform.iOS: _NoPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
           TargetPlatform.linux: _NoPageTransitionsBuilder(),
           TargetPlatform.macOS: _NoPageTransitionsBuilder(),
           TargetPlatform.windows: _NoPageTransitionsBuilder(),

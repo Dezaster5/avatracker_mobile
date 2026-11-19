@@ -100,6 +100,60 @@ abstract class AppLocalizations {
     Locale('uz')
   ];
 
+  /// No description provided for @updateAvailableTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Доступно обновление AvaTracker'**
+  String get updateAvailableTitle;
+
+  /// No description provided for @updateAvailableBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'В магазине появилась новая версия. Можно обновить сейчас или продолжить работу.'**
+  String get updateAvailableBody;
+
+  /// No description provided for @updateLater.
+  ///
+  /// In ru, this message translates to:
+  /// **'Позже'**
+  String get updateLater;
+
+  /// No description provided for @updateRequiredTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обновите AvaTracker'**
+  String get updateRequiredTitle;
+
+  /// No description provided for @updateRequiredBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Чтобы продолжить пользоваться приложением, обновите его до доступной версии в магазине.'**
+  String get updateRequiredBody;
+
+  /// No description provided for @updateInAppStore.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обновить в App Store'**
+  String get updateInAppStore;
+
+  /// No description provided for @updateInGooglePlay.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обновить в Google Play'**
+  String get updateInGooglePlay;
+
+  /// No description provided for @updateCheckAgain.
+  ///
+  /// In ru, this message translates to:
+  /// **'Проверить снова'**
+  String get updateCheckAgain;
+
+  /// No description provided for @updateStoreOpenFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось открыть магазин. Попробуйте ещё раз.'**
+  String get updateStoreOpenFailed;
+
   /// No description provided for @appName.
   ///
   /// In ru, this message translates to:
@@ -172,12 +226,6 @@ abstract class AppLocalizations {
   /// **'Добро пожаловать!'**
   String get loginWelcome;
 
-  /// No description provided for @loginSubtitle.
-  ///
-  /// In ru, this message translates to:
-  /// **'Войдите по номеру телефона и паролю'**
-  String get loginSubtitle;
-
   /// No description provided for @fieldPhone.
   ///
   /// In ru, this message translates to:
@@ -244,12 +292,6 @@ abstract class AppLocalizations {
   /// **'Создайте аккаунт сотрудника'**
   String get createAccount;
 
-  /// No description provided for @registerSubtitle.
-  ///
-  /// In ru, this message translates to:
-  /// **'Введите телефон, идентификационный номер и пароль. Код подтверждения придёт по SMS.'**
-  String get registerSubtitle;
-
   /// No description provided for @fieldIin.
   ///
   /// In ru, this message translates to:
@@ -261,12 +303,6 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'12 цифр'**
   String get iinHint;
-
-  /// No description provided for @iinExplanation.
-  ///
-  /// In ru, this message translates to:
-  /// **'Нужен только для проверки сотрудника в AvaTracker.'**
-  String get iinExplanation;
 
   /// No description provided for @fieldPinfl.
   ///
@@ -280,12 +316,6 @@ abstract class AppLocalizations {
   /// **'14 цифр'**
   String get pinflHint;
 
-  /// No description provided for @pinflExplanation.
-  ///
-  /// In ru, this message translates to:
-  /// **'Нужен только для проверки сотрудника в AvaTracker.'**
-  String get pinflExplanation;
-
   /// No description provided for @confirmPassword.
   ///
   /// In ru, this message translates to:
@@ -298,11 +328,23 @@ abstract class AppLocalizations {
   /// **'Повторите пароль'**
   String get repeatPassword;
 
-  /// No description provided for @getSmsCode.
+  /// No description provided for @continueRegistration.
   ///
   /// In ru, this message translates to:
-  /// **'Получить SMS-код'**
-  String get getSmsCode;
+  /// **'Продолжить'**
+  String get continueRegistration;
+
+  /// No description provided for @phoneAlreadyRegistered.
+  ///
+  /// In ru, this message translates to:
+  /// **'Этот номер уже зарегистрирован.'**
+  String get phoneAlreadyRegistered;
+
+  /// No description provided for @personalIdAlreadyRegistered.
+  ///
+  /// In ru, this message translates to:
+  /// **'С этим ИИН или ПИНФЛ уже есть аккаунт.'**
+  String get personalIdAlreadyRegistered;
 
   /// No description provided for @haveAccount.
   ///
@@ -313,8 +355,14 @@ abstract class AppLocalizations {
   /// No description provided for @consentCheckbox.
   ///
   /// In ru, this message translates to:
-  /// **'Я ознакомлен(а) с Политикой конфиденциальности и даю согласие на обработку персональных данных для учёта рабочего времени, проверки активности сотрудника и фиксации отметок прихода/ухода.'**
-  String get consentCheckbox;
+  /// **'Я принимаю {policy} и соглашаюсь на обработку персональных данных.'**
+  String consentCheckbox(String policy);
+
+  /// No description provided for @consentPolicy.
+  ///
+  /// In ru, this message translates to:
+  /// **'Политику конфиденциальности'**
+  String get consentPolicy;
 
   /// No description provided for @validatorIin.
   ///

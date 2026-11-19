@@ -23,6 +23,8 @@ extension FailureL10n on AppLocalizations {
       EmployeeNotFoundFailure() => errorEmployeeNotFound,
       EmployeeDataMissingFailure() => errorEmployeeDataMissing,
       LoginFailedFailure() => errorLoginFailed,
+      RegistrationConflictFailure(:final isPhone) =>
+        isPhone ? phoneAlreadyRegistered : personalIdAlreadyRegistered,
       ResetTokenMissingFailure() => errorResetTokenMissing,
       SmsAttemptsExceededFailure() => errorAttemptsExceeded,
       SmsCodeNotVerifiedFailure() => errorConfirmSmsFirst,

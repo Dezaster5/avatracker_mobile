@@ -9,6 +9,36 @@ class AppLocalizationsUz extends AppLocalizations {
   AppLocalizationsUz([String locale = 'uz']) : super(locale);
 
   @override
+  String get updateAvailableTitle => 'AvaTracker yangilanishi mavjud';
+
+  @override
+  String get updateAvailableBody =>
+      'Do‘konda yangi versiya chiqdi. Hozir yangilashingiz yoki ishlashda davom etishingiz mumkin.';
+
+  @override
+  String get updateLater => 'Keyinroq';
+
+  @override
+  String get updateRequiredTitle => 'AvaTracker ilovasini yangilang';
+
+  @override
+  String get updateRequiredBody =>
+      'Ilovadan foydalanishni davom ettirish uchun uni do‘kondagi mavjud versiyaga yangilang.';
+
+  @override
+  String get updateInAppStore => 'App Store orqali yangilash';
+
+  @override
+  String get updateInGooglePlay => 'Google Play orqali yangilash';
+
+  @override
+  String get updateCheckAgain => 'Qayta tekshirish';
+
+  @override
+  String get updateStoreOpenFailed =>
+      'Do‘konni ochib bo‘lmadi. Qayta urinib ko‘ring.';
+
+  @override
   String get appName => 'AvaTracker';
 
   @override
@@ -45,9 +75,6 @@ class AppLocalizationsUz extends AppLocalizations {
   String get loginWelcome => 'Xush kelibsiz!';
 
   @override
-  String get loginSubtitle => 'Telefon raqami va parol bilan kiring';
-
-  @override
   String get fieldPhone => 'Telefon raqami';
 
   @override
@@ -81,18 +108,10 @@ class AppLocalizationsUz extends AppLocalizations {
   String get createAccount => 'Xodim hisobini yarating';
 
   @override
-  String get registerSubtitle =>
-      'Telefon raqami, shaxsiy identifikatsiya raqami va parolni kiriting. Tasdiqlash kodi SMS orqali keladi.';
-
-  @override
   String get fieldIin => 'IIN';
 
   @override
   String get iinHint => '12 raqam';
-
-  @override
-  String get iinExplanation =>
-      'Faqat AvaTracker tizimidagi xodimni tekshirish uchun kerak.';
 
   @override
   String get fieldPinfl => 'JShShIR (PINFL)';
@@ -101,24 +120,32 @@ class AppLocalizationsUz extends AppLocalizations {
   String get pinflHint => '14 raqam';
 
   @override
-  String get pinflExplanation =>
-      'Faqat AvaTracker tizimidagi xodimni tekshirish uchun kerak.';
-
-  @override
   String get confirmPassword => 'Parolni tasdiqlang';
 
   @override
   String get repeatPassword => 'Parolni takrorlang';
 
   @override
-  String get getSmsCode => 'SMS kodini olish';
+  String get continueRegistration => 'Davom etish';
+
+  @override
+  String get phoneAlreadyRegistered =>
+      'Bu telefon raqami allaqachon roʻyxatdan oʻtgan.';
+
+  @override
+  String get personalIdAlreadyRegistered =>
+      'Bu JShShIR yoki IIN bilan hisob allaqachon mavjud.';
 
   @override
   String get haveAccount => 'Menda hisob bor';
 
   @override
-  String get consentCheckbox =>
-      'Men Maxfiylik siyosati bilan tanishdim va ish vaqtini hisobga olish, xodim faolligini tekshirish hamda kelish/ketish belgilarini qayd etish uchun shaxsiy maʼlumotlarni qayta ishlashga rozilik beraman.';
+  String consentCheckbox(String policy) {
+    return '$policy qabul qilaman va shaxsiy maʼlumotlarimga ishlov berishga roziman.';
+  }
+
+  @override
+  String get consentPolicy => 'Maxfiylik siyosatini';
 
   @override
   String get validatorIin => 'IIN 12 ta raqamdan iborat boʻlishi kerak';

@@ -1,9 +1,11 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/country/phone_number.dart';
+import '../../../../core/error/failure.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_text_form_field.dart';
 import '../../../../core/widgets/error_banner.dart';
@@ -54,6 +56,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   }
 
   Future<void> _submit() async {
+    final registration = ref.read(registrationControllerProvider);
+    if (!_consent ||
+        registration.sending ||
+        registration.failure is RegistrationConflictFailure) {
+      return;
+    }
     FocusScope.of(context).unfocus();
     if (!(_formKey.currentState?.validate() ?? false)) return;
     final country = ref.read(selectedCountryProvider);
@@ -62,8 +70,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           iin: _iinController.text.trim(),
           password: _passwordController.text,
         );
-    if (ok) TextInput.finishAutofillContext(shouldSave: true);
-    if (ok && mounted) context.push('/sms-register');
+    if (ok && mounted && ModalRoute.of(context)?.isCurrent == true) {
+      context.push('/sms-register');
+    }
   }
 
   /// Ошибка сервера относится к прошлой отправке: правка полей её убирает,
@@ -78,6 +87,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final registration = ref.watch(registrationControllerProvider);
+    final alreadyRegistered =
+        registration.failure is RegistrationConflictFailure;
     final country = ref.watch(selectedCountryProvider);
     final isUzbekistan = country.isUzbekistan;
 
@@ -94,6 +105,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       ),
       body: SafeArea(
         child: AutofillGroup(
+          onDisposeAction: AutofillContextAction.cancel,
           child: Form(
             key: _formKey,
             onChanged: _clearError,
@@ -112,16 +124,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     letterSpacing: 0,
                   ),
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  l10n.registerSubtitle,
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 13.5,
-                    height: 1.45,
-                  ),
-                ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 18),
                 FieldLabel(l10n.fieldPhone),
                 CountryPhoneField(
                   controller: _phoneController,
@@ -131,7 +134,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     AutofillHints.telephoneNumber,
                   ],
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 14),
                 FieldLabel(
                   isUzbekistan ? l10n.fieldPinfl : l10n.fieldIin,
                 ),
@@ -154,16 +157,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                               ? l10n.validatorPinfl
                               : l10n.validatorIin,
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  isUzbekistan ? l10n.pinflExplanation : l10n.iinExplanation,
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 12.5,
-                    height: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 14),
                 FieldLabel(l10n.fieldPassword),
                 PasswordField(
                   controller: _passwordController,
@@ -174,10 +168,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       ? null
                       : l10n.validatorPassword,
                 ),
-                const SizedBox(height: 4),
                 PasswordRequirements(
                   password: _passwordController,
                   confirmation: _confirmController,
+                  compact: true,
                 ),
                 const SizedBox(height: 18),
                 FieldLabel(l10n.confirmPassword),
@@ -190,25 +184,34 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       : l10n.validatorPasswordsMatch,
                   onSubmitted: (_) => _submit(),
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 20),
                 _ConsentCheckbox(
                   value: _consent,
                   onChanged: (v) => setState(() => _consent = v),
                   onPolicyTap: () => context.push('/privacy'),
                 ),
                 ErrorBanner(failure: registration.failure),
-                const SizedBox(height: 20),
-                PrimaryButton(
-                  label: l10n.getSmsCode,
-                  icon: Icons.sms_outlined,
-                  loading: registration.sending,
-                  onPressed: _consent ? _submit : null,
-                ),
-                const SizedBox(height: 16),
+                if (!alreadyRegistered) ...[
+                  const SizedBox(height: 20),
+                  PrimaryButton(
+                    label: l10n.continueRegistration,
+                    loading: registration.sending,
+                    onPressed: _consent ? _submit : null,
+                  ),
+                ],
+                const SizedBox(height: 12),
                 Center(
                   child: TextButton(
-                    onPressed: () => context.pop(),
-                    child: Text(l10n.haveAccount),
+                    onPressed: () {
+                      if (context.canPop()) {
+                        context.pop();
+                      } else {
+                        context.go('/login');
+                      }
+                    },
+                    child: Text(
+                      alreadyRegistered ? l10n.login : l10n.haveAccount,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -222,7 +225,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 }
 
 /// Чекбокс согласия на обработку ПДн со ссылкой на Политику.
-class _ConsentCheckbox extends StatelessWidget {
+class _ConsentCheckbox extends StatefulWidget {
   const _ConsentCheckbox({
     required this.value,
     required this.onChanged,
@@ -234,8 +237,24 @@ class _ConsentCheckbox extends StatelessWidget {
   final VoidCallback onPolicyTap;
 
   @override
+  State<_ConsentCheckbox> createState() => _ConsentCheckboxState();
+}
+
+class _ConsentCheckboxState extends State<_ConsentCheckbox> {
+  late final _policyTap = TapGestureRecognizer()
+    ..onTap = () => widget.onPolicyTap();
+
+  @override
+  void dispose() {
+    _policyTap.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    const linkPlaceholder = '\uFFFC';
+    final parts = l10n.consentCheckbox(linkPlaceholder).split(linkPlaceholder);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -243,8 +262,8 @@ class _ConsentCheckbox extends StatelessWidget {
           width: 24,
           height: 24,
           child: Checkbox(
-            value: value,
-            onChanged: (v) => onChanged(v ?? false),
+            value: widget.value,
+            onChanged: (v) => widget.onChanged(v ?? false),
             activeColor: AppColors.primary,
             materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
             shape:
@@ -253,35 +272,29 @@ class _ConsentCheckbox extends StatelessWidget {
         ),
         const SizedBox(width: 10),
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              GestureDetector(
-                onTap: () => onChanged(!value),
-                child: Text(
-                  l10n.consentCheckbox,
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 12.5,
-                    height: 1.45,
-                  ),
-                ),
-              ),
-              GestureDetector(
-                onTap: onPolicyTap,
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 4, bottom: 2),
-                  child: Text(
-                    l10n.privacyPolicy,
+          child: GestureDetector(
+            onTap: () => widget.onChanged(!widget.value),
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(text: parts.first),
+                  TextSpan(
+                    text: l10n.consentPolicy,
+                    recognizer: _policyTap,
                     style: const TextStyle(
                       color: AppColors.primary,
-                      fontSize: 12.5,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                ),
+                  TextSpan(text: parts.last),
+                ],
               ),
-            ],
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 12.5,
+                height: 1.45,
+              ),
+            ),
           ),
         ),
       ],

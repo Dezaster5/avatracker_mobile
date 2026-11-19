@@ -15,18 +15,26 @@ class Requirement {
 /// выполнено. Виджет только рисует список; что и когда пересчитывать,
 /// решает тот, кто его строит.
 class RequirementList extends StatelessWidget {
-  const RequirementList({super.key, required this.requirements});
+  const RequirementList({
+    super.key,
+    required this.requirements,
+    this.inline = false,
+  });
 
   final List<Requirement> requirements;
+  final bool inline;
 
   @override
   Widget build(BuildContext context) {
+    final items = [
+      for (final requirement in requirements) _RequirementRow(requirement),
+    ];
+    if (inline) return Wrap(spacing: 14, children: items);
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        for (final requirement in requirements) _RequirementRow(requirement),
-      ],
+      children: items,
     );
   }
 }
@@ -47,6 +55,7 @@ class _RequirementRow extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.only(top: 4),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 160),
@@ -63,7 +72,11 @@ class _RequirementRow extends StatelessWidget {
             Flexible(
               child: AnimatedDefaultTextStyle(
                 duration: const Duration(milliseconds: 160),
-                style: TextStyle(color: color, fontSize: 12.5, height: 1.3),
+                style: DefaultTextStyle.of(context).style.copyWith(
+                      color: color,
+                      fontSize: 12.5,
+                      height: 1.3,
+                    ),
                 child: Text(requirement.label),
               ),
             ),
