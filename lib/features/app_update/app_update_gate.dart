@@ -106,11 +106,13 @@ class _AppUpdateGateState extends ConsumerState<AppUpdateGate>
                                       style: Theme.of(context)
                                           .textTheme
                                           .titleMedium)),
-                              IconButton(
-                                tooltip: l10n.updateLater,
-                                onPressed: () => setState(
-                                    () => _dismissedUpdate = update.identity),
-                                icon: const Icon(Icons.close),
+                              Semantics(
+                                label: l10n.updateLater,
+                                child: IconButton(
+                                  onPressed: () => setState(
+                                      () => _dismissedUpdate = update.identity),
+                                  icon: const Icon(Icons.close),
+                                ),
                               ),
                             ],
                           ),
