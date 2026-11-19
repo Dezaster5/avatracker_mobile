@@ -14,6 +14,7 @@ class PasswordRequirements extends StatelessWidget {
     super.key,
     required this.password,
     required this.confirmation,
+    this.compact = false,
   });
 
   /// Значение нового пароля — обычно контроллер его поля.
@@ -22,12 +23,20 @@ class PasswordRequirements extends StatelessWidget {
   /// Значение поля подтверждения.
   final ValueListenable<TextEditingValue> confirmation;
 
+  /// В регистрации подсказки в строку видны только при незавершённом
+  /// или неверном вводе.
+  final bool compact;
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: Listenable.merge([password, confirmation]),
-      builder: (context, _) =>
-          RequirementList(requirements: _requirements(context.l10n)),
+      builder: (context, _) {
+        final requirements = _requirements(context.l10n);
+        return requirements.isEmpty
+            ? const SizedBox.shrink()
+            : RequirementList(requirements: requirements, inline: compact);
+      },
     );
   }
 
@@ -37,15 +46,17 @@ class PasswordRequirements extends StatelessWidget {
     return [
       // Пустое поле не выполняет правила заранее: «без пробелов» у пустой
       // строки формально верно, но галочка до ввода сбивает с толку.
-      for (final rule in PasswordPolicy.rules)
+      if (!compact || (value.isNotEmpty && !PasswordPolicy.isValid(value)))
+        for (final rule in PasswordPolicy.rules)
+          Requirement(
+            l10n._passwordRule(rule),
+            met: value.isNotEmpty && rule.isSatisfiedBy(value),
+          ),
+      if (!compact || (repeated.isNotEmpty && repeated != value))
         Requirement(
-          l10n._passwordRule(rule),
-          met: value.isNotEmpty && rule.isSatisfiedBy(value),
+          l10n.passwordsMatch,
+          met: repeated.isNotEmpty && repeated == value,
         ),
-      Requirement(
-        l10n.passwordsMatch,
-        met: repeated.isNotEmpty && repeated == value,
-      ),
     ];
   }
 }

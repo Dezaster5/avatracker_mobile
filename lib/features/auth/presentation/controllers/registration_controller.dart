@@ -99,6 +99,10 @@ class RegistrationController extends Notifier<RegistrationState> {
         state = state.copyWith(verifying: false);
         return true;
       case Failed(:final failure):
+        if (failure is RegistrationConflictFailure) {
+          state = state.copyWith(verifying: false, failure: failure);
+          return false;
+        }
         final rejected = state.afterFailedVerification(failure);
         state = state.copyWith(
           verifying: false,

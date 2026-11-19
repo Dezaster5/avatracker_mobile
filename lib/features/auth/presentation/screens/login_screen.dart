@@ -98,6 +98,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       backgroundColor: Colors.white,
       body: SafeArea(
         child: AutofillGroup(
+          onDisposeAction: AutofillContextAction.cancel,
           child: Form(
             key: _formKey,
             onChanged: _clearError,
@@ -108,18 +109,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 const LangCountryBar(),
                 const SizedBox(height: 20),
                 const Center(child: BrandLogo(height: 44)),
-                const SizedBox(height: 10),
-                Center(
-                  child: Text(
-                    l10n.appTagline,
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 14,
-                      letterSpacing: 0.2,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 44),
+                const SizedBox(height: 32),
                 Text(
                   l10n.loginWelcome,
                   style: const TextStyle(
@@ -129,16 +119,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     letterSpacing: 0,
                   ),
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  l10n.loginSubtitle,
-                  style: const TextStyle(
-                      color: AppColors.textSecondary, fontSize: 14),
-                ),
-                const SizedBox(height: 28),
+                const SizedBox(height: 24),
                 FieldLabel(l10n.fieldPhone),
                 CountryPhoneField(
                   controller: _phoneController,
+                  // On iOS use the keyboard with the Password AutoFill bar.
+                  keyboardType: Theme.of(context).platform == TargetPlatform.iOS
+                      ? TextInputType.text
+                      : TextInputType.phone,
                   textInputAction: TextInputAction.next,
                   autofillHints: const [
                     AutofillHints.username,

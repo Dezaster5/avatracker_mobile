@@ -20,6 +20,7 @@ class CountryPhoneField extends ConsumerStatefulWidget {
     this.textInputAction,
     this.onSubmitted,
     this.autofillHints = const [AutofillHints.telephoneNumber],
+    this.keyboardType = TextInputType.phone,
   });
 
   final TextEditingController controller;
@@ -27,6 +28,7 @@ class CountryPhoneField extends ConsumerStatefulWidget {
   final TextInputAction? textInputAction;
   final ValueChanged<String>? onSubmitted;
   final Iterable<String>? autofillHints;
+  final TextInputType keyboardType;
 
   @override
   ConsumerState<CountryPhoneField> createState() => _CountryPhoneFieldState();
@@ -45,7 +47,8 @@ class _CountryPhoneFieldState extends ConsumerState<CountryPhoneField> {
     return AppTextFormField(
       controller: widget.controller,
       autofocus: widget.autofocus,
-      keyboardType: TextInputType.phone,
+      keyboardType: widget.keyboardType,
+      autocorrect: false,
       textInputAction: widget.textInputAction,
       autofillHints: widget.autofillHints,
       inputFormatters: [CountryPhoneInputFormatter(country)],

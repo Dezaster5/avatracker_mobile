@@ -91,6 +91,13 @@ final class LoginFailedFailure extends Failure {
   const LoginFailedFailure();
 }
 
+final class RegistrationConflictFailure extends Failure {
+  const RegistrationConflictFailure.phone() : isPhone = true;
+  const RegistrationConflictFailure.personalId() : isPhone = false;
+
+  final bool isPhone;
+}
+
 /// Проверка SMS-кода сброса не вернула `reset_token`.
 final class ResetTokenMissingFailure extends Failure {
   const ResetTokenMissingFailure();

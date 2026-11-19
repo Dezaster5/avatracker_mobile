@@ -14,12 +14,12 @@ class AuthRemoteDataSource {
   final Dio _dio;
 
   Future<void> register(RegisterRequest request) async {
-    await _post(ApiEndpoints.register, request.toJson());
+    await _postRegistration(ApiEndpoints.register, request.toJson());
   }
 
   Future<AuthResponseDto> verifyRegistration(VerifyCodeRequest request) async =>
       AuthResponseDto.fromJson(
-        await _post(ApiEndpoints.registerVerify, request.toJson()),
+        await _postRegistration(ApiEndpoints.registerVerify, request.toJson()),
       );
 
   Future<void> resendRegistrationCode(PhoneRequest request) async {
@@ -103,6 +103,29 @@ class AuthRemoteDataSource {
   /// `DELETE /profile/delete/` — полное удаление мобильного аккаунта.
   Future<void> deleteProfile() async {
     await _dio.delete<dynamic>(ApiEndpoints.deleteProfile);
+  }
+
+  Future<Map<String, dynamic>> _postRegistration(
+    String url,
+    Map<String, dynamic> body,
+  ) async {
+    try {
+      return await _post(url, body);
+    } on DioException catch (error) {
+      final response = error.response;
+      final data = response?.data;
+      if (response?.statusCode == 400 && data is Map<String, dynamic>) {
+        // The old backend returns only the phone field, without an error code.
+        if (data['error_code'] == 'PHONE_ALREADY_REGISTERED' ||
+            data['phone'] == 'Номер уже зарегистрирован') {
+          throw const RegistrationConflictFailure.phone();
+        }
+        if (data['error_code'] == 'PERSONAL_ID_ALREADY_REGISTERED') {
+          throw const RegistrationConflictFailure.personalId();
+        }
+      }
+      rethrow;
+    }
   }
 
   Future<Map<String, dynamic>> _post(

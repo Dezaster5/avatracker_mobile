@@ -74,9 +74,6 @@ class AppLocalizationsKk extends AppLocalizations {
   String get loginWelcome => 'Қош келдіңіз!';
 
   @override
-  String get loginSubtitle => 'Телефон нөмірі мен құпия сөз арқылы кіріңіз';
-
-  @override
   String get fieldPhone => 'Телефон нөмірі';
 
   @override
@@ -110,18 +107,10 @@ class AppLocalizationsKk extends AppLocalizations {
   String get createAccount => 'Қызметкер аккаунтын жасаңыз';
 
   @override
-  String get registerSubtitle =>
-      'Телефонды, сәйкестендіру нөмірін және құпия сөзді енгізіңіз. Растау коды SMS арқылы келеді.';
-
-  @override
   String get fieldIin => 'ЖСН';
 
   @override
   String get iinHint => '12 сан';
-
-  @override
-  String get iinExplanation =>
-      'AvaTracker жүйесіндегі қызметкерді тексеру үшін ғана қажет.';
 
   @override
   String get fieldPinfl => 'ПИНФЛ';
@@ -130,24 +119,31 @@ class AppLocalizationsKk extends AppLocalizations {
   String get pinflHint => '14 сан';
 
   @override
-  String get pinflExplanation =>
-      'AvaTracker жүйесіндегі қызметкерді тексеру үшін ғана қажет.';
-
-  @override
   String get confirmPassword => 'Құпия сөзді растаңыз';
 
   @override
   String get repeatPassword => 'Құпия сөзді қайталаңыз';
 
   @override
-  String get getSmsCode => 'SMS кодын алу';
+  String get continueRegistration => 'Жалғастыру';
+
+  @override
+  String get phoneAlreadyRegistered => 'Бұл телефон нөмірі бұрын тіркелген.';
+
+  @override
+  String get personalIdAlreadyRegistered =>
+      'Бұл ЖСН немесе ПИНФЛ бойынша аккаунт бар.';
 
   @override
   String get haveAccount => 'Менде аккаунт бар';
 
   @override
-  String get consentCheckbox =>
-      'Мен Құпиялылық саясатымен таныстым және жұмыс уақытын есепке алу, қызметкердің белсенділігін тексеру және келу/кету белгілерін тіркеу үшін дербес деректерді өңдеуге келісім беремін.';
+  String consentCheckbox(String policy) {
+    return '$policy қабылдаймын және дербес деректерді өңдеуге келісемін.';
+  }
+
+  @override
+  String get consentPolicy => 'Құпиялылық саясатын';
 
   @override
   String get validatorIin => 'ЖСН 12 саннан тұруы керек';

@@ -1,9 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/error/failure.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/error_banner.dart';
 import '../../../../core/widgets/pin_code_field.dart';
@@ -85,7 +87,13 @@ class _SmsCodeScreenState extends ConsumerState<SmsCodeScreen> {
       // При успехе роутер сам откроет сканер (статус сессии изменится).
       final ok =
           await ref.read(registrationControllerProvider.notifier).verify(code);
-      if (!ok) _codeController.clear();
+      if (!mounted) return;
+      if (ok) {
+        TextInput.finishAutofillContext(shouldSave: true);
+      } else if (ref.read(registrationControllerProvider).failure
+          is! RegistrationConflictFailure) {
+        _codeController.clear();
+      }
     } else {
       final ok =
           await ref.read(passwordResetControllerProvider.notifier).verify(code);
@@ -114,6 +122,7 @@ class _SmsCodeScreenState extends ConsumerState<SmsCodeScreen> {
     final SmsFlowState flow = widget.flow == SmsFlow.register
         ? ref.watch(registrationControllerProvider)
         : ref.watch(passwordResetControllerProvider);
+    final alreadyRegistered = flow.failure is RegistrationConflictFailure;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -171,13 +180,22 @@ class _SmsCodeScreenState extends ConsumerState<SmsCodeScreen> {
               length: SmsCodePolicy.codeLength,
               controller: _codeController,
               hasError: flow.failure != null,
-              enabled: !flow.verifying && !flow.attemptsExhausted,
+              enabled: !alreadyRegistered &&
+                  !flow.verifying &&
+                  !flow.attemptsExhausted,
               onChanged: (_) {
                 if (flow.failure != null) _clearError();
               },
               onCompleted: _verify,
             ),
             ErrorBanner(failure: flow.failure),
+            if (alreadyRegistered)
+              Center(
+                child: TextButton(
+                  onPressed: () => context.go('/login'),
+                  child: Text(l10n.login),
+                ),
+              ),
             if (flow.attemptsLeft < SmsCodePolicy.maxAttempts &&
                 !flow.attemptsExhausted) ...[
               const SizedBox(height: 12),
@@ -191,7 +209,9 @@ class _SmsCodeScreenState extends ConsumerState<SmsCodeScreen> {
               ),
             ],
             const SizedBox(height: 28),
-            if (flow.verifying)
+            if (alreadyRegistered)
+              const SizedBox.shrink()
+            else if (flow.verifying)
               const Center(
                 child: SizedBox(
                   width: 28,
@@ -215,7 +235,7 @@ class _SmsCodeScreenState extends ConsumerState<SmsCodeScreen> {
                         label: Text(l10n.resendCode),
                       ),
               ),
-            if (flow.attemptsExhausted) ...[
+            if (!alreadyRegistered && flow.attemptsExhausted) ...[
               const SizedBox(height: 16),
               PrimaryButton(
                 label: l10n.requestNewCode,
